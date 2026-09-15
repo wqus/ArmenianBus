@@ -7,7 +7,6 @@ __pycache__/
 .ruff_cache/
 .env
 .env.*
-tests/
 docs/
 armeniabus-pro/
 node_modules/

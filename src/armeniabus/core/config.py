@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +11,16 @@ class Settings(BaseSettings):
     redis_url: str = Field(min_length=1)
     cors_origins: list[str] = Field(default_factory=list)
     log_level: str = "INFO"
+    jwt_secret_key: SecretStr
+    access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
+    refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
+    auth_rate_limit_per_minute: int = Field(default=10, ge=1, le=1000)
+
+    @model_validator(mode="after")
+    def validate_jwt_secret(self):
+        if len(self.jwt_secret_key.get_secret_value()) < 32:
+            raise ValueError("JWT_SECRET_KEY must contain at least 32 characters")
+        return self
 
 
 @lru_cache

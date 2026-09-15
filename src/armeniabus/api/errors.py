@@ -24,6 +24,13 @@ class ApiError(Exception):
 def error_response(request: Request, status: int, code: str, message: str, details=None):
     return JSONResponse(
         status_code=status,
+        headers=(
+            {"WWW-Authenticate": "Bearer"}
+            if status == 401
+            else {"Retry-After": "60"}
+            if status == 429
+            else None
+        ),
         content=ErrorBody(
             code=code,
             message=message,

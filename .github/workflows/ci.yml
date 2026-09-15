@@ -24,9 +24,21 @@ jobs:
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10
+      redis:
+        image: redis:8
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
     env:
       DATABASE_URL: postgresql+asyncpg://armeniabus:local-test-only@localhost:5432/armeniabus_test
       REDIS_URL: redis://localhost:6379/0
+      JWT_SECRET_KEY: ci-test-secret-at-least-32-characters-long
+      RUN_DB_TESTS: "1"
+      AUTH_RATE_LIMIT_PER_MINUTE: "100"
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -40,4 +52,4 @@ jobs:
       - run: alembic upgrade head
       - run: alembic check
       - run: docker compose config --quiet
-      - run: docker build -t armeniabus-api:ci .
+      - run: docker build --target runtime -t armeniabus-api:ci .

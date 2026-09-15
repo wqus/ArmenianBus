@@ -9,6 +9,7 @@ def test_health_and_request_correlation():
         Settings(
             database_url="postgresql+asyncpg://user:password@localhost/missing",
             redis_url="redis://localhost:6379/0",
+            jwt_secret_key="foundation-test-secret-at-least-32-characters",
         )
     )
     with TestClient(app) as client:
@@ -23,6 +24,7 @@ def test_readiness_fails_closed_without_database():
         Settings(
             database_url="postgresql+asyncpg://user:password@127.0.0.1:1/missing",
             redis_url="redis://127.0.0.1:1/0",
+            jwt_secret_key="foundation-test-secret-at-least-32-characters",
         )
     )
     with TestClient(app) as client:
@@ -37,6 +39,7 @@ def test_unhandled_errors_have_safe_public_shape_and_request_id():
         Settings(
             database_url="postgresql+asyncpg://user:password@localhost/missing",
             redis_url="redis://localhost:6379/0",
+            jwt_secret_key="foundation-test-secret-at-least-32-characters",
         )
     )
 
