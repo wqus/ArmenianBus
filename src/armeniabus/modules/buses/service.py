@@ -15,6 +15,7 @@ from armeniabus.modules.buses.schemas import (
     SeatPublic,
 )
 from armeniabus.modules.carriers.service import own_profile
+from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.users.models import User
 
 
@@ -78,6 +79,17 @@ async def rename_bus(db: AsyncSession, user: User, bus_id: uuid.UUID, name: str)
 
 async def archive_bus(db: AsyncSession, user: User, bus_id: uuid.UUID) -> None:
     bus = await owned_bus(db, user, bus_id, lock=True)
+    unfinished = await db.scalar(
+        select(Route.id)
+        .where(
+            Route.bus_id == bus.id,
+            Route.archived_at.is_(None),
+            Route.status.in_([RouteStatus.DRAFT, RouteStatus.ACTIVE, RouteStatus.DEPARTED]),
+        )
+        .limit(1)
+    )
+    if unfinished is not None:
+        raise ApiError(409, "BUS_HAS_ROUTES", "Resolve unfinished routes before archiving the bus")
     bus.archived_at = datetime.now(UTC)
     record_audit(db, user.id, "bus.archived", "bus", bus.id)
     await db.commit()

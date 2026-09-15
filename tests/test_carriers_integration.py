@@ -16,6 +16,7 @@ from armeniabus.main import create_app
 from armeniabus.modules.admin.models import AuditLog
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile
+from armeniabus.modules.routes.models import Route
 from armeniabus.modules.users.models import User, UserRole, UserStatus
 
 pytestmark = pytest.mark.skipif(os.getenv("RUN_DB_TESTS") != "1", reason="requires test PostgreSQL")
@@ -56,6 +57,7 @@ async def cleanup(user_ids):
             carriers = select(CarrierProfile.id).where(CarrierProfile.user_id.in_(user_ids))
             buses = select(Bus.id).where(Bus.carrier_id.in_(carriers))
             await connection.execute(delete(AuditLog).where(AuditLog.actor_user_id.in_(user_ids)))
+            await connection.execute(delete(Route).where(Route.carrier_id.in_(carriers)))
             await connection.execute(delete(Seat).where(Seat.bus_id.in_(buses)))
             await connection.execute(delete(Bus).where(Bus.carrier_id.in_(carriers)))
             await connection.execute(

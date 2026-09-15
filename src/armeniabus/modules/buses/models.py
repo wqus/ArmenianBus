@@ -21,6 +21,7 @@ class Bus(Base):
     __tablename__ = "buses"
     __table_args__ = (
         CheckConstraint("capacity BETWEEN 1 AND 100", name="ck_bus_capacity"),
+        UniqueConstraint("id", "carrier_id", name="uq_buses_id_carrier"),
         Index("ix_buses_carrier_id", "carrier_id"),
     )
 
