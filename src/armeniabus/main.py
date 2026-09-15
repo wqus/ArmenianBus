@@ -6,12 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
-from armeniabus.api.auth import router as auth_router
-from armeniabus.api.errors import error_response, register_error_handlers
-from armeniabus.api.health import router as health_router
-from armeniabus.core.config import Settings, get_settings
-from armeniabus.core.logging import configure_logging, request_id_context
-from armeniabus.infrastructure.db.session import create_session_factory
+from src.armeniabus.api.auth import router as auth_router
+from src.armeniabus.api.buses import router as buses_router
+from src.armeniabus.api.carriers import router as carriers_router
+from src.armeniabus.api.errors import error_response, register_error_handlers
+from src.armeniabus.api.health import router as health_router
+from src.armeniabus.core.config import Settings, get_settings
+from src.armeniabus.core.logging import configure_logging, request_id_context
+from src.armeniabus.infrastructure.db.session import create_session_factory
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -61,6 +63,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_error_handlers(app)
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(carriers_router)
+    app.include_router(buses_router)
     return app
 
 

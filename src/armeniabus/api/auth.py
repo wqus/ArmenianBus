@@ -3,12 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from armeniabus.api.dependencies import get_current_user
-from armeniabus.api.errors import ErrorBody
-from armeniabus.api.rate_limit import enforce_auth_rate_limit
-from armeniabus.infrastructure.db.session import get_db_session
-from armeniabus.modules.users.models import User
-from armeniabus.modules.users.schemas import (
+from src.armeniabus.api.dependencies import get_current_user
+from src.armeniabus.api.errors import ErrorBody
+from src.armeniabus.api.rate_limit import enforce_auth_rate_limit
+from src.armeniabus.infrastructure.db.session import get_db_session
+from src.armeniabus.modules.users.models import User
+from src.armeniabus.modules.users.schemas import (
     LoginInput,
     LogoutInput,
     RefreshInput,
@@ -16,7 +16,7 @@ from armeniabus.modules.users.schemas import (
     TokenPair,
     UserPublic,
 )
-from armeniabus.modules.users.service import (
+from src.armeniabus.modules.users.service import (
     login_user,
     register_user,
     revoke_refresh_token,

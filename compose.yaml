@@ -50,16 +50,40 @@ services:
       context: .
       target: test
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
-      REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://armeniabus:test-only-password@db-test:5432/armeniabus_test
+      REDIS_URL: redis://redis-test:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       RUN_DB_TESTS: "1"
       AUTH_RATE_LIMIT_PER_MINUTE: "100"
     depends_on:
-      db:
+      db-test:
         condition: service_healthy
-      redis:
+      redis-test:
         condition: service_healthy
+
+  db-test:
+    profiles: [test]
+    image: postgres:17
+    environment:
+      POSTGRES_DB: armeniabus_test
+      POSTGRES_USER: armeniabus
+      POSTGRES_PASSWORD: test-only-password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "armeniabus", "-d", "armeniabus_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  redis-test:
+    profiles: [test]
+    image: redis:8
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
 
 volumes:
   postgres_data:

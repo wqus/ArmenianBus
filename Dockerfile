@@ -20,4 +20,4 @@ USER root
 RUN pip install --no-cache-dir ".[dev]"
 COPY tests ./tests
 USER appuser
-CMD ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+CMD ["python", "tests/run.py"]

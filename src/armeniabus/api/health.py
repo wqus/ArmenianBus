@@ -4,7 +4,7 @@ import logging
 from fastapi import APIRouter, Request
 from sqlalchemy import text
 
-from armeniabus.api.errors import ApiError, ErrorBody
+from src.armeniabus.api.errors import ApiError, ErrorBody
 
 router = APIRouter(prefix="/api/v1/health", tags=["health"])
 logger = logging.getLogger(__name__)

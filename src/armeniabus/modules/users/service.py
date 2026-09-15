@@ -6,17 +6,19 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from armeniabus.api.errors import ApiError
-from armeniabus.core.config import Settings
-from armeniabus.core.security import (
+from src.armeniabus.api.errors import ApiError
+from src.armeniabus.core.config import Settings
+from src.armeniabus.core.security import (
     create_access_token,
     create_refresh_token,
     hash_password,
     refresh_token_hash,
     verify_password,
 )
-from armeniabus.modules.users.models import RefreshSession, User, UserStatus
-from armeniabus.modules.users.schemas import LoginInput, RegisterInput, TokenPair
+from src.armeniabus.modules.admin.audit import record_audit
+from src.armeniabus.modules.carriers.models import CarrierProfile
+from src.armeniabus.modules.users.models import RefreshSession, User, UserRole, UserStatus
+from src.armeniabus.modules.users.schemas import LoginInput, RegisterInput, TokenPair
 
 
 def normalized_email(email: str) -> str:
@@ -50,10 +52,20 @@ async def register_user(db: AsyncSession, data: RegisterInput) -> User:
     )
     db.add(user)
     try:
+        await db.flush()
+        if data.role == UserRole.CARRIER:
+            profile = CarrierProfile(
+                user_id=user.id, company_name=data.company_name, phone=data.phone
+            )
+            db.add(profile)
+            await db.flush()
+            record_audit(db, user.id, "carrier.created", "carrier", profile.id)
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise ApiError(409, "EMAIL_EXISTS", "Email is already registered") from None
+        if await db.scalar(select(User.id).where(User.email == normalized_email(str(data.email)))):
+            raise ApiError(409, "EMAIL_EXISTS", "Email is already registered") from None
+        raise
     await db.refresh(user)
     return user
 

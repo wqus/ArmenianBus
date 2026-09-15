@@ -1,6 +1,6 @@
 # ArmeniaBus
 
-Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Выполнены **B1: технический фундамент** и **B2: пользователи и авторизация**. Рейсы, бронирование и оплата пока не реализованы.
+Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Реализованы фундамент, авторизация и этап B3: профили перевозчиков, активация, автобусы и места. Рейсы, бронирование и оплата пока не реализованы.
 
 ## Локальный запуск
 
@@ -8,8 +8,9 @@
 
 ```powershell
 Copy-Item .env.example .env
-docker compose up --build -d
+docker compose build api
 docker compose run --rm api alembic upgrade head
+docker compose up -d
 Invoke-RestMethod http://localhost:8000/api/v1/health/live
 Invoke-RestMethod http://localhost:8000/api/v1/health/ready
 ```
@@ -18,9 +19,21 @@ OpenAPI доступен по адресу `http://localhost:8000/docs`. Postgre
 
 ## Авторизация
 
-API этапа B2: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/me`. Регистрация допускает роли `PASSENGER` и `CARRIER`. Пользователь с ролью `CARRIER` пока не может создавать автобусы: профиль и активация перевозчика относятся к B3. Самостоятельная регистрация `ADMIN` запрещена.
+API авторизации: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, `GET /api/v1/me`. Регистрация допускает роли `PASSENGER` и `CARRIER`. Для `CARRIER` обязательны `company_name` и `phone` в международном формате, например `+37499123456`. Пользователь и профиль `PENDING` создаются одной транзакцией. Самостоятельная регистрация `ADMIN` запрещена.
 
 Access token действует 15 минут и передаётся как `Authorization: Bearer ...`. Refresh token обновляется при каждом использовании; его хеш хранится в БД, старый токен отзывается. Logout отзывает refresh token. Уже выданный access token остаётся действительным до своего срока истечения, если пользователь не заблокирован. Пароли хешируются Argon2; API не принимает и не хранит карточные данные.
+
+## Перевозчики и автобусы
+
+Создание администратора выполняется локальной командой. Пароль вводится скрыто и не передаётся в аргументах процесса; существующий пользователь не будет изменён:
+
+```powershell
+docker compose run --rm api python -m armeniabus.cli create-admin --email admin@example.com
+```
+
+Администратор входит через обычный `/auth/login`, просматривает `/api/v1/admin/carriers` и активирует профиль через `PATCH /api/v1/admin/carriers/{id}/status`. Активный перевозчик может создавать, просматривать, переименовывать и архивировать свои автобусы через `/api/v1/buses`. Номера мест и вместимость фиксируются при создании; архивирование сохраняет записи мест. Блокировка профиля закрывает доступ к операциям с автобусами. Статусы и изменения сохраняются в `audit_log` в той же транзакции.
+
+API-сценарий и ограничения этапа: [docs/carriers-and-buses.md](docs/carriers-and-buses.md).
 
 ## Проверки
 
@@ -33,7 +46,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pytest
 ```
 
-Интеграционный тест с реальными PostgreSQL и Redis запускается в отдельном контейнере:
+Интеграционные тесты запускаются в контейнере с отдельными PostgreSQL и Redis. Миграции применяются автоматически. Тестовая БД хранится в памяти контейнера; рабочая БД не используется. Тестовый runner отказывается работать с БД, имя которой не заканчивается на `_test`:
 
 ```powershell
 docker compose --profile test build test
@@ -42,6 +55,6 @@ docker compose --profile test run --rm test
 
 ## Следующий этап
 
-B3 добавит профили перевозчиков, активацию, автобусы и места. Затем B4–B5 добавят рейсы и поиск. Правила бронирования и оплаты из документов будут реализованы на backend; текущий API не имитирует покупку.
+B4 добавит рейсы, динамические направления РФ ↔ Армения, жизненный цикл и правила изменения рейсов. На B5 появятся поиск и доступность мест. При добавлении рейсов будут введены ограничения на архивацию автобусов с действующими рейсами.
 
 Детальный порядок работ и состояние этапов: [docs/roadmap.md](docs/roadmap.md).
