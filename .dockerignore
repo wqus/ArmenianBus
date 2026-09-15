@@ -1,4 +1,5 @@
 .git/
+.idea/
 .github/
 .venv/
 __pycache__/
