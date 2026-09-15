@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 from pwdlib import PasswordHash
 
-from src.armeniabus.core.config import Settings
+from armeniabus.core.config import Settings
 
 password_hashing = PasswordHash.recommended()
 _dummy_password_hash = password_hashing.hash("never-a-real-account-password")

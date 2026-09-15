@@ -4,8 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-from src.armeniabus.modules.carriers.schemas import CompanyName, PhoneNumber
-from src.armeniabus.modules.users.models import UserRole, UserStatus
+from armeniabus.modules.carriers.schemas import CompanyName, PhoneNumber
+from armeniabus.modules.users.models import UserRole, UserStatus
 
 
 class RegisterInput(BaseModel):

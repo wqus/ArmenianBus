@@ -4,19 +4,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.api.dependencies import require_role
-from src.armeniabus.api.errors import ErrorBody
-from src.armeniabus.infrastructure.db.session import get_db_session
-from src.armeniabus.modules.carriers import service
-from src.armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
-from src.armeniabus.modules.carriers.schemas import (
+from armeniabus.api.dependencies import require_role
+from armeniabus.api.errors import ErrorBody
+from armeniabus.infrastructure.db.session import get_db_session
+from armeniabus.modules.carriers import service
+from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
+from armeniabus.modules.carriers.schemas import (
     CarrierInput,
     CarrierPage,
     CarrierPublic,
     CarrierStatusInput,
     CarrierUpdate,
 )
-from src.armeniabus.modules.users.models import User, UserRole
+from armeniabus.modules.users.models import User, UserRole
 
 RESOURCE_ERRORS = {status: {"model": ErrorBody} for status in (401, 403, 404, 409, 422)}
 router = APIRouter(prefix="/api/v1", tags=["carriers"], responses=RESOURCE_ERRORS)

@@ -4,12 +4,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.api.dependencies import require_role
-from src.armeniabus.api.errors import ErrorBody
-from src.armeniabus.infrastructure.db.session import get_db_session
-from src.armeniabus.modules.buses import service
-from src.armeniabus.modules.buses.schemas import BusCreate, BusPage, BusPublic, BusUpdate
-from src.armeniabus.modules.users.models import User, UserRole
+from armeniabus.api.dependencies import require_role
+from armeniabus.api.errors import ErrorBody
+from armeniabus.infrastructure.db.session import get_db_session
+from armeniabus.modules.buses import service
+from armeniabus.modules.buses.schemas import BusCreate, BusPage, BusPublic, BusUpdate
+from armeniabus.modules.users.models import User, UserRole
 
 router = APIRouter(
     prefix="/api/v1/buses",

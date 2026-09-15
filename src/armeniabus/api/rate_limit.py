@@ -4,7 +4,7 @@ import logging
 
 from fastapi import Request
 
-from src.armeniabus.api.errors import ApiError
+from armeniabus.api.errors import ApiError
 
 logger = logging.getLogger(__name__)
 

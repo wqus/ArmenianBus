@@ -3,11 +3,11 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.api.errors import ApiError
-from src.armeniabus.modules.admin.audit import record_audit
-from src.armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
-from src.armeniabus.modules.carriers.schemas import CarrierInput, CarrierPage, CarrierPublic
-from src.armeniabus.modules.users.models import User
+from armeniabus.api.errors import ApiError
+from armeniabus.modules.admin.audit import record_audit
+from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
+from armeniabus.modules.carriers.schemas import CarrierInput, CarrierPage, CarrierPublic
+from armeniabus.modules.users.models import User
 
 
 async def own_profile(

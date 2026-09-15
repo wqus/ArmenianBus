@@ -6,19 +6,19 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.api.errors import ApiError
-from src.armeniabus.core.config import Settings
-from src.armeniabus.core.security import (
+from armeniabus.api.errors import ApiError
+from armeniabus.core.config import Settings
+from armeniabus.core.security import (
     create_access_token,
     create_refresh_token,
     hash_password,
     refresh_token_hash,
     verify_password,
 )
-from src.armeniabus.modules.admin.audit import record_audit
-from src.armeniabus.modules.carriers.models import CarrierProfile
-from src.armeniabus.modules.users.models import RefreshSession, User, UserRole, UserStatus
-from src.armeniabus.modules.users.schemas import LoginInput, RegisterInput, TokenPair
+from armeniabus.modules.admin.audit import record_audit
+from armeniabus.modules.carriers.models import CarrierProfile
+from armeniabus.modules.users.models import RefreshSession, User, UserRole, UserStatus
+from armeniabus.modules.users.schemas import LoginInput, RegisterInput, TokenPair
 
 
 def normalized_email(email: str) -> str:

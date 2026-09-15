@@ -39,6 +39,8 @@ API-сценарий и ограничения этапа: [docs/carriers-and-bu
 
 На Python 3.12+:
 
+В PyCharm отметьте каталог `src` как **Sources Root** и выберите интерпретатор `.venv`. Пакет импортируется как `armeniabus`, без префикса `src`. Иначе Python может загрузить модели дважды, а запуск установленного пакета и миграций завершится ошибкой. Ruff проверяет единообразие импортов.
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -e ".[dev]"

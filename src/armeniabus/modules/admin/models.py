@@ -6,7 +6,7 @@ from sqlalchemy import DateTime, ForeignKey, Index, String, Uuid, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
-from src.armeniabus.infrastructure.db.base import Base
+from armeniabus.infrastructure.db.base import Base
 
 
 class AuditLog(Base):

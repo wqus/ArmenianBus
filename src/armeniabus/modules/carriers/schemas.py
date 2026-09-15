@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, StringConstraints, model_validator
 
-from src.armeniabus.modules.carriers.models import CarrierStatus
+from armeniabus.modules.carriers.models import CarrierStatus
 
 CompanyName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)]
 PhoneNumber = Annotated[str, StringConstraints(pattern=r"^\+[1-9][0-9]{7,14}$")]

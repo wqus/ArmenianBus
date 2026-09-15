@@ -8,10 +8,10 @@ import sys
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.armeniabus.api.errors import ApiError
-from src.armeniabus.core.config import get_settings
-from src.armeniabus.infrastructure.db.session import create_session_factory
-from src.armeniabus.modules.admin.service import AdminCreate, create_admin
+from armeniabus.api.errors import ApiError
+from armeniabus.core.config import get_settings
+from armeniabus.infrastructure.db.session import create_session_factory
+from armeniabus.modules.admin.service import AdminCreate, create_admin
 
 
 async def provision_admin(data: AdminCreate) -> str:

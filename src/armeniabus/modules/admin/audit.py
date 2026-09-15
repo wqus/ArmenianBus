@@ -3,7 +3,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.modules.admin.models import AuditLog
+from armeniabus.modules.admin.models import AuditLog
 
 
 def record_audit(

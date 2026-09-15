@@ -4,10 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.armeniabus.api.errors import ApiError
-from src.armeniabus.core.security import hash_password
-from src.armeniabus.modules.admin.audit import record_audit
-from src.armeniabus.modules.users.models import User, UserRole, UserStatus
+from armeniabus.api.errors import ApiError
+from armeniabus.core.security import hash_password
+from armeniabus.modules.admin.audit import record_audit
+from armeniabus.modules.users.models import User, UserRole, UserStatus
 
 
 class AdminCreate(BaseModel):
