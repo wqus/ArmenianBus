@@ -12,6 +12,7 @@ dependencies = [
   "asyncpg>=0.30,<1",
   "email-validator>=2,<3",
   "fastapi>=0.115,<1",
+  "httpx>=0.27,<1",
   "pydantic-settings>=2.6,<3",
   "pyjwt>=2.10,<3",
   "pwdlib[argon2]>=0.2,<1",
@@ -21,7 +22,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["httpx>=0.27,<1", "pytest>=8,<9", "ruff>=0.8,<1"]
+dev = ["pytest>=8,<9", "ruff>=0.8,<1"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

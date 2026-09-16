@@ -12,10 +12,12 @@ from armeniabus.api.buses import router as buses_router
 from armeniabus.api.carriers import router as carriers_router
 from armeniabus.api.errors import error_response, register_error_handlers
 from armeniabus.api.health import router as health_router
+from armeniabus.api.payments import router as payments_router
 from armeniabus.api.routes import router as routes_router
 from armeniabus.core.config import Settings, get_settings
 from armeniabus.core.logging import configure_logging, request_id_context
 from armeniabus.infrastructure.db.session import create_session_factory
+from armeniabus.modules.payments.provider import YooKassa
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -28,9 +30,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.db_engine = engine
         app.state.db_sessions = sessions
         app.state.redis = Redis.from_url(settings.redis_url, decode_responses=True)
+        app.state.payment_provider = YooKassa(settings)
         try:
             yield
         finally:
+            await app.state.payment_provider.close()
             await app.state.redis.aclose()
             await engine.dispose()
 
@@ -69,6 +73,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(buses_router)
     app.include_router(routes_router)
     app.include_router(bookings_router)
+    app.include_router(payments_router)
     return app
 
 

@@ -1,3 +1,10 @@
+x-payment-environment: &payment-environment
+  PAYMENTS_ENABLED: ${PAYMENTS_ENABLED:-false}
+  YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID:-}
+  YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY:-}
+  YOOKASSA_TEST_MODE: ${YOOKASSA_TEST_MODE:-true}
+  PAYMENT_RETURN_URL: ${PAYMENT_RETURN_URL:-http://localhost:5173/payment/result}
+
 services:
   db:
     image: postgres:17
@@ -26,6 +33,7 @@ services:
       context: .
       target: runtime
     environment:
+      <<: *payment-environment
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
       CORS_ORIGINS: '["http://localhost:5173"]'
@@ -57,6 +65,21 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       HOLD_WORKER_INTERVAL_SECONDS: ${HOLD_WORKER_INTERVAL_SECONDS:-5}
       HOLD_WORKER_BATCH_SIZE: ${HOLD_WORKER_BATCH_SIZE:-500}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  payment-worker:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "-m", "armeniabus.modules.payments.worker"]
+    restart: unless-stopped
+    environment:
+      <<: *payment-environment
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
     depends_on:
       db:
         condition: service_healthy

@@ -17,6 +17,7 @@ from armeniabus.modules.admin.models import AuditLog
 from armeniabus.modules.bookings.models import Booking
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile
+from armeniabus.modules.payments.models import Payment
 from armeniabus.modules.routes.models import Route
 from armeniabus.modules.users.models import User, UserRole, UserStatus
 
@@ -59,6 +60,13 @@ async def cleanup(user_ids):
             buses = select(Bus.id).where(Bus.carrier_id.in_(carriers))
             routes = select(Route.id).where(Route.carrier_id.in_(carriers))
             bookings = select(Booking.id).where(Booking.route_id.in_(routes))
+            payments = select(Payment.id).where(Payment.booking_id.in_(bookings))
+            await connection.execute(
+                delete(AuditLog).where(
+                    AuditLog.entity_type == "payment", AuditLog.entity_id.in_(payments)
+                )
+            )
+            await connection.execute(delete(Payment).where(Payment.booking_id.in_(bookings)))
             await connection.execute(
                 delete(AuditLog).where(
                     AuditLog.entity_type == "booking", AuditLog.entity_id.in_(bookings)

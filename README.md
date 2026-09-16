@@ -1,6 +1,6 @@
 # ArmeniaBus
 
-Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Реализованы B1–B6: фундамент, авторизация, перевозчики, автобусы, рейсы, поиск, доступность мест, бронирование и удержание. Онлайн-оплата пока не реализована.
+Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Реализованы B1–B7: фундамент, авторизация, перевозчики, автобусы, рейсы, поиск, бронирование, hold и код интеграции платежей YooKassa. Платежи по умолчанию выключены; проверка с реальным тестовым магазином требует его настройки.
 
 ## Локальный запуск
 
@@ -8,7 +8,7 @@
 
 ```powershell
 Copy-Item .env.example .env
-docker compose build api worker
+docker compose build api worker payment-worker
 docker compose run --rm api alembic upgrade head
 docker compose up -d
 Invoke-RestMethod http://localhost:8000/api/v1/health/live
@@ -53,7 +53,13 @@ API-сценарий и ограничения этапа: [docs/carriers-and-bu
 
 Пассажир создаёт удержание через `POST /api/v1/bookings` с `route_id` и `seat_id`, просматривает `/bookings/my` и `/bookings/{id}`, отменяет неоплаченный hold через `DELETE /bookings/{id}`. Цена фиксируется сервером. Hold действует 10 минут (настраивается), максимум до отправления. После первой брони критические поля рейса закрываются для редактирования.
 
-PostgreSQL блокировки и уникальный индекс защищают от двойной продажи; Redis для этого не требуется. Compose запускает отдельный `worker`, который переводит просроченные удержания в EXPIRED. Разовый запуск: `docker compose run --rm worker python -m armeniabus.worker --once`. Отмена оплаченных билетов и оплата пока недоступны. Контракт, блокировки и границы этапа: [docs/bookings.md](docs/bookings.md).
+PostgreSQL блокировки и уникальный индекс защищают от двойной продажи; Redis для этого не требуется. Compose запускает отдельный `worker`, который переводит просроченные удержания в EXPIRED. Разовый запуск: `docker compose run --rm worker python -m armeniabus.worker --once`. Отмена оплаченных билетов пока недоступна. Контракт: [docs/bookings.md](docs/bookings.md).
+
+## Платежи
+
+`POST /api/v1/bookings/{id}/pay` требует токен владельца и `Idempotency-Key: UUID`. Сумма берётся из Booking. `GET /api/v1/bookings/{id}/payment` показывает состояние. Webhook `/api/v1/webhooks/payments` проверяется запросом к YooKassa; redirect не подтверждает оплату. Отдельный `payment-worker` восстанавливает состояние после потерянного уведомления.
+
+Без `PAYMENTS_ENABLED=true` и ключей магазина оплата возвращает `503 PAYMENTS_DISABLED`. Тесты работают с имитацией провайдера. Позднее списание не восстанавливает истёкшую бронь: платёж получает отметку ручного возврата. Настройка тестового магазина, HTTPS webhook, ограничения чеков и статусы: [docs/payments.md](docs/payments.md).
 
 ## Проверки
 
@@ -77,6 +83,6 @@ docker compose --profile test run --rm test
 
 ## Следующий этап
 
-B7 добавит Payment, адаптер YooKassa, идемпотентное создание платежа, webhook и подтверждение PAID на стороне backend. Отмена оплаченных билетов и уведомления относятся к следующим этапам.
+B8: кабинеты и бронирования перевозчика, отмена оплаченного билета по правилам MVP, уведомления и повторная доставка. Подключение настоящего тестового магазина YooKassa остаётся отдельной проверкой после предоставления настроек.
 
 Детальный порядок работ и состояние этапов: [docs/roadmap.md](docs/roadmap.md).
