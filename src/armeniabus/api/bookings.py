@@ -44,5 +44,7 @@ async def details(booking_id: uuid.UUID, user: Passenger, db: DbSession) -> Book
 
 
 @router.delete("/{booking_id}", status_code=204)
-async def cancel(booking_id: uuid.UUID, user: Passenger, db: DbSession) -> None:
-    await service.cancel_booking(db, user, booking_id)
+async def cancel(booking_id: uuid.UUID, request: Request, user: Passenger, db: DbSession) -> None:
+    await service.cancel_booking(
+        db, user, booking_id, request.app.state.settings.paid_cancellation_cutoff_hours
+    )

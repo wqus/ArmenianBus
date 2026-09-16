@@ -9,9 +9,13 @@ from armeniabus.api.errors import ApiError
 from armeniabus.modules.admin.audit import record_audit
 from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
 from armeniabus.modules.bookings.models import Booking, BookingStatus
+from armeniabus.modules.bookings.policy import paid_cancellation_allowed
 from armeniabus.modules.bookings.schemas import BookingCreate, BookingPage, BookingPublic
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
+from armeniabus.modules.notifications.outbox import enqueue
+from armeniabus.modules.payments.models import Payment, PaymentStatus
+from armeniabus.modules.payments.refunds import request_refund
 from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.users.models import User, UserStatus
 
@@ -128,9 +132,11 @@ async def list_bookings(db: AsyncSession, user: User, limit: int, offset: int) -
     )
 
 
-async def cancel_booking(db: AsyncSession, user: User, booking_id: uuid.UUID) -> None:
+async def cancel_booking(
+    db: AsyncSession, user: User, booking_id: uuid.UUID, cutoff_hours: int = 24
+) -> None:
     booking = await own_booking(db, user, booking_id)
-    await db.scalar(select(Route).where(Route.id == booking.route_id).with_for_update())
+    route = await db.scalar(select(Route).where(Route.id == booking.route_id).with_for_update())
     booking = await db.scalar(
         select(Booking)
         .where(Booking.id == booking_id, Booking.passenger_id == user.id)
@@ -139,12 +145,39 @@ async def cancel_booking(db: AsyncSession, user: User, booking_id: uuid.UUID) ->
     )
     if booking.status in (BookingStatus.CANCELLED, BookingStatus.EXPIRED):
         return
+    payment = None
+    if booking.status == BookingStatus.PAID:
+        payment = await db.scalar(
+            select(Payment)
+            .where(Payment.booking_id == booking.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
     now = await database_now(db)
-    if not expire_booking(db, booking, now):
-        if booking.status != BookingStatus.HELD:
+    if booking.status == BookingStatus.PAID:
+        if not paid_cancellation_allowed(route.status, route.departure_at, now, cutoff_hours):
+            raise ApiError(409, "CANCELLATION_CUTOFF", "Paid cancellation deadline has passed")
+        if payment is None or payment.status != PaymentStatus.SUCCEEDED:
             raise ApiError(
-                409, "BOOKING_NOT_CANCELLABLE", "Only unpaid holds can be cancelled in this release"
+                409, "BOOKING_NOT_CANCELLABLE", "Verified payment is required for cancellation"
             )
         booking.status = BookingStatus.CANCELLED
+        await request_refund(db, payment, "PASSENGER_CANCELLED", user.id)
+        await enqueue(db, booking, "cancelled")
+        record_audit(
+            db,
+            user.id,
+            "booking.cancelled",
+            "booking",
+            booking.id,
+            {"reason": "passenger", "refund_required": True},
+        )
+        await db.commit()
+        return
+    if not expire_booking(db, booking, now):
+        if booking.status != BookingStatus.HELD:
+            raise ApiError(409, "BOOKING_NOT_CANCELLABLE", "Booking can no longer be cancelled")
+        booking.status = BookingStatus.CANCELLED
+        await enqueue(db, booking, "cancelled")
         record_audit(db, user.id, "booking.cancelled", "booking", booking.id)
     await db.commit()

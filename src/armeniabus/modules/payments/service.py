@@ -11,8 +11,10 @@ from armeniabus.modules.admin.audit import record_audit
 from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
+from armeniabus.modules.notifications.outbox import enqueue
 from armeniabus.modules.payments.models import Payment, PaymentStatus
 from armeniabus.modules.payments.provider import ProviderError, ProviderPayment, YooKassa
+from armeniabus.modules.payments.refunds import request_refund
 from armeniabus.modules.payments.schemas import PaymentPublic
 from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.users.models import User, UserStatus
@@ -166,9 +168,12 @@ async def apply_snapshot(
             if bookable(carrier, owner_status, route, booking, now):
                 booking.status = BookingStatus.PAID
                 record_audit(db, None, "booking.paid", "booking", booking.id)
+                await enqueue(db, booking, "paid")
             else:
                 expire_booking(db, booking, now)
                 review(db, payment, "REFUND_REQUIRED")
+                await request_refund(db, payment, "LATE_OR_UNAVAILABLE_BOOKING")
+                await enqueue(db, booking, "refund_required")
             record_audit(db, None, "payment.succeeded", "payment", payment.id)
     elif snapshot.status == "canceled":
         payment.status = PaymentStatus.CANCELED
@@ -177,6 +182,7 @@ async def apply_snapshot(
             record_audit(
                 db, None, "booking.cancelled", "booking", booking.id, {"reason": "payment_canceled"}
             )
+            await enqueue(db, booking, "cancelled")
         record_audit(db, None, "payment.canceled", "payment", payment.id)
     elif snapshot.status == "waiting_for_capture":
         review(db, payment, "UNEXPECTED_CAPTURE_REQUIRED")

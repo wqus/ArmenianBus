@@ -10,6 +10,9 @@ from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus
 from armeniabus.modules.carriers.service import own_profile
+from armeniabus.modules.notifications.outbox import enqueue
+from armeniabus.modules.payments.models import Payment, PaymentStatus
+from armeniabus.modules.payments.refunds import request_refund
 from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.routes.schemas import RouteCreate, RoutePage, RoutePublic, RouteUpdate
 from armeniabus.modules.users.models import User
@@ -101,12 +104,6 @@ async def transition(db: AsyncSession, user: User, route: Route, target: RouteSt
                 .with_for_update()
             )
         )
-        if target == RouteStatus.CANCELLED and any(
-            b.status == BookingStatus.PAID for b in bookings
-        ):
-            raise ApiError(
-                409, "ROUTE_HAS_PAID_BOOKINGS", "Paid bookings require operational cancellation"
-            )
         now = await database_now(db)
         for booking in bookings:
             if expire_booking(db, booking, now):
@@ -120,6 +117,31 @@ async def transition(db: AsyncSession, user: User, route: Route, target: RouteSt
                     "booking",
                     booking.id,
                     {"reason": "route_cancelled"},
+                )
+                await enqueue(db, booking, "cancelled")
+            elif booking.status == BookingStatus.PAID and target == RouteStatus.CANCELLED:
+                payment = await db.scalar(
+                    select(Payment)
+                    .where(Payment.booking_id == booking.id)
+                    .with_for_update()
+                    .execution_options(populate_existing=True)
+                )
+                if payment is None or payment.status != PaymentStatus.SUCCEEDED:
+                    raise ApiError(
+                        409,
+                        "ROUTE_HAS_PAID_BOOKINGS",
+                        "Verified payments are required for operational cancellation",
+                    )
+                booking.status = BookingStatus.CANCELLED
+                await request_refund(db, payment, "ROUTE_CANCELLED", user.id)
+                await enqueue(db, booking, "cancelled")
+                record_audit(
+                    db,
+                    user.id,
+                    "booking.cancelled",
+                    "booking",
+                    booking.id,
+                    {"reason": "route_cancelled", "refund_required": True},
                 )
             elif booking.status == BookingStatus.PAID and target == RouteStatus.COMPLETED:
                 booking.status = BookingStatus.COMPLETED

@@ -9,6 +9,7 @@ from redis.asyncio import Redis
 from armeniabus.api.auth import router as auth_router
 from armeniabus.api.bookings import router as bookings_router
 from armeniabus.api.buses import router as buses_router
+from armeniabus.api.cabinets import router as cabinets_router
 from armeniabus.api.carriers import router as carriers_router
 from armeniabus.api.errors import error_response, register_error_handlers
 from armeniabus.api.health import router as health_router
@@ -74,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(routes_router)
     app.include_router(bookings_router)
     app.include_router(payments_router)
+    app.include_router(cabinets_router)
     return app
 
 

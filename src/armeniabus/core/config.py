@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field, HttpUrl, SecretStr, model_validator
+from pydantic import EmailStr, Field, HttpUrl, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,6 +25,17 @@ class Settings(BaseSettings):
     payment_return_url: HttpUrl = HttpUrl("http://localhost:5173/payment/result")
     payment_poll_seconds: int = Field(default=30, ge=5, le=300)
     payment_batch_size: int = Field(default=10, ge=1, le=100)
+    paid_cancellation_cutoff_hours: int = Field(default=24, ge=0, le=720)
+    notifications_enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = Field(default=465, ge=1, le=65535)
+    smtp_from: EmailStr | None = None
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    notification_batch_size: int = Field(default=20, ge=1, le=100)
+    notification_poll_seconds: int = Field(default=5, ge=1, le=300)
+    notification_retry_seconds: int = Field(default=30, ge=1, le=3600)
+    notification_max_attempts: int = Field(default=8, ge=1, le=20)
 
     @model_validator(mode="after")
     def validate_jwt_secret(self):
@@ -35,6 +46,8 @@ class Settings(BaseSettings):
                 raise ValueError("Enabled payments require YooKassa shop ID and secret")
             if not self.yookassa_test_mode and self.payment_return_url.scheme != "https":
                 raise ValueError("Live payments require an HTTPS return URL")
+        if self.notifications_enabled and (not self.smtp_host or not self.smtp_from):
+            raise ValueError("Enabled notifications require SMTP_HOST and SMTP_FROM")
         return self
 
 

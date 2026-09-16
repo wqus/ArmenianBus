@@ -40,6 +40,7 @@ services:
       LOG_LEVEL: INFO
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
       BOOKING_HOLD_MINUTES: ${BOOKING_HOLD_MINUTES:-10}
+      PAID_CANCELLATION_CUTOFF_HOURS: ${PAID_CANCELLATION_CUTOFF_HOURS:-24}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -80,6 +81,30 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  notification-worker:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "-m", "armeniabus.modules.notifications.worker"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@example.com}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      NOTIFICATION_BATCH_SIZE: ${NOTIFICATION_BATCH_SIZE:-20}
+      NOTIFICATION_POLL_SECONDS: ${NOTIFICATION_POLL_SECONDS:-5}
+      NOTIFICATION_RETRY_SECONDS: ${NOTIFICATION_RETRY_SECONDS:-30}
+      NOTIFICATION_MAX_ATTEMPTS: ${NOTIFICATION_MAX_ATTEMPTS:-8}
     depends_on:
       db:
         condition: service_healthy
