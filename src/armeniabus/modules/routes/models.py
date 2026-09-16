@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -45,6 +46,14 @@ class Route(Base):
             name="ck_routes_status",
         ),
         Index("ix_routes_search", "origin", "destination", "departure_at"),
+        Index(
+            "ix_routes_public_search",
+            text("lower(origin)"),
+            text("lower(destination)"),
+            "departure_at",
+            "id",
+            postgresql_where=text("status = 'ACTIVE' AND archived_at IS NULL"),
+        ),
         Index("ix_routes_carrier_id", "carrier_id"),
         Index("ix_routes_bus_id", "bus_id"),
     )

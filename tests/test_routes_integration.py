@@ -106,7 +106,7 @@ def test_create_edit_dynamic_direction_exact_price_and_pagination(journeys):
     unchanged = patch(journeys, route["id"], origin_country="RU")
     assert unchanged.status_code == 422
     assert (
-        client.get(f"/api/v1/routes/{route['id']}", headers=headers).json()["origin_country"]
+        client.get(f"/api/v1/routes/my/{route['id']}", headers=headers).json()["origin_country"]
         == "AM"
     )
     second = create(journeys, departure_at=(datetime.now(UTC) + timedelta(days=3)).isoformat())
@@ -136,7 +136,9 @@ def test_route_state_machine_and_time_guards(journeys):
     assert patch(journeys, route_id, status="ACTIVE").status_code == 409
     assert patch(journeys, route_id, price="100").status_code == 409
     assert client.delete(bus_path, headers=headers).status_code == 204
-    assert client.get(f"/api/v1/routes/{route_id}", headers=headers).json()["status"] == "COMPLETED"
+    assert (
+        client.get(f"/api/v1/routes/my/{route_id}", headers=headers).json()["status"] == "COMPLETED"
+    )
     assert (
         asyncio.run(
             scalar(
@@ -159,7 +161,10 @@ def test_draft_archiving_and_active_cancellation_preserve_history(journeys):
     assert client.delete(f"/api/v1/buses/{draft['bus_id']}", headers=headers).status_code == 409
     assert client.delete(draft_path, headers=headers).status_code == 204
     assert client.delete(draft_path, headers=headers).status_code == 204
-    assert client.get(draft_path, headers=headers).status_code == 404
+    assert (
+        client.get(draft_path.replace("/routes/", "/routes/my/"), headers=headers).status_code
+        == 404
+    )
     assert patch(journeys, draft["id"], status="ACTIVE").status_code == 404
     assert asyncio.run(scalar(select(Route.archived_at).where(Route.id == uuid.UUID(draft["id"]))))
     assert client.get("/api/v1/routes/my", headers=headers).json()["items"] == []
@@ -168,7 +173,10 @@ def test_draft_archiving_and_active_cancellation_preserve_history(journeys):
     path = f"/api/v1/routes/{route['id']}"
     assert client.delete(path, headers=headers).status_code == 204
     assert client.delete(path, headers=headers).status_code == 204
-    assert client.get(path, headers=headers).json()["status"] == "CANCELLED"
+    assert (
+        client.get(path.replace("/routes/", "/routes/my/"), headers=headers).json()["status"]
+        == "CANCELLED"
+    )
     assert patch(journeys, route["id"], status="ACTIVE").status_code == 409
     assert patch(journeys, route["id"], destination="Ереван").status_code == 409
     assert client.delete(f"/api/v1/buses/{route['bus_id']}", headers=headers).status_code == 204
@@ -192,10 +200,11 @@ def test_route_ownership_and_unavailable_buses(journeys):
     )
     assert patch(journeys, route["id"], bus_id=foreign_bus["id"]).status_code == 404
     for method, body in [("get", None), ("patch", {"price": "100"}), ("delete", None)]:
-        response = client.request(method, path, headers=stranger, json=body)
+        endpoint = path.replace("/routes/", "/routes/my/") if method == "get" else path
+        response = client.request(method, endpoint, headers=stranger, json=body)
         assert response.status_code == 404
     assert client.get("/api/v1/routes/my", headers=stranger).json()["items"] == []
-    assert client.get(path).status_code == 401
+    assert client.get(path.replace("/routes/", "/routes/my/")).status_code == 401
     _, passenger = world.account("PASSENGER")
     assert (
         client.post("/api/v1/routes", headers=passenger, json=payload(journeys)).status_code == 403
@@ -210,7 +219,7 @@ def test_route_ownership_and_unavailable_buses(journeys):
     )
     assert world.status(journeys["profile"]["id"], "BLOCKED").status_code == 200
     for method, endpoint, body in [
-        ("get", path, None),
+        ("get", path.replace("/routes/", "/routes/my/"), None),
         ("get", "/api/v1/routes/my", None),
         ("post", "/api/v1/routes", payload(journeys)),
         ("patch", path, {"status": "ACTIVE"}),

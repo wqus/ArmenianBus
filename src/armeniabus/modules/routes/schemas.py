@@ -1,5 +1,6 @@
 import uuid
 from datetime import UTC, datetime
+from datetime import date as CalendarDate
 from decimal import Decimal
 from typing import Annotated, Literal
 
@@ -105,3 +106,41 @@ class RoutePage(BaseModel):
     items: list[RoutePublic]
     limit: int
     offset: int
+
+
+class RouteSearch(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    origin: PlaceName
+    destination: PlaceName
+    date: CalendarDate = Field(
+        le=CalendarDate(9999, 12, 30), description="Departure calendar date in UTC"
+    )
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0, le=10000)
+
+
+class SearchRoute(RoutePublic):
+    company_name: str
+    bus_name: str
+    capacity: int
+    free_seats: int
+
+
+class SearchPage(BaseModel):
+    items: list[SearchRoute]
+    limit: int
+    offset: int
+
+
+class AvailableSeat(BaseModel):
+    id: uuid.UUID
+    seat_number: int
+    status: Literal["FREE", "HELD", "PAID"]
+
+
+class RouteSeats(BaseModel):
+    route_id: uuid.UUID
+    bus_id: uuid.UUID
+    free_seats: int
+    seats: list[AvailableSeat]

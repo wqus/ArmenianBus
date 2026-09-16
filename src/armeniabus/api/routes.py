@@ -7,9 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from armeniabus.api.dependencies import require_role
 from armeniabus.api.errors import ErrorBody
 from armeniabus.infrastructure.db.session import get_db_session
-from armeniabus.modules.routes import service
+from armeniabus.modules.routes import search, service
 from armeniabus.modules.routes.models import Route, RouteStatus
-from armeniabus.modules.routes.schemas import RouteCreate, RoutePage, RoutePublic, RouteUpdate
+from armeniabus.modules.routes.schemas import (
+    RouteCreate,
+    RoutePage,
+    RoutePublic,
+    RouteSearch,
+    RouteSeats,
+    RouteUpdate,
+    SearchPage,
+    SearchRoute,
+)
 from armeniabus.modules.users.models import User, UserRole
 
 router = APIRouter(
@@ -37,9 +46,24 @@ async def list_own(
     return await service.list_routes(db, user, limit, offset, status)
 
 
-@router.get("/{route_id}", response_model=RoutePublic)
-async def details(route_id: uuid.UUID, user: CarrierUser, db: DbSession) -> Route:
+@router.get("/my/{route_id}", response_model=RoutePublic)
+async def own_details(route_id: uuid.UUID, user: CarrierUser, db: DbSession) -> Route:
     return await service.own_route(db, user, route_id)
+
+
+@router.get("/search", response_model=SearchPage)
+async def find_routes(filters: Annotated[RouteSearch, Query()], db: DbSession) -> SearchPage:
+    return await search.search_routes(db, filters)
+
+
+@router.get("/{route_id}", response_model=SearchRoute)
+async def details(route_id: uuid.UUID, db: DbSession) -> SearchRoute:
+    return await search.route_details(db, route_id)
+
+
+@router.get("/{route_id}/seats", response_model=RouteSeats)
+async def seats(route_id: uuid.UUID, db: DbSession) -> RouteSeats:
+    return await search.route_seats(db, route_id)
 
 
 @router.patch("/{route_id}", response_model=RoutePublic)
