@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from redis.asyncio import Redis
 
 from armeniabus.api.auth import router as auth_router
+from armeniabus.api.bookings import router as bookings_router
 from armeniabus.api.buses import router as buses_router
 from armeniabus.api.carriers import router as carriers_router
 from armeniabus.api.errors import error_response, register_error_handlers
@@ -67,6 +68,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(carriers_router)
     app.include_router(buses_router)
     app.include_router(routes_router)
+    app.include_router(bookings_router)
     return app
 
 

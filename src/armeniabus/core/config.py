@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
     refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
     auth_rate_limit_per_minute: int = Field(default=10, ge=1, le=1000)
+    booking_hold_minutes: int = Field(default=10, ge=1, le=60)
+    hold_worker_interval_seconds: int = Field(default=5, ge=1, le=300)
+    hold_worker_batch_size: int = Field(default=500, ge=1, le=5000)
 
     @model_validator(mode="after")
     def validate_jwt_secret(self):

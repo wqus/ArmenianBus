@@ -3,10 +3,11 @@
 import uuid
 from datetime import UTC, datetime, time, timedelta
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from armeniabus.api.errors import ApiError
+from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
 from armeniabus.modules.routes.models import Route, RouteStatus
@@ -21,12 +22,24 @@ from armeniabus.modules.routes.schemas import (
 from armeniabus.modules.users.models import User, UserStatus
 
 
-def seat_inventory():
-    # B6: derive HELD/PAID from bookings for the requested route, including held_until.
-    # Seat itself has no mutable status. Before B6 there are no reservations.
-    return select(
-        Seat.id, Seat.bus_id, Seat.seat_number, literal("FREE").label("status")
-    ).subquery()
+def seat_status(now):
+    def booked(status, *conditions):
+        return exists(
+            select(Booking.id)
+            .where(
+                Booking.route_id == Route.id,
+                Booking.seat_id == Seat.id,
+                Booking.status == status,
+                *conditions,
+            )
+            .correlate(Route, Seat)
+        )
+
+    return case(
+        (booked(BookingStatus.PAID), "PAID"),
+        (booked(BookingStatus.HELD, Booking.held_until > now), "HELD"),
+        else_="FREE",
+    )
 
 
 def visible_routes(statement, now: datetime):
@@ -46,15 +59,12 @@ def visible_routes(statement, now: datetime):
     )
 
 
-def public_query(now: datetime):
-    inventory = seat_inventory()
-    counts = (
-        select(
-            inventory.c.bus_id,
-            func.count().filter(inventory.c.status == "FREE").label("free_seats"),
-        )
-        .group_by(inventory.c.bus_id)
-        .subquery()
+def public_query(now):
+    free_count = (
+        select(func.count(Seat.id))
+        .where(Seat.bus_id == Route.bus_id, seat_status(now) == "FREE")
+        .correlate(Route)
+        .scalar_subquery()
     )
     return visible_routes(
         select(
@@ -62,10 +72,10 @@ def public_query(now: datetime):
             CarrierProfile.company_name,
             Bus.name.label("bus_name"),
             Bus.capacity,
-            func.coalesce(counts.c.free_seats, 0).label("free_seats"),
+            free_count.label("free_seats"),
         ),
         now,
-    ).outerjoin(counts, counts.c.bus_id == Route.bus_id)
+    )
 
 
 def public_result(row) -> SearchRoute:
@@ -80,7 +90,7 @@ def public_result(row) -> SearchRoute:
 
 async def search_routes(db: AsyncSession, filters: RouteSearch) -> SearchPage:
     start = datetime.combine(filters.date, time.min, tzinfo=UTC)
-    query = public_query(datetime.now(UTC)).where(
+    query = public_query(func.statement_timestamp()).where(
         func.lower(Route.origin) == func.lower(filters.origin),
         func.lower(Route.destination) == func.lower(filters.destination),
         Route.departure_at >= start,
@@ -96,7 +106,7 @@ async def search_routes(db: AsyncSession, filters: RouteSearch) -> SearchPage:
 
 async def route_details(db: AsyncSession, route_id: uuid.UUID) -> SearchRoute:
     row = (
-        await db.execute(public_query(datetime.now(UTC)).where(Route.id == route_id))
+        await db.execute(public_query(func.statement_timestamp()).where(Route.id == route_id))
     ).one_or_none()
     if row is None:
         raise ApiError(404, "ROUTE_NOT_FOUND", "Route not found")
@@ -104,22 +114,22 @@ async def route_details(db: AsyncSession, route_id: uuid.UUID) -> SearchRoute:
 
 
 async def route_seats(db: AsyncSession, route_id: uuid.UUID) -> RouteSeats:
-    inventory = seat_inventory()
+    now = func.statement_timestamp()
     query = (
         visible_routes(
             select(
                 Route.id,
                 Route.bus_id,
-                inventory.c.id.label("seat_id"),
-                inventory.c.seat_number,
-                inventory.c.status,
+                Seat.id.label("seat_id"),
+                Seat.seat_number,
+                seat_status(now).label("status"),
             ),
-            datetime.now(UTC),
+            now,
         )
-        .outerjoin(inventory, inventory.c.bus_id == Route.bus_id)
+        .outerjoin(Seat, Seat.bus_id == Route.bus_id)
         .where(Route.id == route_id)
     )
-    rows = (await db.execute(query.order_by(inventory.c.seat_number))).all()
+    rows = (await db.execute(query.order_by(Seat.seat_number))).all()
     if not rows:
         raise ApiError(404, "ROUTE_NOT_FOUND", "Route not found")
     seats = [

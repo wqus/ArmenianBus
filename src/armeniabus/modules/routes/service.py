@@ -6,6 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from armeniabus.api.errors import ApiError
 from armeniabus.modules.admin.audit import record_audit
+from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
+from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus
 from armeniabus.modules.carriers.service import own_profile
 from armeniabus.modules.routes.models import Route, RouteStatus
@@ -80,13 +82,48 @@ async def transition(db: AsyncSession, user: User, route: Route, target: RouteSt
     }
     if target not in allowed[previous]:
         raise ApiError(409, "INVALID_ROUTE_TRANSITION", "Route status transition is not allowed")
-    now = datetime.now(UTC)
+    now = await database_now(db)
     if target == RouteStatus.ACTIVE:
         await available_bus(db, route.carrier_id, route.bus_id)
         if route.departure_at <= now:
             raise ApiError(409, "DEPARTURE_IN_PAST", "Cannot publish a departed route")
     if target == RouteStatus.DEPARTED and route.departure_at > now:
         raise ApiError(409, "DEPARTURE_NOT_REACHED", "Scheduled departure has not been reached")
+    if target in (RouteStatus.CANCELLED, RouteStatus.DEPARTED, RouteStatus.COMPLETED):
+        bookings = list(
+            await db.scalars(
+                select(Booking)
+                .where(
+                    Booking.route_id == route.id,
+                    Booking.status.in_([BookingStatus.HELD, BookingStatus.PAID]),
+                )
+                .order_by(Booking.id)
+                .with_for_update()
+            )
+        )
+        if target == RouteStatus.CANCELLED and any(
+            b.status == BookingStatus.PAID for b in bookings
+        ):
+            raise ApiError(
+                409, "ROUTE_HAS_PAID_BOOKINGS", "Paid bookings require operational cancellation"
+            )
+        now = await database_now(db)
+        for booking in bookings:
+            if expire_booking(db, booking, now):
+                continue
+            if booking.status == BookingStatus.HELD and target == RouteStatus.CANCELLED:
+                booking.status = BookingStatus.CANCELLED
+                record_audit(
+                    db,
+                    user.id,
+                    "booking.cancelled",
+                    "booking",
+                    booking.id,
+                    {"reason": "route_cancelled"},
+                )
+            elif booking.status == BookingStatus.PAID and target == RouteStatus.COMPLETED:
+                booking.status = BookingStatus.COMPLETED
+                record_audit(db, user.id, "booking.completed", "booking", booking.id)
     route.status = target
     record_audit(
         db, user.id, "route.status_changed", "route", route.id, {"from": previous, "to": target}
@@ -116,7 +153,8 @@ async def update_route(
         raise ApiError(422, "DEPARTURE_IN_PAST", "Departure must be in the future")
     if "bus_id" in changes:
         await available_bus(db, route.carrier_id, changes["bus_id"])
-    # B6 must check existence of any Booking here under the same route lock.
+    if await db.scalar(select(Booking.id).where(Booking.route_id == route.id).limit(1)):
+        raise ApiError(409, "ROUTE_HAS_BOOKINGS", "Route details are fixed after the first booking")
     for field, value in changes.items():
         setattr(route, field, value)
     record_audit(db, user.id, "route.updated", "route", route.id, {"fields": sorted(changes)})

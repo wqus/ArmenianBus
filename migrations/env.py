@@ -6,12 +6,8 @@ from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from armeniabus.core.config import get_settings
+from armeniabus.infrastructure.db import models  # noqa: F401 - register all models with Base
 from armeniabus.infrastructure.db.base import Base
-from armeniabus.modules.admin import models as admin_models  # noqa: F401
-from armeniabus.modules.buses import models as bus_models  # noqa: F401
-from armeniabus.modules.carriers import models as carrier_models  # noqa: F401
-from armeniabus.modules.routes import models as route_models  # noqa: F401
-from armeniabus.modules.users import models  # noqa: F401 - register models with Base
 
 config = context.config
 if config.config_file_name:

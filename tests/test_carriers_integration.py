@@ -14,6 +14,7 @@ from armeniabus.core.config import Settings
 from armeniabus.core.security import hash_password
 from armeniabus.main import create_app
 from armeniabus.modules.admin.models import AuditLog
+from armeniabus.modules.bookings.models import Booking
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile
 from armeniabus.modules.routes.models import Route
@@ -56,7 +57,15 @@ async def cleanup(user_ids):
         async with engine.begin() as connection:
             carriers = select(CarrierProfile.id).where(CarrierProfile.user_id.in_(user_ids))
             buses = select(Bus.id).where(Bus.carrier_id.in_(carriers))
+            routes = select(Route.id).where(Route.carrier_id.in_(carriers))
+            bookings = select(Booking.id).where(Booking.route_id.in_(routes))
+            await connection.execute(
+                delete(AuditLog).where(
+                    AuditLog.entity_type == "booking", AuditLog.entity_id.in_(bookings)
+                )
+            )
             await connection.execute(delete(AuditLog).where(AuditLog.actor_user_id.in_(user_ids)))
+            await connection.execute(delete(Booking).where(Booking.route_id.in_(routes)))
             await connection.execute(delete(Route).where(Route.carrier_id.in_(carriers)))
             await connection.execute(delete(Seat).where(Seat.bus_id.in_(buses)))
             await connection.execute(delete(Bus).where(Bus.carrier_id.in_(carriers)))

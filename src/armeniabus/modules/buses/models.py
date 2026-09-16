@@ -41,6 +41,7 @@ class Seat(Base):
     __tablename__ = "seats"
     __table_args__ = (
         UniqueConstraint("bus_id", "seat_number", name="uq_seats_bus_number"),
+        UniqueConstraint("id", "bus_id", name="uq_seats_id_bus"),
         CheckConstraint("seat_number BETWEEN 1 AND 100", name="ck_seat_number"),
     )
 

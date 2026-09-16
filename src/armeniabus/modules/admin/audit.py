@@ -8,7 +8,7 @@ from armeniabus.modules.admin.models import AuditLog
 
 def record_audit(
     db: AsyncSession,
-    actor_id: uuid.UUID,
+    actor_id: uuid.UUID | None,
     action: str,
     entity_type: str,
     entity_id: uuid.UUID,

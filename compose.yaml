@@ -31,6 +31,7 @@ services:
       CORS_ORIGINS: '["http://localhost:5173"]'
       LOG_LEVEL: INFO
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      BOOKING_HOLD_MINUTES: ${BOOKING_HOLD_MINUTES:-10}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -43,6 +44,22 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: ["python", "-m", "armeniabus.worker"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      HOLD_WORKER_INTERVAL_SECONDS: ${HOLD_WORKER_INTERVAL_SECONDS:-5}
+      HOLD_WORKER_BATCH_SIZE: ${HOLD_WORKER_BATCH_SIZE:-500}
+    depends_on:
+      db:
+        condition: service_healthy
 
   test:
     profiles: [test]
