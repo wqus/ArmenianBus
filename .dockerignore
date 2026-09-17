@@ -11,6 +11,7 @@ __pycache__/
 docs/
 armeniabus-pro/
 node_modules/
+frontend/
 dist/
 backups/
 *.dump
