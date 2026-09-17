@@ -10,6 +10,7 @@ from armeniabus.core.config import Settings
 from armeniabus.core.logging import configure_logging
 from armeniabus.infrastructure.db import models  # noqa: F401
 from armeniabus.infrastructure.db.session import create_session_factory
+from armeniabus.modules.admin.monitoring import heartbeat
 from armeniabus.modules.payments.provider import YooKassa
 from armeniabus.modules.payments.service import reconcile_batch
 
@@ -26,10 +27,22 @@ async def run(once: bool) -> int:
         while True:
             try:
                 count = await reconcile_batch(sessions, provider, settings)
+                await heartbeat(
+                    sessions, "payments", enabled=settings.payments_enabled, count=count
+                )
                 if count or once:
                     logger.info("Reconciled payments: %s", count)
             except (SQLAlchemyError, OSError, TimeoutError) as exc:
                 logger.error("Payment batch failed: %s", type(exc).__name__)
+                try:
+                    await heartbeat(
+                        sessions,
+                        "payments",
+                        enabled=settings.payments_enabled,
+                        error=type(exc).__name__,
+                    )
+                except (SQLAlchemyError, OSError, TimeoutError):
+                    pass
                 if once:
                     return 1
             if once:

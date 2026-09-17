@@ -13,3 +13,7 @@ __pycache__/
 armeniabus-pro/
 node_modules/
 dist/
+backups/
+*.dump
+*.dump.json
+!.env.production.example

@@ -10,6 +10,7 @@ from armeniabus.core.config import Settings
 from armeniabus.core.logging import configure_logging
 from armeniabus.infrastructure.db import models  # noqa: F401
 from armeniabus.infrastructure.db.session import create_session_factory
+from armeniabus.modules.admin.monitoring import heartbeat
 from armeniabus.modules.bookings.lifecycle import expire_batch
 
 logger = logging.getLogger(__name__)
@@ -25,11 +26,16 @@ async def run(once: bool) -> int:
             try:
                 async with sessions() as db:
                     count = await expire_batch(db, settings.hold_worker_batch_size)
+                await heartbeat(sessions, "holds", count=count)
                 if count or once:
                     logger.info("Expired holds: %s", count)
             except (SQLAlchemyError, OSError, TimeoutError) as exc:
                 # Exception messages may contain connection details; log only the type.
                 logger.error("Hold expiry batch failed: %s", type(exc).__name__)
+                try:
+                    await heartbeat(sessions, "holds", error=type(exc).__name__)
+                except (SQLAlchemyError, OSError, TimeoutError):
+                    pass
                 if once:
                     return 1
             if once:

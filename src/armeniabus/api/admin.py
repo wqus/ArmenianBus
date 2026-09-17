@@ -10,6 +10,7 @@ from armeniabus.api.errors import ApiError, ErrorBody
 from armeniabus.infrastructure.db.session import get_db_session
 from armeniabus.modules.admin import operations as service
 from armeniabus.modules.admin.models import AuditLog
+from armeniabus.modules.admin.monitoring import snapshot
 from armeniabus.modules.admin.schemas import (
     AdminBooking,
     AdminPayment,
@@ -17,6 +18,7 @@ from armeniabus.modules.admin.schemas import (
     AuditPublic,
     NotificationPublic,
     NotificationRetryInput,
+    OperationsHealth,
     Page,
     PaymentVerifyInput,
     ReasonInput,
@@ -48,6 +50,11 @@ Admin = Annotated[User, Depends(require_role(UserRole.ADMIN))]
 DbSession = Annotated[AsyncSession, Depends(get_db_session)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 Offset = Annotated[int, Query(ge=0, le=10000)]
+
+
+@router.get("/operations/health", response_model=OperationsHealth)
+async def operations_health(request: Request, user: Admin, db: DbSession):
+    return await snapshot(db, request.app.state.settings.worker_stale_seconds)
 
 
 @router.get("/users", response_model=Page[UserPublic])

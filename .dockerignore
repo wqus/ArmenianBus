@@ -12,3 +12,6 @@ docs/
 armeniabus-pro/
 node_modules/
 dist/
+backups/
+*.dump
+*.dump.json

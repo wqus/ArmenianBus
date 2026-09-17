@@ -1,6 +1,6 @@
 # ArmeniaBus
 
-Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Реализован backend B1–B9: фундамент, авторизация, перевозчики, автобусы, рейсы, поиск, бронирование, платежи, API кабинетов, отмена PAID, очередь уведомлений и административные операции. Frontend ещё не реализован. Платежи и отправка писем по умолчанию выключены; проверки с реальным тестовым магазином и SMTP требуют настройки.
+Веб-платформа автобусных поездок между Россией и Арменией. Разработка идёт по этапам из документов `ArmeniaBus_Final_PreDevelopment_Package.docx` и `ArmeniaBus_MVP_Full_Architecture_and_Development_Plan.docx`. Реализован backend B1–B9 и базовая эксплуатационная подготовка B10: авторизация, перевозчики, автобусы, рейсы, поиск, бронирование, платежи, API кабинетов, уведомления, административные операции, защита API и диагностика. Frontend ещё не реализован. Платежи и отправка писем по умолчанию выключены; проверки с реальным тестовым магазином и SMTP требуют настройки. Production ещё не запущен.
 
 ## Локальный запуск
 
@@ -79,8 +79,10 @@ ADMIN видит пользователей, перевозчиков, рейс�
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.venv\Scripts\python.exe -m ruff check src tests migrations
+.venv\Scripts\python.exe -m pip install -r requirements-dev.lock
+.venv\Scripts\python.exe -m pip install --no-deps -e .
+.venv\Scripts\python.exe -m pip check
+.venv\Scripts\python.exe -m ruff check src tests migrations scripts
 .venv\Scripts\python.exe -m pytest
 ```
 
@@ -93,6 +95,8 @@ docker compose --profile test run --rm test
 
 ## Следующий этап
 
-B10: безопасность, наблюдаемость, производительность запросов, backup/restore и production-конфигурация. Backend B9 готов; UI администратора относится к F9. Подключение тестового магазина YooKassa и проверка реальной SMTP-доставки остаются отдельными интеграционными проверками после настройки.
+B10: добавлены ограничения запросов, безопасные журналы, диагностика worker/очередей, индексы административных списков, фиксация зависимостей, backup/restore-check и отдельный production-шаблон с Caddy. Инструкции и проверенные границы: [docs/hardening-and-operations.md](docs/hardening-and-operations.md).
+
+Далее F1: фундамент frontend и интеграция с готовым API. UI администратора относится к F9. Подключение тестового магазина YooKassa, реальная SMTP-доставка и публичный запуск остаются отдельными работами после настройки окружения.
 
 Детальный порядок работ и состояние этапов: [docs/roadmap.md](docs/roadmap.md).

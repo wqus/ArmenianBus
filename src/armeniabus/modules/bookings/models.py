@@ -31,6 +31,7 @@ class BookingStatus(StrEnum):
 class Booking(Base):
     __tablename__ = "bookings"
     __table_args__ = (
+        Index("ix_bookings_created", "created_at", "id"),
         ForeignKeyConstraint(
             ["route_id", "bus_id"], ["routes.id", "routes.bus_id"], name="fk_booking_route_bus"
         ),

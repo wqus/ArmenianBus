@@ -10,6 +10,7 @@ from armeniabus.core.config import Settings
 from armeniabus.core.logging import configure_logging
 from armeniabus.infrastructure.db import models  # noqa: F401
 from armeniabus.infrastructure.db.session import create_session_factory
+from armeniabus.modules.admin.monitoring import heartbeat
 from armeniabus.modules.notifications.delivery import SmtpSender, deliver_batch
 
 logger = logging.getLogger(__name__)
@@ -25,10 +26,22 @@ async def run(once: bool) -> int:
         while True:
             try:
                 count = await deliver_batch(sessions, sender, settings)
+                await heartbeat(
+                    sessions, "notifications", enabled=settings.notifications_enabled, count=count
+                )
                 if count or once:
                     logger.info("Delivered notifications: %s", count)
             except (SQLAlchemyError, OSError, TimeoutError) as exc:
                 logger.error("Notification batch failed: %s", type(exc).__name__)
+                try:
+                    await heartbeat(
+                        sessions,
+                        "notifications",
+                        enabled=settings.notifications_enabled,
+                        error=type(exc).__name__,
+                    )
+                except (SQLAlchemyError, OSError, TimeoutError):
+                    pass
                 if once:
                     return 1
             if once:

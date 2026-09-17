@@ -22,6 +22,7 @@ class UserStatus(StrEnum):
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
+        Index("ix_users_created", "created_at", "id"),
         CheckConstraint("role IN ('PASSENGER', 'CARRIER', 'ADMIN')", name="ck_users_role"),
         CheckConstraint("status IN ('ACTIVE', 'BLOCKED')", name="ck_users_status"),
     )

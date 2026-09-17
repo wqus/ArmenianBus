@@ -1,16 +1,28 @@
 from functools import lru_cache
+from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import EmailStr, Field, HttpUrl, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", hide_input_in_errors=True
+    )
 
     database_url: str = Field(min_length=1)
     redis_url: str = Field(min_length=1)
     cors_origins: list[str] = Field(default_factory=list)
     log_level: str = "INFO"
+    app_env: Literal["development", "production"] = "development"
+    allowed_hosts: list[str] = Field(
+        default_factory=lambda: ["localhost", "127.0.0.1", "testserver"]
+    )
+    request_max_bytes: int = Field(default=65536, ge=1024, le=1048576)
+    request_body_timeout_seconds: int = Field(default=10, ge=1, le=60)
+    worker_stale_seconds: int = Field(default=600, ge=30, le=7200)
     jwt_secret_key: SecretStr
     access_token_ttl_minutes: int = Field(default=15, ge=1, le=60)
     refresh_token_ttl_days: int = Field(default=30, ge=1, le=90)
@@ -48,6 +60,35 @@ class Settings(BaseSettings):
                 raise ValueError("Live payments require an HTTPS return URL")
         if self.notifications_enabled and (not self.smtp_host or not self.smtp_from):
             raise ValueError("Enabled notifications require SMTP_HOST and SMTP_FROM")
+        if not self.allowed_hosts or any(not host or "/" in host for host in self.allowed_hosts):
+            raise ValueError("ALLOWED_HOSTS must contain hostnames")
+        if self.app_env == "production":
+            secret = self.jwt_secret_key.get_secret_value()
+            if len(secret) < 64 or len(set(secret)) < 16 or "replace-this" in secret:
+                raise ValueError(
+                    "Production requires a fresh random JWT secret of at least 64 characters"
+                )
+            if any("*" in host for host in self.allowed_hosts) or not any(
+                host not in {"localhost", "127.0.0.1", "testserver"} for host in self.allowed_hosts
+            ):
+                raise ValueError("Production requires explicit public ALLOWED_HOSTS")
+            for origin in self.cors_origins:
+                parsed = urlsplit(origin)
+                if (
+                    parsed.scheme != "https"
+                    or not parsed.hostname
+                    or parsed.username
+                    or parsed.path
+                    or parsed.query
+                    or parsed.fragment
+                    or "*" in origin
+                ):
+                    raise ValueError("Production CORS origins must be exact HTTPS origins")
+            password = make_url(self.database_url).password or ""
+            if len(password) < 24 or password == "change-me-local":
+                raise ValueError(
+                    "Production requires a non-default database password of at least 24 characters"
+                )
         return self
 
 

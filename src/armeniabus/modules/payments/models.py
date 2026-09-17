@@ -31,6 +31,13 @@ class PaymentStatus(StrEnum):
 class Payment(Base):
     __tablename__ = "payments"
     __table_args__ = (
+        Index("ix_payments_created", "created_at", "id"),
+        Index(
+            "ix_payments_review",
+            "created_at",
+            "id",
+            postgresql_where=text("review_reason IS NOT NULL"),
+        ),
         CheckConstraint(
             "status IN ('PENDING', 'SUCCEEDED', 'CANCELED', 'FAILED')", name="ck_payment_status"
         ),

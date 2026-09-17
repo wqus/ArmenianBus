@@ -1,0 +1,165 @@
+# Standalone deployment template: do not merge with compose.yaml.
+x-environment: &environment
+  APP_ENV: production
+  DATABASE_URL: postgresql+asyncpg://armeniabus_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}@db:5432/${POSTGRES_DB:-armeniabus}
+  REDIS_URL: redis://redis:6379/0
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}
+  ALLOWED_HOSTS: '["${API_DOMAIN:?Set API_DOMAIN}","localhost"]'
+  CORS_ORIGINS: ${CORS_ORIGINS:-[]}
+  WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
+  REQUEST_MAX_BYTES: ${REQUEST_MAX_BYTES:-65536}
+  REQUEST_BODY_TIMEOUT_SECONDS: ${REQUEST_BODY_TIMEOUT_SECONDS:-10}
+  PAYMENTS_ENABLED: ${PAYMENTS_ENABLED:-false}
+  YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID:-}
+  YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY:-}
+  YOOKASSA_TEST_MODE: ${YOOKASSA_TEST_MODE:-true}
+  PAYMENT_RETURN_URL: ${PAYMENT_RETURN_URL:-https://example.invalid/payment/result}
+  NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_FROM: ${SMTP_FROM:-no-reply@example.com}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  BOOKING_HOLD_MINUTES: ${BOOKING_HOLD_MINUTES:-10}
+  PAID_CANCELLATION_CUTOFF_HOURS: ${PAID_CANCELLATION_CUTOFF_HOURS:-24}
+
+x-app: &app
+  image: ${APP_IMAGE:?Set APP_IMAGE to a tested release tag}
+  build:
+    context: .
+    target: runtime
+  environment: *environment
+  restart: unless-stopped
+  read_only: true
+  tmpfs: ["/tmp:size=32m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 128
+  mem_limit: 512m
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+  networks: [backend]
+  depends_on:
+    db: {condition: service_healthy}
+    redis: {condition: service_healthy}
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-armeniabus}
+      POSTGRES_USER: ${POSTGRES_USER:-armeniabus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/init-app-db.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
+    networks: [backend]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+    command: [redis-server, --maxmemory, 128mb, --maxmemory-policy, noeviction]
+    networks: [backend]
+    mem_limit: 256m
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+  api:
+    <<: *app
+    command: [uvicorn, armeniabus.main:app, --host, 0.0.0.0, --port, "8000", --no-access-log, --proxy-headers, --forwarded-allow-ips, "${PROXY_IP:-172.30.10.2}"]
+    networks:
+      backend: {}
+      edge: {}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  migrate:
+    <<: *app
+    profiles: [maintenance]
+    restart: "no"
+    command: [alembic, upgrade, head]
+    environment:
+      <<: *environment
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-armeniabus}
+
+  worker:
+    <<: *app
+    command: [python, -m, armeniabus.worker]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, holds]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  payment-worker:
+    <<: *app
+    command: [python, -m, armeniabus.modules.payments.worker]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, payments]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  notification-worker:
+    <<: *app
+    command: [python, -m, armeniabus.modules.notifications.worker]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, notifications]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN}
+    networks:
+      edge:
+        ipv4_address: ${PROXY_IP:-172.30.10.2}
+    depends_on:
+      api: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+networks:
+  backend: {}
+  edge:
+    ipam:
+      config:
+        - subnet: ${EDGE_SUBNET:-172.30.10.0/24}
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

@@ -1,13 +1,17 @@
 import logging
+import re
+import time
 import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from redis.asyncio import Redis
 
 from armeniabus.api.admin import router as admin_router
 from armeniabus.api.auth import router as auth_router
+from armeniabus.api.body_limit import BodyLimitMiddleware
 from armeniabus.api.bookings import router as bookings_router
 from armeniabus.api.buses import router as buses_router
 from armeniabus.api.cabinets import router as cabinets_router
@@ -40,8 +44,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await app.state.redis.aclose()
             await engine.dispose()
 
-    app = FastAPI(title="ArmeniaBus API", version="0.1.0", lifespan=lifespan)
+    public_docs = settings.app_env != "production"
+    app = FastAPI(
+        title="ArmeniaBus API",
+        version="0.1.0",
+        lifespan=lifespan,
+        docs_url="/docs" if public_docs else None,
+        redoc_url="/redoc" if public_docs else None,
+        openapi_url="/openapi.json" if public_docs else None,
+    )
     app.state.settings = settings
+    app.add_middleware(
+        BodyLimitMiddleware,
+        max_bytes=settings.request_max_bytes,
+        timeout_seconds=settings.request_body_timeout_seconds,
+    )
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.allowed_hosts)
+    # CORS also covers early host/body-limit errors for the configured frontend.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -53,17 +72,36 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.middleware("http")
     async def request_id_middleware(request: Request, call_next):
         incoming = request.headers.get("X-Request-ID", "")
-        valid_incoming = incoming.isascii() and 0 < len(incoming) <= 128
+        valid_incoming = re.fullmatch(r"[A-Za-z0-9._-]{1,128}", incoming) is not None
         request_id = incoming if valid_incoming else str(uuid.uuid4())
         request.state.request_id = request_id
         token = request_id_context.set(request_id)
+        started = time.perf_counter()
         try:
             try:
                 response = await call_next(request)
-            except Exception:
-                logging.getLogger(__name__).exception("Unhandled request error")
+            except Exception as exc:
+                logging.getLogger(__name__).error(
+                    "Unhandled request error", extra={"error_type": type(exc).__name__}
+                )
                 response = error_response(request, 500, "INTERNAL_ERROR", "Internal server error")
             response.headers["X-Request-ID"] = request_id
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "no-referrer"
+            response.headers["Cache-Control"] = "no-store"
+            if settings.app_env == "production":
+                response.headers["Strict-Transport-Security"] = "max-age=31536000"
+            route = request.scope.get("route")
+            logging.getLogger("armeniabus.requests").info(
+                "Request completed",
+                extra={
+                    "method": request.method,
+                    "route": getattr(route, "path", "unmatched"),
+                    "status_code": response.status_code,
+                    "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                },
+            )
             return response
         finally:
             request_id_context.reset(token)

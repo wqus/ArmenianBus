@@ -1,6 +1,7 @@
 """Register the full metadata graph for migrations and non-HTTP processes."""
 
 from armeniabus.modules.admin import models as admin_models  # noqa: F401
+from armeniabus.modules.admin import monitoring  # noqa: F401
 from armeniabus.modules.bookings import models as booking_models  # noqa: F401
 from armeniabus.modules.buses import models as bus_models  # noqa: F401
 from armeniabus.modules.carriers import models as carrier_models  # noqa: F401

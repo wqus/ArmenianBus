@@ -36,9 +36,13 @@ services:
       <<: *payment-environment
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: '["http://localhost:5173"]'
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173"]}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-["localhost","127.0.0.1","testserver"]}
+      REQUEST_MAX_BYTES: ${REQUEST_MAX_BYTES:-65536}
+      REQUEST_BODY_TIMEOUT_SECONDS: ${REQUEST_BODY_TIMEOUT_SECONDS:-10}
       LOG_LEVEL: INFO
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
       BOOKING_HOLD_MINUTES: ${BOOKING_HOLD_MINUTES:-10}
       PAID_CANCELLATION_CUTOFF_HOURS: ${PAID_CANCELLATION_CUTOFF_HOURS:-24}
     ports:
@@ -59,11 +63,18 @@ services:
       context: .
       target: runtime
     command: ["python", "-m", "armeniabus.worker"]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, holds]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
       HOLD_WORKER_INTERVAL_SECONDS: ${HOLD_WORKER_INTERVAL_SECONDS:-5}
       HOLD_WORKER_BATCH_SIZE: ${HOLD_WORKER_BATCH_SIZE:-500}
     depends_on:
@@ -75,12 +86,19 @@ services:
       context: .
       target: runtime
     command: ["python", "-m", "armeniabus.modules.payments.worker"]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, payments]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
     environment:
       <<: *payment-environment
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
     depends_on:
       db:
         condition: service_healthy
@@ -90,11 +108,18 @@ services:
       context: .
       target: runtime
     command: ["python", "-m", "armeniabus.modules.notifications.worker"]
+    healthcheck:
+      test: [CMD, python, -m, armeniabus.healthcheck, notifications]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
       NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-465}
@@ -118,6 +143,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://armeniabus:test-only-password@db-test:5432/armeniabus_test
       REDIS_URL: redis://redis-test:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
       RUN_DB_TESTS: "1"
       AUTH_RATE_LIMIT_PER_MINUTE: "100"
     depends_on:

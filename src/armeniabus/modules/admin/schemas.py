@@ -17,6 +17,31 @@ class Page[T](BaseModel):
     offset: int
 
 
+class WorkerHealth(BaseModel):
+    name: Literal["holds", "payments", "notifications"]
+    state: Literal["OK", "DISABLED", "MISSING", "STALE", "ERROR"]
+    last_seen_at: datetime | None
+    last_success_at: datetime | None
+    last_error: str | None
+    last_count: int | None
+
+
+class QueueHealth(BaseModel):
+    expired_holds: int
+    payments_due: int
+    payments_for_review: int
+    open_refunds: int
+    failed_notifications: int
+    notifications_due: int
+    oldest_notification_due_at: datetime | None
+
+
+class OperationsHealth(BaseModel):
+    checked_at: datetime
+    workers: list[WorkerHealth]
+    queues: QueueHealth
+
+
 class ReasonInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]

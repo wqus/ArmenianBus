@@ -20,6 +20,7 @@ from armeniabus.infrastructure.db.base import Base
 class Notification(Base):
     __tablename__ = "notifications"
     __table_args__ = (
+        Index("ix_notifications_created", "created_at", "id"),
         CheckConstraint("status IN ('PENDING', 'SENT', 'FAILED')", name="ck_notification_status"),
         CheckConstraint("attempts >= 0", name="ck_notification_attempts"),
         CheckConstraint("retry_generation >= 0", name="ck_notification_retry_generation"),

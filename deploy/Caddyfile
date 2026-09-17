@@ -1,0 +1,14 @@
+{
+	admin off
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 15s
+			idle 60s
+		}
+	}
+}
+
+{$API_DOMAIN} {
+	reverse_proxy api:8000
+}

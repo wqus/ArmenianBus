@@ -32,6 +32,7 @@ class RouteStatus(StrEnum):
 class Route(Base):
     __tablename__ = "routes"
     __table_args__ = (
+        Index("ix_routes_departure", "departure_at", "id"),
         UniqueConstraint("id", "bus_id", name="uq_routes_id_bus"),
         ForeignKeyConstraint(
             ["bus_id", "carrier_id"], ["buses.id", "buses.carrier_id"], name="fk_routes_owned_bus"
