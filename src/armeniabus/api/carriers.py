@@ -46,7 +46,7 @@ async def carriers(
     db: DbSession,
     status: CarrierStatus | None = None,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    offset: Annotated[int, Query(ge=0, le=10000)] = 0,
 ) -> CarrierPage:
     return await service.list_carriers(db, status, limit, offset)
 

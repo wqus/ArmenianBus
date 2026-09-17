@@ -44,6 +44,9 @@ async def create_booking(
     )
     if carrier is None:
         raise ApiError(404, "ROUTE_NOT_FOUND", "Route not found")
+    # Account blocking locks this profile; read account state again after any wait.
+    if await db.scalar(select(User.status).where(User.id == carrier.user_id)) != UserStatus.ACTIVE:
+        raise ApiError(404, "ROUTE_NOT_FOUND", "Route not found")
     route = await db.scalar(select(Route).where(Route.id == data.route_id).with_for_update())
     if route is None or route.status != RouteStatus.ACTIVE or route.archived_at is not None:
         raise ApiError(404, "ROUTE_NOT_FOUND", "Route not found")

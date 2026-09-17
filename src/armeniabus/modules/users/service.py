@@ -77,6 +77,12 @@ async def login_user(db: AsyncSession, data: LoginInput, settings: Settings) -> 
     )
     if not user or not valid_password:
         raise ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password")
+    user = await db.scalar(
+        select(User)
+        .where(User.id == user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if user.status != UserStatus.ACTIVE:
         raise ApiError(403, "USER_BLOCKED", "User account is blocked")
     session, refresh_token = new_refresh_session(user.id, settings)
@@ -86,6 +92,18 @@ async def login_user(db: AsyncSession, data: LoginInput, settings: Settings) -> 
 
 
 async def rotate_refresh_token(db: AsyncSession, token: str, settings: Settings) -> TokenPair:
+    user_id = await db.scalar(
+        select(RefreshSession.user_id).where(RefreshSession.token_hash == refresh_token_hash(token))
+    )
+    if user_id is None:
+        raise ApiError(401, "INVALID_REFRESH_TOKEN", "Refresh token is invalid")
+    # Account lock precedes refresh-session locks, as in administrative blocking.
+    user = await db.scalar(
+        select(User)
+        .where(User.id == user_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     session = await db.scalar(
         select(RefreshSession)
         .where(RefreshSession.token_hash == refresh_token_hash(token))
@@ -94,7 +112,6 @@ async def rotate_refresh_token(db: AsyncSession, token: str, settings: Settings)
     now = datetime.now(UTC)
     if not session or session.revoked_at or session.expires_at <= now:
         raise ApiError(401, "INVALID_REFRESH_TOKEN", "Refresh token is invalid")
-    user = await db.get(User, session.user_id)
     if not user or user.status != UserStatus.ACTIVE:
         raise ApiError(403, "USER_BLOCKED", "User account is blocked")
     session.revoked_at = now

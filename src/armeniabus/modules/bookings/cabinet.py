@@ -26,6 +26,7 @@ class CabinetBooking(BookingPublic):
     company_name: str
     payment_status: str | None
     refund_required: bool
+    refund_status: str | None
     cancellation_allowed: bool
 
 
@@ -41,6 +42,10 @@ class RefundPublic(BaseModel):
     payment_id: uuid.UUID
     reason: str
     created_at: datetime
+    status: str
+    resolution_reference: str | None
+    resolved_at: datetime | None
+    resolved_by_user_id: uuid.UUID | None
 
 
 class RefundPage(BaseModel):
@@ -68,6 +73,7 @@ def query():
             CarrierProfile.company_name,
             Payment.status.label("payment_status"),
             RefundCase.id.label("refund_id"),
+            RefundCase.status.label("refund_status"),
             effective_status().label("effective_status"),
             func.statement_timestamp().label("read_at"),
         )
@@ -96,7 +102,8 @@ def result(row, cutoff_hours):
         seat_number=row.seat_number,
         company_name=row.company_name,
         payment_status=row.payment_status,
-        refund_required=row.refund_id is not None,
+        refund_required=row.refund_status == "OPEN",
+        refund_status=row.refund_status,
         cancellation_allowed=allowed,
     )
 

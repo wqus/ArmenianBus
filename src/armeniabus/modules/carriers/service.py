@@ -7,7 +7,7 @@ from armeniabus.api.errors import ApiError
 from armeniabus.modules.admin.audit import record_audit
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
 from armeniabus.modules.carriers.schemas import CarrierInput, CarrierPage, CarrierPublic
-from armeniabus.modules.users.models import User
+from armeniabus.modules.users.models import User, UserStatus
 
 
 async def own_profile(
@@ -21,12 +21,21 @@ async def own_profile(
         raise ApiError(404, "CARRIER_PROFILE_NOT_FOUND", "Complete carrier onboarding first")
     if active and profile.status != CarrierStatus.ACTIVE:
         raise ApiError(403, "CARRIER_NOT_ACTIVE", "Carrier must be active")
+    if await db.scalar(select(User.status).where(User.id == user_id)) != UserStatus.ACTIVE:
+        raise ApiError(403, "USER_BLOCKED", "User account is blocked")
     return profile
 
 
 async def create_profile(db: AsyncSession, user: User, data: CarrierInput) -> CarrierProfile:
     # Serialize onboarding for carrier accounts registered before profiles existed.
-    await db.scalar(select(User).where(User.id == user.id).with_for_update())
+    account = await db.scalar(
+        select(User)
+        .where(User.id == user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if account.status != UserStatus.ACTIVE:
+        raise ApiError(403, "USER_BLOCKED", "User account is blocked")
     if await db.scalar(select(CarrierProfile.id).where(CarrierProfile.user_id == user.id)):
         raise ApiError(409, "CARRIER_PROFILE_EXISTS", "Carrier profile already exists")
     profile = CarrierProfile(user_id=user.id, **data.model_dump())

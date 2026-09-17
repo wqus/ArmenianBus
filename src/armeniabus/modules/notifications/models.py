@@ -22,6 +22,7 @@ class Notification(Base):
     __table_args__ = (
         CheckConstraint("status IN ('PENDING', 'SENT', 'FAILED')", name="ck_notification_status"),
         CheckConstraint("attempts >= 0", name="ck_notification_attempts"),
+        CheckConstraint("retry_generation >= 0", name="ck_notification_retry_generation"),
         Index("ix_notifications_due", "status", "next_attempt_at"),
     )
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -33,6 +34,7 @@ class Notification(Base):
     body: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="PENDING", nullable=False)
     attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    retry_generation: Mapped[int] = mapped_column(Integer, server_default="0", nullable=False)
     next_attempt_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -160,6 +160,18 @@ async def apply_snapshot(
             review(db, payment, "PROVIDER_STATE_CONFLICT")
         await db.commit()
         return payment
+    if payment.review_reason and snapshot.status in ("pending", "succeeded", "canceled"):
+        # A newly verified matching object can resolve an earlier uncertain/mismatched response.
+        previous_review = payment.review_reason
+        payment.review_reason = None
+        record_audit(
+            db,
+            None,
+            "payment.review_rechecked",
+            "payment",
+            payment.id,
+            {"previous_reason": previous_review},
+        )
     if snapshot.status == "succeeded":
         if not snapshot.paid:
             review(db, payment, "PROVIDER_DATA_MISMATCH")
