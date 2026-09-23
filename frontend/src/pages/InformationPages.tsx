@@ -83,9 +83,12 @@ export function CarriersPage() {
           активации. Подготовьте название компании, контактный телефон и информацию об автобусах.
         </p>
       </div>
-      <ButtonLink to="/help" secondary>
-        Как работает бронирование
-      </ButtonLink>
+      <div className="profile-actions">
+        <ButtonLink to="/register?role=carrier">Зарегистрировать компанию</ButtonLink>
+        <ButtonLink to="/help" secondary>
+          Как работает бронирование
+        </ButtonLink>
+      </div>
     </div>
   )
 }

@@ -5,6 +5,11 @@ import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation } from 'reac
 import { Brand, Button, Notice } from '../shared/ui'
 import { HomePage } from '../pages/HomePage'
 import { CarriersPage, HelpPage, NotFoundPage } from '../pages/InformationPages'
+import { SessionProvider } from '../features/auth/SessionProvider'
+import { useSession } from '../features/auth/context'
+import { Protected } from '../features/auth/Protected'
+import { AuthPage } from '../pages/AuthPages'
+import { AccountPage, AdminProfilePage, CarrierProfilePage } from '../pages/AccountPages'
 
 const DesignSystemPage = import.meta.env.DEV
   ? lazy(() => import('../pages/DesignSystemPage'))
@@ -29,6 +34,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
 }
 
 function Shell() {
+  const { status } = useSession()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const location = useLocation()
@@ -82,6 +88,12 @@ function Shell() {
             <NavLink to="/help" onClick={() => setMenuOpen(false)}>
               Помощь
             </NavLink>
+            <NavLink
+              to={status === 'anonymous' ? '/login' : '/account'}
+              onClick={() => setMenuOpen(false)}
+            >
+              {status === 'anonymous' ? 'Войти' : 'Аккаунт'}
+            </NavLink>
           </nav>
           <span className="header-caption">
             Россия <span aria-hidden="true">↔</span> Армения
@@ -129,17 +141,30 @@ export function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<Shell />}>
-              <Route index element={<HomePage />} />
-              <Route path="carriers" element={<CarriersPage />} />
-              <Route path="help" element={<HelpPage />} />
-              {DesignSystemPage && <Route path="design-system" element={<DesignSystemPage />} />}
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <SessionProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Shell />}>
+                <Route index element={<HomePage />} />
+                <Route path="carriers" element={<CarriersPage />} />
+                <Route path="help" element={<HelpPage />} />
+                <Route path="login" element={<AuthPage key="login" />} />
+                <Route path="register" element={<AuthPage key="register" register />} />
+                <Route element={<Protected />}>
+                  <Route path="account" element={<AccountPage />} />
+                </Route>
+                <Route element={<Protected role="CARRIER" />}>
+                  <Route path="carrier" element={<CarrierProfilePage />} />
+                </Route>
+                <Route element={<Protected role="ADMIN" />}>
+                  <Route path="admin" element={<AdminProfilePage />} />
+                </Route>
+                {DesignSystemPage && <Route path="design-system" element={<DesignSystemPage />} />}
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </SessionProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   )

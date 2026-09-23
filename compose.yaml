@@ -36,7 +36,7 @@ services:
       <<: *payment-environment
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-armeniabus}:${POSTGRES_PASSWORD:-change-me-local}@db:5432/${POSTGRES_DB:-armeniabus}
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173"]}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:5173","http://127.0.0.1:5173"]}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS:-["localhost","127.0.0.1","testserver"]}
       REQUEST_MAX_BYTES: ${REQUEST_MAX_BYTES:-65536}
       REQUEST_BODY_TIMEOUT_SECONDS: ${REQUEST_BODY_TIMEOUT_SECONDS:-10}
@@ -151,6 +151,28 @@ services:
         condition: service_healthy
       redis-test:
         condition: service_healthy
+
+  api-e2e:
+    profiles: [test]
+    build:
+      context: .
+      target: runtime
+    environment:
+      DATABASE_URL: postgresql+asyncpg://armeniabus:test-only-password@db-test:5432/armeniabus_test
+      REDIS_URL: redis://redis-test:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in .env}
+      AUTH_RATE_LIMIT_PER_MINUTE: "1000"
+      CORS_ORIGINS: '["http://127.0.0.1:5174","http://localhost:5174"]'
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      db-test: {condition: service_healthy}
+      redis-test: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
 
   db-test:
     profiles: [test]

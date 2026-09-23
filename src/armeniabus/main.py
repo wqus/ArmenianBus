@@ -20,6 +20,7 @@ from armeniabus.api.errors import error_response, register_error_handlers
 from armeniabus.api.health import router as health_router
 from armeniabus.api.payments import router as payments_router
 from armeniabus.api.routes import router as routes_router
+from armeniabus.api.web_auth import router as web_auth_router
 from armeniabus.core.config import Settings, get_settings
 from armeniabus.core.logging import configure_logging, request_id_context
 from armeniabus.infrastructure.db.session import create_session_factory
@@ -66,7 +67,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PATCH", "DELETE"],
-        allow_headers=["Authorization", "Content-Type", "Idempotency-Key", "X-Request-ID"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            "X-Request-ID",
+            "X-ArmeniaBus-Web",
+        ],
     )
 
     @app.middleware("http")
@@ -109,6 +116,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_error_handlers(app)
     app.include_router(health_router)
     app.include_router(auth_router)
+    app.include_router(web_auth_router)
     app.include_router(carriers_router)
     app.include_router(buses_router)
     app.include_router(routes_router)

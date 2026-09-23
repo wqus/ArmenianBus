@@ -59,6 +59,10 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET_KEY: ci-browser-test-secret-at-least-32-characters
+      API_PROXY_TARGET: http://127.0.0.1:8001
+      RUN_AUTH_E2E: "1"
     defaults:
       run:
         working-directory: frontend
@@ -74,5 +78,14 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+      - run: docker compose -p armeniabus-auth-e2e --profile test build api-e2e test
+        working-directory: .
+      - run: docker compose -p armeniabus-auth-e2e --profile test run --rm test alembic upgrade head
+        working-directory: .
+      - run: docker compose -p armeniabus-auth-e2e --profile test up -d --wait api-e2e
+        working-directory: .
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - if: always()
+        run: docker compose -p armeniabus-auth-e2e --profile test down --volumes
+        working-directory: .
