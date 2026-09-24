@@ -15,10 +15,11 @@ import {
   searchUrl,
 } from '../features/search/search'
 import type { SearchInput, SearchRoute } from '../features/search/search'
+import { tripUrl } from '../features/trips/trip'
 
 const countries = { RU: 'Россия', AM: 'Армения' }
 
-function RouteCard({ route }: { route: SearchRoute }) {
+function RouteCard({ route, search }: { route: SearchRoute; search: string }) {
   const departure = new Date(route.departure_at)
   return (
     <article
@@ -45,6 +46,7 @@ function RouteCard({ route }: { route: SearchRoute }) {
           <span className={`seat-availability ${route.free_seats === 0 ? 'is-sold-out' : ''}`}>
             {route.free_seats === 0 ? 'Свободных мест нет' : `Свободных мест: ${route.free_seats}`}
           </span>
+          <ButtonLink to={tripUrl(route.id, search)}>Рейс и места</ButtonLink>
         </div>
       </div>
       <details className="trip-details">
@@ -139,7 +141,7 @@ function Results({ input, params }: { input: SearchInput; params: URLSearchParam
                   </p>
                   <div className="trip-list">
                     {data.items.map((route) => (
-                      <RouteCard key={route.id} route={route} />
+                      <RouteCard key={route.id} route={route} search={params.toString()} />
                     ))}
                   </div>
                 </>

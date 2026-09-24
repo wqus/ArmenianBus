@@ -1,8 +1,8 @@
-# ArmeniaBus web — F1–F3
+# ArmeniaBus web — F1–F4
 
 Основа интерфейса по утверждённой концепции: светлый фон, lavender/blue accents, Manrope, мягкие карточки, иллюстрация дороги/гор и адаптивная вёрстка. Иллюстрация — собственный SVG, шрифт поставляется локально через npm; внешние font/image CDN при просмотре не нужны.
 
-F1 содержит app shell, публичные страницы, навигацию и UI-компоненты. F2 добавляет регистрацию PASSENGER/CARRIER, вход, профили, защищённые маршруты и cookie session flow. F3 добавляет поиск реальных рейсов, цену, доступность и пагинацию. Выбор мест, бронирование и оплата в интерфейсе ещё не реализованы. Backend этих операций существует; данные рейсов и статусы оплаты не имитируются.
+F1 содержит app shell, публичные страницы, навигацию и UI-компоненты. F2 добавляет регистрацию PASSENGER/CARRIER, вход, профили, защищённые маршруты и cookie session flow. F3 добавляет поиск реальных рейсов, цену, доступность и пагинацию. F4 добавляет страницу рейса, выбор свободного места и обновление доступности. Создание брони и оплата в интерфейсе ещё не реализованы. Backend этих операций существует; данные рейсов и статусы оплаты не имитируются.
 
 ## Запуск
 
@@ -16,7 +16,7 @@ npm run dev
 
 Открыть [localhost:5173](http://localhost:5173/). Сервер слушает только loopback. `strictPort` предотвращает незаметный переход на другой порт.
 
-Маршруты: `/`, `/search`, `/carriers`, `/help`, `/register`, `/login`; приватные `/account`, `/carrier` (CARRIER), `/admin` (ADMIN, только подтверждение роли до F9). Остальные — 404. `/design-system` доступен только в development: компоненты и настоящий `/api/v1/health/ready`. Он не входит в production bundle.
+Маршруты: `/`, `/search`, `/trips/:id`, `/carriers`, `/help`, `/register`, `/login`; приватные `/account`, `/carrier` (CARRIER), `/admin` (ADMIN, только подтверждение роли до F9). Остальные — 404. `/design-system` доступен только в development: компоненты и настоящий `/api/v1/health/ready`. Он не входит в production bundle.
 
 Vite проксирует `/api` к backend, поэтому клиент работает с same-origin адресами `/api/v1`. API должен быть запущен отдельно через корневой Docker Compose. При будущей публикации frontend сервер должен отдавать `index.html` для клиентских маршрутов и отдельно проксировать `/api`; такой публичный frontend deployment ещё не настроен. `vite preview` — просмотр сборки, не production-сервер.
 
@@ -24,6 +24,7 @@ Vite проксирует `/api` к backend, поэтому клиент раб�
 
 - `src/app` — routing, shell, QueryClient, error boundary, CSS tokens/layout.
 - `src/pages` — публичные страницы и development-only showcase.
+- `src/features/trips` — проверка деталей/мест, предварительный выбор и сверка его доступности.
 - `src/features/search` — форма, параметры URL, проверка ответа поиска, UTC и точное форматирование цен.
 - `src/features/auth` — Session, provider, role guards и проверка контрактов user/access.
 - `src/shared/ui` — кнопки/ссылки, label/input с hint/error, сообщения состояний, заголовки и SVG.
@@ -31,7 +32,7 @@ Vite проксирует `/api` к backend, поэтому клиент раб�
 
 CSS использует слои и переменные; компоненты не привязаны к конкретным сущностям бронирования. QueryClient создаётся на экземпляр приложения. Данные сервера не объявляются финальными на основании локального состояния. Повтор запросов отключён по умолчанию, особенно для мутаций; retry следует задавать для конкретного безопасного чтения.
 
-Клиент поддерживает отмену и timeout 10 секунд. Cookie отправляется только при явном `credentials: same-origin` в browser-auth transport. Access хранится в памяти, refresh — в HttpOnly-cookie; localStorage/sessionStorage не используются. `Session.request` передаёт Bearer, объединяет refresh и повторяет GET после 401 максимум один раз. Logout/смена аккаунта очищают приватные данные. Обычный refresh одного пользователя не очищает QueryClient. Generic TypeScript type не заменяет runtime-валидацию; auth/carrier/search её выполняют. Подробный контракт и ограничения: [browser-auth.md](../docs/browser-auth.md).
+Клиент поддерживает отмену и timeout 10 секунд. Cookie отправляется только при явном `credentials: same-origin` в browser-auth transport. Access хранится в памяти, refresh — в HttpOnly-cookie; localStorage/sessionStorage не используются. `Session.request` передаёт Bearer, объединяет refresh и повторяет GET после 401 максимум один раз. Logout/смена аккаунта очищают приватные данные. Обычный refresh одного пользователя не очищает QueryClient. Generic TypeScript type не заменяет runtime-валидацию; auth/carrier/search/trips её выполняют. Подробный контракт и ограничения: [browser-auth.md](../docs/browser-auth.md).
 
 Доступность: semantic landmarks/headings, skip-link, focus после перехода страницы, клавиатурное меню с Escape, видимые focus states, связанный label/hint/error, reduced-motion. Реализована responsive-база для desktop/tablet/mobile, но полный cross-browser и screen-reader аудит относится к F10.
 
@@ -65,3 +66,5 @@ CI устанавливает Chromium и выполняет lint, формат�
 Выбор стека: [Vite](https://vite.dev/guide/), [React Router declarative mode](https://reactrouter.com/start/declarative/installation), [TanStack Query](https://tanstack.com/query/latest/docs/framework/react/installation). SSR в F1 не реализован; отдельного Node API/BFF и дублирования бизнес-правил FastAPI нет.
 
 Поиск F3 и его ограничения описаны в [frontend-search.md](../docs/frontend-search.md). Локально проверены 16 unit-тестов и 24 браузерных сценария (desktop/mobile Edge), включая 6 сценариев с настоящим API. TypeScript/build, ESLint и Prettier проходят. Удалённый CI не запускался.
+
+Страница рейса и выбор места F4 описаны в [frontend-trips.md](../docs/frontend-trips.md). Проверены 22 unit-теста и 32 браузерных сценария desktop/mobile Edge, включая 6 с настоящим API. Три desktop live-сценария первого прогона превысили таймауты при нагрузке на Docker; отдельный последовательный повтор прошёл. Скриншоты и axe проверены, TypeScript/build, ESLint и Prettier проходят.

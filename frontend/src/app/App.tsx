@@ -5,6 +5,7 @@ import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation } from 'reac
 import { Brand, Button, Notice } from '../shared/ui'
 import { HomePage } from '../pages/HomePage'
 import { SearchPage } from '../pages/SearchPage'
+import { TripPage } from '../pages/TripPage'
 import { CarriersPage, HelpPage, NotFoundPage } from '../pages/InformationPages'
 import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
@@ -148,6 +149,7 @@ export function App() {
               <Route element={<Shell />}>
                 <Route index element={<HomePage />} />
                 <Route path="search" element={<SearchPage />} />
+                <Route path="trips/:id" element={<TripPage />} />
                 <Route path="carriers" element={<CarriersPage />} />
                 <Route path="help" element={<HelpPage />} />
                 <Route path="login" element={<AuthPage key="login" />} />

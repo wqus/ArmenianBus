@@ -61,7 +61,7 @@ export function searchUrl(input: SearchInput): string {
 const text = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 const country = (value: unknown) => value === 'RU' || value === 'AM'
-function isRoute(value: unknown): value is SearchRoute {
+export function isRoute(value: unknown): value is SearchRoute {
   if (!value || typeof value !== 'object') return false
   const route = value as Record<string, unknown>
   return (

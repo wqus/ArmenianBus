@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 
 test.skip(process.env.RUN_AUTH_E2E !== '1', 'requires the isolated api-e2e Compose project')
 
-test('real public search reflects publishing, UTC day, held seats and cancellation', async ({
+test('real search and trip selection reflect publishing, UTC day, held seats and cancellation', async ({
   page,
   request,
 }) => {
@@ -115,6 +115,13 @@ test('real public search reflects publishing, UTC day, held seats and cancellati
   expect((await page.context().cookies()).some((cookie) => cookie.name.includes('refresh'))).toBe(
     false,
   )
+  await page.getByRole('link', { name: 'Рейс и места' }).click()
+  const firstSeat = page.getByRole('button', { name: 'Место 1, свободно', exact: true })
+  await firstSeat.click()
+  await expect(firstSeat).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: 'Обновить места' }).click()
+  await expect(firstSeat).toBeEnabled()
+  await expect(firstSeat).toHaveAttribute('aria-pressed', 'true')
   const passenger = await register('PASSENGER')
   const holdResponse = await request.post(`${api}/bookings`, {
     headers: passenger,
@@ -122,14 +129,32 @@ test('real public search reflects publishing, UTC day, held seats and cancellati
   })
   expect(holdResponse.status()).toBe(201)
   const booking = await holdResponse.json()
-  await page.getByRole('button', { name: 'Обновить рейсы' }).click()
+  await page.getByRole('button', { name: 'Обновить места' }).click()
+  await expect(page.getByText('Выбранное место стало недоступно', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Место 1, временно удерживается' })).toBeDisabled()
+  await page.getByRole('link', { name: 'К результатам поиска' }).click()
   await expect(page.getByRole('article')).toContainText('Свободных мест нет')
   expect(
     (await request.delete(`${api}/bookings/${booking.id}`, { headers: passenger })).status(),
   ).toBe(204)
   await page.getByRole('button', { name: 'Обновить рейсы' }).click()
   await expect(page.getByRole('article')).toContainText('Свободных мест: 1')
+  await page.getByRole('link', { name: 'Рейс и места' }).click()
+  await expect(firstSeat).toBeEnabled()
+  await expect(firstSeat).toHaveAttribute('aria-pressed', 'false')
+  await page.getByRole('link', { name: 'К результатам поиска' }).click()
   await page.getByLabel('Дата отправления (UTC)').fill(nextDay)
   await page.getByRole('button', { name: 'Найти рейсы', exact: true }).click()
   await expect(page.getByText('Рейсов не найдено', { exact: true })).toBeVisible()
+  expect(
+    (
+      await request.patch(`${api}/routes/${route.id}`, {
+        headers: carrier,
+        data: { status: 'CANCELLED' },
+      })
+    ).status(),
+  ).toBe(200)
+  await page.goto(`/trips/${route.id}`)
+  await expect(page.getByRole('alert')).toContainText('Рейс недоступен')
+  await expect(page.getByRole('button', { name: /Место 1,/ })).toHaveCount(0)
 })
