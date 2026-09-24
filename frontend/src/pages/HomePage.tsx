@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Arrow, ButtonLink } from '../shared/ui'
 import { MountainRoad } from '../shared/ui/MountainRoad'
+import { SearchForm } from '../features/search/SearchForm'
 
 const steps = [
   {
@@ -42,12 +43,12 @@ export function HomePage() {
             <br className="desktop-break" /> с вниманием к каждому шагу.
           </p>
           <div className="hero-actions">
-            <a className="button button--primary" href="#journey">
+            <a className="button button--primary" href="#search">
+              Найти поездку <Arrow />
+            </a>
+            <a className="button button--secondary" href="#journey">
               Как устроена поездка <Arrow />
             </a>
-            <ButtonLink to="/help" secondary>
-              Вопросы и ответы
-            </ButtonLink>
           </div>
           <div className="hero-note">
             <span className="note-icon" aria-hidden="true">
@@ -73,6 +74,10 @@ export function HomePage() {
             <span>Армения</span>
           </div>
         </div>
+      </section>
+      <section className="container home-search" id="search" aria-labelledby="search-title">
+        <h2 id="search-title">Куда отправимся?</h2>
+        <SearchForm />
       </section>
       <div className="container">
         <div className="principles">

@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation } from 'react-router'
 import { Brand, Button, Notice } from '../shared/ui'
 import { HomePage } from '../pages/HomePage'
+import { SearchPage } from '../pages/SearchPage'
 import { CarriersPage, HelpPage, NotFoundPage } from '../pages/InformationPages'
 import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
@@ -146,6 +147,7 @@ export function App() {
             <Routes>
               <Route element={<Shell />}>
                 <Route index element={<HomePage />} />
+                <Route path="search" element={<SearchPage />} />
                 <Route path="carriers" element={<CarriersPage />} />
                 <Route path="help" element={<HelpPage />} />
                 <Route path="login" element={<AuthPage key="login" />} />
