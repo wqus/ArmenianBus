@@ -30,7 +30,7 @@ Production-cookie: `__Host-armeniabus_refresh`, HttpOnly, Secure, SameSite=Stric
 
 ## Сессия во frontend
 
-Access хранится только в памяти экземпляра `Session`. localStorage/sessionStorage не используются. После reload браузер получает access по HttpOnly-cookie и загружает `/me`. Формат access/user/carrier проверяется во время исполнения.
+Access хранится только в памяти экземпляра `Session`. Токены не сохраняются в localStorage/sessionStorage. С F6 localStorage используется только для ключа попытки оплаты: [frontend-payments.md](frontend-payments.md). После reload браузер получает access по HttpOnly-cookie и загружает `/me`. Формат access/user/carrier проверяется во время исполнения.
 
 Web Locks сериализует login/refresh/logout между вкладками одного origin; в пределах страницы refresh объединяется в один Promise. BroadcastChannel сообщает только login/logout. Номер поколения сессии отбрасывает запоздалые ответы после выхода/смены пользователя. QueryClient очищается при потере или смене авторизованного пользователя; обычный refresh того же пользователя и первоначальное анонимное открытие страницы не отменяют публичные запросы.
 

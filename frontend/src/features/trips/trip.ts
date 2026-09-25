@@ -5,7 +5,9 @@ import type { SearchRoute } from '../search/search'
 export type Seat = { id: string; seat_number: number; status: 'FREE' | 'HELD' | 'PAID' }
 export type Trip = { route: SearchRoute & { bus_id: string }; seats: Seat[]; freeSeats: number }
 export const isUuid = (value: unknown): value is string =>
-  typeof value === 'string' && /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(value)
+  typeof value === 'string' &&
+  value.length === 36 &&
+  /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(value)
 
 function invalidResponse(): never {
   throw new ApiError(200, {

@@ -309,6 +309,11 @@ function BookingContent({ id }: { id: string }) {
           </div>
           <BookingInfo booking={value.booking} />
           {value.booking.status === 'HELD' && <HoldTimer value={value} />}
+          <div className="booking-actions">
+            <ButtonLink to={`/bookings/${id}/payment`}>
+              {value.booking.status === 'HELD' ? 'Перейти к оплате' : 'Проверить оплату'}
+            </ButtonLink>
+          </div>
           {value.booking.status === 'EXPIRED' && (
             <Notice title="Место больше не удерживается">
               Для новой поездки выберите свободное место заново.

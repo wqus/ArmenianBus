@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -58,6 +59,13 @@ def bookable(carrier, owner_status, route, booking, now):
     )
 
 
+def booking_return_url(base: str, booking_id: uuid.UUID) -> str:
+    url = urlsplit(base)
+    query = [(key, value) for key, value in parse_qsl(url.query) if key != "booking"]
+    query.append(("booking", str(booking_id)))
+    return urlunsplit((url.scheme, url.netloc, url.path, urlencode(query), ""))
+
+
 async def prepare(
     db: AsyncSession, user: User, booking_id: uuid.UUID, key: uuid.UUID, settings: Settings
 ) -> Payment:
@@ -88,7 +96,10 @@ async def prepare(
     payload = {
         "amount": {"value": str(booking.amount), "currency": booking.currency},
         "capture": True,
-        "confirmation": {"type": "redirect", "return_url": str(settings.payment_return_url)},
+        "confirmation": {
+            "type": "redirect",
+            "return_url": booking_return_url(str(settings.payment_return_url), booking.id),
+        },
         "description": f"ArmeniaBus booking {booking.id}",
         "metadata": {"booking_id": str(booking.id), "payment_id": str(payment_id)},
     }

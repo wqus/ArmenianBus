@@ -5,6 +5,7 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 from pydantic import SecretStr
@@ -121,6 +122,8 @@ def test_idempotent_payment_and_verified_duplicate_webhook(checkout):
     assert first.status_code == 200, first.text
     assert first.json()["amount"] == "4500.50" and first.json()["status"] == "PENDING"
     assert first.json()["confirmation_url"].startswith("https://")
+    return_url = checkout["provider"].requests[0][1]["confirmation"]["return_url"]
+    assert parse_qs(urlsplit(return_url).query)["booking"] == [checkout["booking"]["id"]]
     assert pay(checkout).json()["id"] == first.json()["id"]
     assert len(checkout["provider"].objects) == 1
     assert pay(checkout, key=str(uuid.uuid4())).status_code == 409

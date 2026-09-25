@@ -68,9 +68,20 @@ export function safeReturnTo(value: string | null): string {
   if (!value || value !== value.trim()) return '/account'
   if (value && ['/account', '/carrier', '/admin', '/bookings'].includes(value)) return value
   const uuid = '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'
+  if (value.startsWith('/payment/result?')) {
+    const params = new URLSearchParams(value.slice('/payment/result?'.length))
+    const booking = params.get('booking')
+    if (
+      params.getAll('booking').length === 1 &&
+      booking?.length === 36 &&
+      new RegExp(`^${uuid}$`).test(booking)
+    )
+      return `/payment/result?booking=${booking}`
+    return '/account'
+  }
   if (
     value &&
-    (new RegExp(`^/bookings/${uuid}$`).test(value) ||
+    (new RegExp(`^/bookings/${uuid}(?:/payment)?$`).test(value) ||
       new RegExp(`^/trips/${uuid}/book\\?seat=${uuid}$`).test(value))
   )
     return value

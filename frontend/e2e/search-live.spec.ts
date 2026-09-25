@@ -166,6 +166,16 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Место удерживается', exact: true })).toBeVisible()
   expect((await (await request.get(`${api}/routes/${route.id}/seats`)).json()).free_seats).toBe(0)
+  await page.getByRole('link', { name: 'Перейти к оплате', exact: true }).click()
+  await page.getByRole('button', { name: 'Подготовить оплату', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('Оплата пока недоступна')
+  const noPayment = await request.get(`${api}/bookings/${browserBooking.id}/payment`, {
+    headers: passenger,
+  })
+  expect(noPayment.status()).toBe(404)
+  expect((await noPayment.json()).code).toBe('PAYMENT_NOT_FOUND')
+  await page.getByRole('link', { name: 'Открыть бронь', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Место удерживается', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Отменить удержание', exact: true }).click()
   await page.getByRole('button', { name: 'Да, освободить место' }).click()
   await expect(page.getByRole('heading', { name: 'Бронь отменена', exact: true })).toBeVisible()
