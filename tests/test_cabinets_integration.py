@@ -61,6 +61,40 @@ def refund_count(payment):
     )
 
 
+def test_hold_only_cancellation_cannot_cancel_a_payment_that_won_the_race(checkout):
+    payment = complete_payment(checkout)
+    booking = checkout["booking"]
+    response = checkout["world"].client.delete(
+        f"/api/v1/bookings/{booking['id']}?hold_only=true",
+        headers=checkout["passengers"][0],
+    )
+    assert response.status_code == 409 and response.json()["code"] == "BOOKING_NOT_HELD"
+    assert booking_state(booking) == "PAID"
+    assert refund_count(payment) == 0
+    assert audit_count(booking, "booking.cancelled") == 0
+
+
+def test_cabinet_server_clock_and_hold_only_cancellation(trip):
+    booking = held(trip)
+    client, headers = trip["world"].client, trip["passengers"][0]
+    path = f"/api/v1/cabinet/bookings/{booking['id']}"
+    item = client.get(path, headers=headers).json()
+    assert datetime.fromisoformat(item["created_at"]) <= datetime.fromisoformat(item["server_time"])
+    assert datetime.fromisoformat(item["server_time"]) < datetime.fromisoformat(item["held_until"])
+    assert datetime.fromisoformat(
+        cabinet(trip).json()["items"][0]["server_time"]
+    ).utcoffset() == timedelta(0)
+    cancel_path = f"/api/v1/bookings/{booking['id']}?hold_only=true"
+    assert client.delete(cancel_path, headers=headers).status_code == 204
+    assert client.delete(cancel_path, headers=headers).status_code == 204
+    assert client.get(path, headers=headers).json()["status"] == "CANCELLED"
+    expired = held(trip)
+    expire_time(expired)
+    item = client.get(f"/api/v1/cabinet/bookings/{expired['id']}", headers=headers).json()
+    assert item["status"] == "EXPIRED"
+    assert datetime.fromisoformat(item["server_time"]) >= datetime.fromisoformat(item["held_until"])
+
+
 def test_paid_cancellation_is_atomic_idempotent_and_does_not_claim_refund(checkout):
     payment = complete_payment(checkout)
     client, booking = checkout["world"].client, checkout["booking"]

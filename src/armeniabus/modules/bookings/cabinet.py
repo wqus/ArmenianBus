@@ -18,6 +18,7 @@ from armeniabus.modules.routes.models import Route
 
 
 class CabinetBooking(BookingPublic):
+    server_time: datetime
     origin: str
     destination: str
     departure_at: datetime
@@ -95,6 +96,7 @@ def result(row, cutoff_hours):
     return CabinetBooking(
         **BookingPublic.model_validate(booking).model_dump(exclude={"status"}),
         status=row.effective_status,
+        server_time=row.read_at,
         origin=route.origin,
         destination=route.destination,
         departure_at=route.departure_at,

@@ -47,3 +47,5 @@ docker compose run --rm notification-worker python -m armeniabus.modules.notific
 ## Проверки
 
 Проверяются ownership/RBAC, пагинация и история, расчёт EXPIRED без worker, точная граница 24 часов, настраиваемый срок, конкурентная повторная отмена, сохранение SUCCEEDED и повторное занятие места, повтор webhook, отмена всего рейса, late-payment refund, атомарность/дедупликация outbox, выключенная доставка, два worker, задержка повторов, исчерпание попыток, восстановление lease, защита от устаревшего worker и SMTP-адаптер без сети.
+
+С F5 ответы кабинета содержат `server_time`: время PostgreSQL statement, согласованное с эффективным статусом брони. Браузер использует его для таймера удержания; миграция не требуется. Отмена только неоплаченного удержания доступна через `DELETE /bookings/{id}?hold_only=true`; оплаченная/завершённая бронь возвращает `409 BOOKING_NOT_HELD` без изменений. См. [frontend-bookings.md](frontend-bookings.md).

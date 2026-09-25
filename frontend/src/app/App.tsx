@@ -6,6 +6,7 @@ import { Brand, Button, Notice } from '../shared/ui'
 import { HomePage } from '../pages/HomePage'
 import { SearchPage } from '../pages/SearchPage'
 import { TripPage } from '../pages/TripPage'
+import { BookingPage, BookingsPage, CreateBookingPage } from '../pages/BookingPages'
 import { CarriersPage, HelpPage, NotFoundPage } from '../pages/InformationPages'
 import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
@@ -159,6 +160,11 @@ export function App() {
                 </Route>
                 <Route element={<Protected role="CARRIER" />}>
                   <Route path="carrier" element={<CarrierProfilePage />} />
+                </Route>
+                <Route element={<Protected role="PASSENGER" />}>
+                  <Route path="trips/:id/book" element={<CreateBookingPage />} />
+                  <Route path="bookings" element={<BookingsPage />} />
+                  <Route path="bookings/:id" element={<BookingPage />} />
                 </Route>
                 <Route element={<Protected role="ADMIN" />}>
                   <Route path="admin" element={<AdminProfilePage />} />

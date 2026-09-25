@@ -21,7 +21,13 @@ export function Protected({ role }: { role?: Role }) {
         <Button onClick={() => void session.restore()}>Попробовать снова</Button>
       </div>
     )
-  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname)}`} replace />
+  if (!user)
+    return (
+      <Navigate
+        to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    )
   if (role && user.role !== role)
     return (
       <div className="container section auth-unavailable">

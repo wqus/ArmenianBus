@@ -44,6 +44,7 @@ export function AccountPage() {
           </div>
         </dl>
         <div className="profile-actions">
+          {user.role === 'PASSENGER' && <ButtonLink to="/bookings">Мои бронирования</ButtonLink>}
           {user.role === 'CARRIER' && <ButtonLink to="/carrier">Профиль перевозчика</ButtonLink>}
           {user.role === 'ADMIN' && <ButtonLink to="/admin">Доступ администратора</ButtonLink>}
           <Button variant="secondary" busy={busy} onClick={() => void logout()}>

@@ -65,7 +65,16 @@ export function authMessage(error: unknown): string {
 }
 
 export function safeReturnTo(value: string | null): string {
-  return value && ['/account', '/carrier', '/admin'].includes(value) ? value : '/account'
+  if (!value || value !== value.trim()) return '/account'
+  if (value && ['/account', '/carrier', '/admin', '/bookings'].includes(value)) return value
+  const uuid = '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'
+  if (
+    value &&
+    (new RegExp(`^/bookings/${uuid}$`).test(value) ||
+      new RegExp(`^/trips/${uuid}/book\\?seat=${uuid}$`).test(value))
+  )
+    return value
+  return '/account'
 }
 
 export const roleLabels: Record<Role, string> = {

@@ -7,7 +7,7 @@
 - `POST /api/v1/bookings` — создать удержание (`201`). Тело: `{"route_id": "UUID рейса", "seat_id": "UUID места"}`.
 - `GET /api/v1/bookings/my?limit=20&offset=0` — собственные брони, сначала новые, порядок `created_at DESC, id DESC`. Limit 1–100, offset 0–10000.
 - `GET /api/v1/bookings/{id}` — собственная бронь, включая историю.
-- `DELETE /api/v1/bookings/{id}` — отменить неоплаченное удержание (`204`). Повтор для CANCELLED/EXPIRED безопасен.
+- `DELETE /api/v1/bookings/{id}` — отменить бронь по правилам B6/B8 (`204`). Повтор для CANCELLED/EXPIRED безопасен. Необязательный `?hold_only=true` разрешает только неоплаченное удержание: если после чтения статуса бронь стала PAID/COMPLETED, под блокировкой возвращается `409 BOOKING_NOT_HELD`, без отмены/возврата.
 
 Клиент не передаёт пассажира, цену, срок удержания или статус. Неизвестные поля возвращают `422`. Ответ содержит `id`, `route_id`, `seat_id`, `bus_id`, `status`, `amount`, `currency`, `held_until`, `created_at`. Деньги сериализуются десятичной строкой, например `"4500.50"`; время — ISO 8601 UTC.
 

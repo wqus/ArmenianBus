@@ -136,7 +136,12 @@ async def list_bookings(db: AsyncSession, user: User, limit: int, offset: int) -
 
 
 async def cancel_booking(
-    db: AsyncSession, user: User, booking_id: uuid.UUID, cutoff_hours: int = 24
+    db: AsyncSession,
+    user: User,
+    booking_id: uuid.UUID,
+    cutoff_hours: int = 24,
+    *,
+    hold_only: bool = False,
 ) -> None:
     booking = await own_booking(db, user, booking_id)
     route = await db.scalar(select(Route).where(Route.id == booking.route_id).with_for_update())
@@ -148,6 +153,8 @@ async def cancel_booking(
     )
     if booking.status in (BookingStatus.CANCELLED, BookingStatus.EXPIRED):
         return
+    if hold_only and booking.status != BookingStatus.HELD:
+        raise ApiError(409, "BOOKING_NOT_HELD", "Booking is no longer an unpaid hold")
     payment = None
     if booking.status == BookingStatus.PAID:
         payment = await db.scalar(

@@ -1432,3 +1432,107 @@
     gap: 10px;
   }
 }
+@layer pages {
+  .booking-panel {
+    border: 1px solid var(--line);
+    background: white;
+    border-radius: var(--radius);
+    padding: 32px;
+    margin: 24px 0;
+    overflow-wrap: anywhere;
+  }
+  .booking-panel h2 {
+    font-size: 26px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+  .booking-panel > p {
+    color: var(--muted);
+    margin: 12px 0;
+    line-height: 1.8;
+  }
+  .booking-panel .booking-amount {
+    color: var(--ink);
+    font-size: 24px;
+    font-weight: 700;
+    margin: 24px 0;
+  }
+  .booking-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin: 24px 0;
+  }
+  .booking-choice-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .booking-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin: 24px 0;
+  }
+  .booking-info dt {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  .booking-info dd {
+    margin: 0;
+    line-height: 1.7;
+  }
+  .hold-timer {
+    background: var(--lavender);
+    border-radius: 20px;
+    padding: 24px;
+    margin: 28px 0;
+  }
+  .hold-timer > span {
+    font-size: 14px;
+  }
+  .hold-timer > strong {
+    display: block;
+    font-size: 48px;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+    margin: 12px 0;
+  }
+  .hold-timer p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .booking-panel .booking-reference {
+    font-size: 12px;
+    margin: 24px 0;
+  }
+  .cancel-confirm {
+    border-left: 3px solid var(--primary);
+    padding: 4px 20px;
+    margin: 24px 0;
+  }
+  .booking-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .booking-list .booking-panel {
+    margin: 0;
+  }
+}
+@media (max-width: 760px) {
+  .booking-panel {
+    padding: 20px;
+    border-radius: 20px;
+  }
+  .booking-info,
+  .booking-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .booking-panel h2 {
+    font-size: 22px;
+  }
+}

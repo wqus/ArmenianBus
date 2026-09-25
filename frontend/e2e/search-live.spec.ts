@@ -9,7 +9,7 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   page,
   request,
 }) => {
-  test.setTimeout(60_000)
+  test.setTimeout(90_000)
   // Fixed isolated Compose project, verified database, fixed loopback API target.
   // Synthetic data is removed by `compose down --volumes`, including after CI failures.
   expect(process.env.API_PROXY_TARGET).toBe('http://127.0.0.1:8001')
@@ -146,6 +146,88 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   await page.getByLabel('Дата отправления (UTC)').fill(nextDay)
   await page.getByRole('button', { name: 'Найти рейсы', exact: true }).click()
   await expect(page.getByText('Рейсов не найдено', { exact: true })).toBeVisible()
+  // The passenger now creates and cancels their hold entirely through the browser.
+  await page.goto(`/trips/${route.id}`)
+  await firstSeat.click()
+  await page.getByRole('link', { name: 'Перейти к бронированию' }).click()
+  await expect(page).toHaveURL(/\/login\?next=/)
+  await page.getByLabel('Электронная почта').fill(`search-passenger-${id}@example.com`)
+  await page.getByLabel('Пароль', { exact: true }).fill(password)
+  await page.getByRole('button', { name: 'Войти', exact: true }).click()
+  const createResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/v1/bookings') && response.request().method() === 'POST',
+  )
+  await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
+  const browserCreated = await createResponse
+  expect(browserCreated.status()).toBe(201)
+  const browserBooking = await browserCreated.json()
+  await expect(page.getByRole('timer')).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Место удерживается', exact: true })).toBeVisible()
+  expect((await (await request.get(`${api}/routes/${route.id}/seats`)).json()).free_seats).toBe(0)
+  await page.getByRole('button', { name: 'Отменить удержание', exact: true }).click()
+  await page.getByRole('button', { name: 'Да, освободить место' }).click()
+  await expect(page.getByRole('heading', { name: 'Бронь отменена', exact: true })).toBeVisible()
+  expect(
+    (
+      await (
+        await request.get(`${api}/bookings/${browserBooking.id}`, { headers: passenger })
+      ).json()
+    ).status,
+  ).toBe('CANCELLED')
+  expect((await (await request.get(`${api}/routes/${route.id}/seats`)).json()).free_seats).toBe(1)
+  await page.getByRole('link', { name: 'Открыть рейс' }).click()
+  await firstSeat.click()
+  await page.getByRole('link', { name: 'Перейти к бронированию' }).click()
+  const expiringResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/api/v1/bookings') && response.request().method() === 'POST',
+  )
+  await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
+  const expiring = await (await expiringResponse).json()
+  await expect(page.getByRole('timer')).toBeVisible()
+  // Simulate elapsed time only for this synthetic booking in the verified test database.
+  execFileSync(
+    'docker',
+    [
+      'compose',
+      '-p',
+      'armeniabus-auth-e2e',
+      '--profile',
+      'test',
+      'exec',
+      '-T',
+      'api-e2e',
+      'python',
+      '-c',
+      `import asyncio, sys, uuid
+from datetime import timedelta
+from sqlalchemy import update, func
+from sqlalchemy.engine import make_url
+from sqlalchemy.ext.asyncio import create_async_engine
+from armeniabus.core.config import get_settings
+from armeniabus.modules.bookings.models import Booking
+assert make_url(get_settings().database_url).database == 'armeniabus_test'
+async def expire():
+    engine = create_async_engine(get_settings().database_url)
+    async with engine.begin() as connection:
+        await connection.execute(update(Booking).where(Booking.id == uuid.UUID(sys.argv[1])).values(held_until=func.clock_timestamp()-timedelta(seconds=1)))
+    await engine.dispose()
+asyncio.run(expire())`,
+      expiring.id,
+    ],
+    {
+      cwd: fileURLToPath(new URL('../../', import.meta.url)),
+      timeout: 20_000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    },
+  )
+  await page.getByRole('button', { name: 'Обновить статус' }).click()
+  await expect(
+    page.getByRole('heading', { name: 'Срок удержания истёк', exact: true }),
+  ).toBeVisible()
+  expect((await (await request.get(`${api}/routes/${route.id}/seats`)).json()).free_seats).toBe(1)
   expect(
     (
       await request.patch(`${api}/routes/${route.id}`, {

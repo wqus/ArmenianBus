@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Notice } from '../../shared/ui'
+import { Button, ButtonLink, Notice } from '../../shared/ui'
 import { formatPrice } from '../search/search'
 import type { Seat } from './trip'
 
@@ -9,10 +9,12 @@ export function SeatPicker({
   seats,
   price,
   busy,
+  routeId,
 }: {
   seats: Seat[]
   price: string
   busy: boolean
+  routeId: string
 }) {
   const [selection, setSelection] = useState<{ seats: Seat[]; id: string | null; lost: boolean }>({
     seats,
@@ -99,13 +101,20 @@ export function SeatPicker({
           Выбор на этой странице не удерживает место. Доступность может измениться до бронирования.
         </p>
         {chosen && (
-          <Button
-            variant="secondary"
-            disabled={busy}
-            onClick={() => setSelection({ seats, id: null, lost: false })}
-          >
-            Снять выбор
-          </Button>
+          <div className="booking-choice-actions">
+            {!busy && (
+              <ButtonLink to={`/trips/${routeId}/book?seat=${chosen.id}`}>
+                Перейти к бронированию
+              </ButtonLink>
+            )}
+            <Button
+              variant="secondary"
+              disabled={busy}
+              onClick={() => setSelection({ seats, id: null, lost: false })}
+            >
+              Снять выбор
+            </Button>
+          </div>
         )}
       </aside>
     </div>
