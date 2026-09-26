@@ -14,6 +14,10 @@ import { useSession } from '../features/auth/context'
 import { Protected } from '../features/auth/Protected'
 import { AuthPage } from '../pages/AuthPages'
 import { AccountPage, AdminProfilePage, CarrierProfilePage } from '../pages/AccountPages'
+import { CarrierLayout } from '../features/carrier/CarrierLayout'
+import { CarrierBusesPage, CreateBusPage, CarrierBusPage } from '../pages/CarrierBusPages'
+import { CarrierRoutesPage, CreateRoutePage, CarrierRoutePage } from '../pages/CarrierRoutePages'
+import { CarrierBookingsPage, CarrierBookingPage } from '../pages/CarrierBookingPages'
 
 const DesignSystemPage = import.meta.env.DEV
   ? lazy(() => import('../pages/DesignSystemPage'))
@@ -161,6 +165,17 @@ export function App() {
                 </Route>
                 <Route element={<Protected role="CARRIER" />}>
                   <Route path="carrier" element={<CarrierProfilePage />} />
+                  <Route element={<CarrierLayout />}>
+                    <Route path="carrier/buses" element={<CarrierBusesPage />} />
+                    <Route path="carrier/buses/new" element={<CreateBusPage />} />
+                    <Route path="carrier/buses/:id" element={<CarrierBusPage />} />
+                    <Route path="carrier/routes" element={<CarrierRoutesPage />} />
+                    <Route path="carrier/routes/new" element={<CreateRoutePage />} />
+                    <Route path="carrier/routes/:id" element={<CarrierRoutePage />} />
+                    <Route path="carrier/routes/:id/edit" element={<CarrierRoutePage edit />} />
+                    <Route path="carrier/bookings" element={<CarrierBookingsPage />} />
+                    <Route path="carrier/bookings/:id" element={<CarrierBookingPage />} />
+                  </Route>
                 </Route>
                 <Route element={<Protected role="PASSENGER" />}>
                   <Route path="trips/:id/book" element={<CreateBookingPage />} />

@@ -1,5 +1,6 @@
 import { ApiError } from '../../shared/api/client'
 import { bookingListUrl, readBookingFilters } from '../bookings/filters'
+import { carrierReturnTo } from '../carrier/paths'
 
 export type Role = 'PASSENGER' | 'CARRIER' | 'ADMIN'
 export type User = {
@@ -68,6 +69,7 @@ export function authMessage(error: unknown): string {
 export function safeReturnTo(value: string | null): string {
   if (!value || value !== value.trim()) return '/account'
   if (value && ['/account', '/carrier', '/admin', '/bookings'].includes(value)) return value
+  if (value.startsWith('/carrier/')) return carrierReturnTo(value) ?? '/account'
   if (value.startsWith('/bookings?')) {
     const filters = readBookingFilters(new URLSearchParams(value.slice('/bookings?'.length)))
     return filters ? bookingListUrl(filters) : '/account'

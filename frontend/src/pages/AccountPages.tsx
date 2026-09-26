@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { useSession } from '../features/auth/context'
 import { authMessage, roleLabels } from '../features/auth/types'
 import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { readCarrier } from '../features/carrier/contracts'
 
 export function AccountPage() {
   const { session, user } = useSession()
@@ -57,19 +58,6 @@ export function AccountPage() {
   )
 }
 
-type Carrier = { company_name: string; phone: string; status: 'PENDING' | 'ACTIVE' | 'BLOCKED' }
-function readCarrier(value: unknown): Carrier {
-  const profile = value as Partial<Carrier> | null
-  if (
-    !profile ||
-    typeof profile.company_name !== 'string' ||
-    typeof profile.phone !== 'string' ||
-    !['PENDING', 'ACTIVE', 'BLOCKED'].includes(profile.status ?? '')
-  )
-    throw new Error('Invalid carrier response')
-  return profile as Carrier
-}
-
 export function CarrierProfilePage() {
   const { session, user } = useSession()
   const profile = useQuery({
@@ -112,6 +100,13 @@ export function CarrierProfilePage() {
                 ? 'Операции перевозчика приостановлены. Обратитесь к администратору.'
                 : 'Данные компании прошли проверку.'}
           </Notice>
+          {profile.data.status === 'ACTIVE' && (
+            <div className="profile-actions">
+              <ButtonLink to="/carrier/buses">Автобусы</ButtonLink>
+              <ButtonLink to="/carrier/routes">Рейсы</ButtonLink>
+              <ButtonLink to="/carrier/bookings">Бронирования</ButtonLink>
+            </div>
+          )}
         </section>
       )}
       <div className="page-back">
