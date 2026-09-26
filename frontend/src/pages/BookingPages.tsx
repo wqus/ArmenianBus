@@ -12,6 +12,13 @@ import {
   statusLabels,
 } from '../features/bookings/booking'
 import type { BookingDetails, TimedBooking } from '../features/bookings/booking'
+import { BookingFinancials } from '../features/bookings/BookingFinancials'
+import {
+  bookingFilterParams,
+  defaultBookingFilters,
+  readBookingFilters,
+} from '../features/bookings/filters'
+import type { BookingFilters } from '../features/bookings/filters'
 import { departureDate, departureTime, formatPrice } from '../features/search/search'
 import { ApiError } from '../shared/api/client'
 import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
@@ -22,6 +29,7 @@ function useInvalidateAvailability() {
     void client.invalidateQueries({ queryKey: ['public-trip'] })
     void client.invalidateQueries({ queryKey: ['public-routes'] })
     void client.invalidateQueries({ queryKey: ['bookings'] })
+    void client.invalidateQueries({ queryKey: ['payment'] })
   }
 }
 
@@ -240,6 +248,27 @@ function BookingInfo({ booking }: { booking: BookingDetails }) {
         <dt>Стоимость брони</dt>
         <dd>{formatPrice(booking.amount)}</dd>
       </div>
+      <div>
+        <dt>Состояние рейса</dt>
+        <dd>
+          {
+            {
+              DRAFT: 'Не опубликован',
+              ACTIVE: 'Запланирован',
+              DEPARTED: 'В пути',
+              COMPLETED: 'Завершён',
+              CANCELLED: 'Отменён',
+            }[booking.route_status]
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Бронь создана · UTC</dt>
+        <dd>
+          {departureDate.format(new Date(booking.created_at))} ·{' '}
+          {departureTime.format(new Date(booking.created_at))}
+        </dd>
+      </div>
     </dl>
   )
 }
@@ -249,7 +278,7 @@ function BookingContent({ id }: { id: string }) {
   const invalidate = useInvalidateAvailability()
   const [busy, setBusy] = useState(false)
   const pending = useRef(false)
-  const [confirm, setConfirm] = useState(false)
+  const [confirm, setConfirm] = useState<'HELD' | 'PAID' | null>(null)
   const [error, setError] = useState('')
   const query = useQuery({
     queryKey: ['booking', user?.id, id],
@@ -258,21 +287,35 @@ function BookingContent({ id }: { id: string }) {
     networkMode: 'always',
     refetchOnWindowFocus: 'always',
     refetchInterval: (query) =>
-      !query.state.error && query.state.data?.booking.status === 'HELD' ? 15_000 : false,
+      !query.state.error &&
+      (['HELD', 'PAID'].includes(query.state.data?.booking.status ?? '') ||
+        query.state.data?.booking.refund_status === 'OPEN')
+        ? 15_000
+        : false,
   })
   const value = query.data
   async function cancel() {
-    if (pending.current || !confirm || value?.booking.status !== 'HELD') return
+    if (
+      pending.current ||
+      !confirm ||
+      value?.booking.status !== confirm ||
+      !value.booking.cancellation_allowed ||
+      query.isFetching ||
+      query.isError
+    )
+      return
     pending.current = true
     setBusy(true)
     setError('')
     try {
-      await session.request(`/bookings/${id}?hold_only=true`, { method: 'DELETE' })
-      invalidate()
+      await session.request(`/bookings/${id}${confirm === 'HELD' ? '?hold_only=true' : ''}`, {
+        method: 'DELETE',
+      })
     } catch (error) {
       setError(`${bookingError(error)} Проверьте текущий статус перед повторной отменой.`)
     } finally {
-      setConfirm(false)
+      setConfirm(null)
+      invalidate()
       await query.refetch()
       setBusy(false)
       pending.current = false
@@ -308,6 +351,7 @@ function BookingContent({ id }: { id: string }) {
             <h2>{statusLabels[value.booking.status]}</h2>
           </div>
           <BookingInfo booking={value.booking} />
+          <BookingFinancials booking={value.booking} />
           {value.booking.status === 'HELD' && <HoldTimer value={value} />}
           <div className="booking-actions">
             <ButtonLink to={`/bookings/${id}/payment`}>
@@ -319,16 +363,20 @@ function BookingContent({ id }: { id: string }) {
               Для новой поездки выберите свободное место заново.
             </Notice>
           )}
-          {value.booking.status === 'HELD' &&
+          {(value.booking.status === 'HELD' || value.booking.status === 'PAID') &&
             value.booking.cancellation_allowed &&
-            (confirm ? (
+            (confirm === value.booking.status ? (
               <div className="cancel-confirm">
-                <p>Отменить удержание? Место станет доступно другим пассажирам.</p>
+                <p>
+                  {confirm === 'PAID'
+                    ? 'Отменить оплаченную бронь? Место освободится, а сервис создаст заявку на ручной возврат. Отмена не означает, что деньги уже возвращены.'
+                    : 'Отменить удержание? Место станет доступно другим пассажирам.'}
+                </p>
                 <div className="booking-actions">
                   <Button busy={busy} disabled={query.isFetching} onClick={() => void cancel()}>
-                    Да, освободить место
+                    {confirm === 'PAID' ? 'Да, отменить оплаченную бронь' : 'Да, освободить место'}
                   </Button>
-                  <Button variant="secondary" disabled={busy} onClick={() => setConfirm(false)}>
+                  <Button variant="secondary" disabled={busy} onClick={() => setConfirm(null)}>
                     Сохранить бронь
                   </Button>
                 </div>
@@ -337,11 +385,19 @@ function BookingContent({ id }: { id: string }) {
               <Button
                 variant="secondary"
                 disabled={query.isFetching || busy}
-                onClick={() => setConfirm(true)}
+                onClick={() => setConfirm(value.booking.status as 'HELD' | 'PAID')}
               >
-                Отменить удержание
+                {value.booking.status === 'PAID'
+                  ? 'Отменить оплаченную бронь'
+                  : 'Отменить удержание'}
               </Button>
             ))}
+          {value.booking.status === 'PAID' && !value.booking.cancellation_allowed && (
+            <Notice title="Отмена оплаченной брони недоступна">
+              Сервер учитывает срок до отправления и состояние рейса. Если нужна помощь, обратитесь
+              в поддержку с номером брони.
+            </Notice>
+          )}
           {error && (
             <Notice title="Результат отмены" error>
               {error}
@@ -378,13 +434,20 @@ export function BookingPage() {
 export function BookingsPage() {
   const { session, user } = useSession()
   const [params, setParams] = useSearchParams()
-  const raw = Number(params.get('offset') ?? 0)
-  const offset = Number.isInteger(raw) && raw >= 0 && raw <= 10_000 && raw % 20 === 0 ? raw : 0
+  const parsed = readBookingFilters(params)
+  const filters = parsed ?? defaultBookingFilters
+  const { segment, status, offset } = filters
+  function changeFilters(changes: Partial<BookingFilters>) {
+    setParams(bookingFilterParams({ ...filters, offset: 0, ...changes }))
+  }
   const query = useQuery({
-    queryKey: ['bookings', user?.id, offset],
+    queryKey: ['bookings', user?.id, segment, status, offset],
+    enabled: parsed !== null,
     queryFn: async ({ signal }) => {
+      const search = new URLSearchParams({ limit: '21', offset: String(offset), segment })
+      if (status) search.set('status', status)
       const data = await session.request<{ items: unknown[]; limit: number; offset: number }>(
-        `/cabinet/bookings?limit=21&offset=${offset}`,
+        `/cabinet/bookings?${search}`,
         { signal },
       )
       if (
@@ -395,24 +458,82 @@ export function BookingsPage() {
         data.limit !== 21
       )
         throw new Error('Invalid booking list')
-      return { items: data.items.slice(0, 20).map(readDetails), next: data.items.length > 20 }
+      const items = data.items.map(readDetails)
+      if (
+        new Set(items.map((item) => item.id)).size !== items.length ||
+        items.some((item) => status && item.status !== status)
+      )
+        throw new Error('Invalid booking list')
+      return { items: items.slice(0, 20), next: items.length > 20 }
     },
     staleTime: 0,
     networkMode: 'always',
     refetchOnWindowFocus: 'always',
   })
+  if (!parsed)
+    return (
+      <div className="container information-page">
+        <PageHeading eyebrow="ЛИЧНЫЙ КАБИНЕТ" title="Проверьте фильтры">
+          Параметры списка некорректны. Откройте все бронирования и выберите фильтры заново.
+        </PageHeading>
+        <Button onClick={() => setParams({})}>Все бронирования</Button>
+      </div>
+    )
   return (
     <div className="container information-page">
-      <PageHeading eyebrow="ПАССАЖИРУ" title="Мои бронирования">
-        Последние бронирования — в начале списка. Здесь можно проверить результат, если ответ при
-        создании не пришёл.
+      <PageHeading eyebrow="ЛИЧНЫЙ КАБИНЕТ" title="Мои бронирования">
+        Предстоящие поездки, история и состояние оплаты. Последние бронирования — в начале списка.
       </PageHeading>
+      <section className="booking-filters" aria-label="Фильтры бронирований">
+        <div className="booking-segments" role="group" aria-label="Период поездок">
+          {(
+            [
+              ['all', 'Все'],
+              ['upcoming', 'Предстоящие'],
+              ['history', 'История'],
+            ] as const
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              variant={segment === value ? 'primary' : 'secondary'}
+              aria-pressed={segment === value}
+              onClick={() => changeFilters({ segment: value })}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+        <div className="booking-status-filter">
+          <label htmlFor="booking-status">Статус брони</label>
+          <select
+            id="booking-status"
+            value={status}
+            onChange={(event) =>
+              changeFilters({ status: event.target.value as BookingFilters['status'] })
+            }
+          >
+            <option value="">Все статусы</option>
+            {Object.entries(statusLabels).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="seat-help">
+          Предстоящие — действующие удержания и оплаченные брони на будущие рейсы. Остальные записи
+          находятся в истории.
+        </p>
+      </section>
       <div className="booking-actions">
         <Button variant="secondary" busy={query.isFetching} onClick={() => void query.refetch()}>
           Обновить бронирования
         </Button>
         <ButtonLink secondary to="/search">
           Найти рейс
+        </ButtonLink>
+        <ButtonLink secondary to="/account">
+          Мой профиль
         </ButtonLink>
       </div>
       {query.isFetching ? (
@@ -426,7 +547,7 @@ export function BookingsPage() {
           <>
             {!query.data.items.length && (
               <Notice title="Бронирований на этой странице нет">
-                Если вы только что отправили запрос, обновите список через несколько секунд.
+                Измените фильтры или обновите список, если только что создали бронь.
               </Notice>
             )}
             <div className="booking-list">
@@ -440,27 +561,26 @@ export function BookingsPage() {
                     {booking.seat_number}
                   </p>
                   <p>
+                    {departureTime.format(new Date(booking.departure_at))} UTC ·{' '}
+                    {booking.company_name}
+                  </p>
+                  <p>
                     {statusLabels[booking.status]} · {formatPrice(booking.amount)}
                   </p>
+                  <BookingFinancials booking={booking} />
                   <ButtonLink to={`/bookings/${booking.id}`}>Открыть бронь</ButtonLink>
                 </article>
               ))}
             </div>
             <nav className="search-pagination" aria-label="Страницы бронирований">
               {offset > 0 && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setParams({ offset: String(offset - 20) })}
-                >
+                <Button variant="secondary" onClick={() => changeFilters({ offset: offset - 20 })}>
                   Предыдущая страница
                 </Button>
               )}
               {(offset > 0 || query.data.next) && <span>Страница {offset / 20 + 1}</span>}
               {query.data.next && offset < 10_000 && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setParams({ offset: String(offset + 20) })}
-                >
+                <Button variant="secondary" onClick={() => changeFilters({ offset: offset + 20 })}>
                   Следующая страница
                 </Button>
               )}

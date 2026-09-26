@@ -40,14 +40,18 @@ function PaymentContent({ id }: { id: string }) {
     refetchInterval: (query) =>
       !query.state.error &&
       (query.state.data?.payment?.status === 'PENDING' ||
-        query.state.data?.booking.status === 'HELD')
+        query.state.data?.booking.status === 'HELD' ||
+        query.state.data?.booking.refund_status === 'OPEN')
         ? 5000
         : false,
   })
   const value = query.data
   const payment = value?.payment
   const active = value?.booking.status === 'HELD' && remainingSeconds(value, now) > 0
-  const eligible = active && (!payment || (payment.status === 'PENDING' && !payment.review_reason))
+  const eligible =
+    active &&
+    !value?.booking.refund_status &&
+    (!payment || (payment.status === 'PENDING' && !payment.review_reason))
   const url = eligible && payment ? confirmationUrl(payment.confirmation_url) : null
   let canRetry = !payment
   try {
@@ -68,6 +72,7 @@ function PaymentContent({ id }: { id: string }) {
       const fresh = current.data
       if (
         fresh.booking.status !== 'HELD' ||
+        fresh.booking.refund_status !== null ||
         remainingSeconds(fresh, performance.now()) <= 0 ||
         (fresh.payment &&
           (fresh.payment.status !== 'PENDING' ||

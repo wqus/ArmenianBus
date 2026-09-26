@@ -18,9 +18,13 @@ export type BookingDetails = Booking & {
   origin: string
   destination: string
   departure_at: string
+  route_status: 'DRAFT' | 'ACTIVE' | 'DEPARTED' | 'COMPLETED' | 'CANCELLED'
   seat_number: number
   company_name: string
   cancellation_allowed: boolean
+  payment_status: 'PENDING' | 'SUCCEEDED' | 'CANCELED' | 'FAILED' | null
+  refund_status: 'OPEN' | 'REFUND_RECORDED' | null
+  refund_required: boolean
 }
 export type TimedBooking = { booking: BookingDetails; receivedAt: number; remainingMs: number }
 const timestamp = (value: unknown): value is string =>
@@ -56,6 +60,13 @@ export function readDetails(data: unknown): BookingDetails {
   if (
     !timestamp(b.server_time) ||
     !timestamp(b.departure_at) ||
+    !['DRAFT', 'ACTIVE', 'DEPARTED', 'COMPLETED', 'CANCELLED'].includes(b.route_status ?? '') ||
+    ![null, 'PENDING', 'SUCCEEDED', 'CANCELED', 'FAILED'].includes(
+      b.payment_status as string | null,
+    ) ||
+    ![null, 'OPEN', 'REFUND_RECORDED'].includes(b.refund_status as string | null) ||
+    typeof b.refund_required !== 'boolean' ||
+    b.refund_required !== (b.refund_status === 'OPEN') ||
     !text(b.origin) ||
     !text(b.destination) ||
     !text(b.company_name) ||
@@ -106,6 +117,10 @@ export function bookingError(error: unknown): string {
     if (error.status === 0) return error.message
     if (error.problem.code === 'BOOKING_NOT_HELD')
       return 'Статус брони изменился. Отмена удержания не выполнена.'
+    if (error.problem.code === 'CANCELLATION_CUTOFF')
+      return 'Срок отмены оплаченной брони истёк или рейс уже недоступен для отмены.'
+    if (error.problem.code === 'BOOKING_NOT_CANCELLABLE')
+      return 'Сервер не разрешил отмену этой брони. Проверьте её состояние.'
   }
   return 'Не удалось подтвердить результат. Обновите данные брони.'
 }

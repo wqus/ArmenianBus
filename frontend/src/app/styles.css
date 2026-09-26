@@ -1522,6 +1522,48 @@
   .booking-list .booking-panel {
     margin: 0;
   }
+  .booking-filters {
+    padding: 24px;
+    background: var(--lavender);
+    border-radius: 20px;
+  }
+  .booking-segments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .booking-status-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 360px;
+    font-size: 14px;
+  }
+  .booking-status-filter select {
+    font: inherit;
+    color: var(--ink);
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    width: 100%;
+  }
+  .booking-financials {
+    margin: 20px 0;
+    line-height: 1.8;
+    font-size: 14px;
+  }
+  .booking-refund {
+    padding: 16px;
+    margin-top: 12px;
+    border-radius: 12px;
+    background: var(--lavender);
+  }
+  .booking-refund h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
 }
 @media (max-width: 760px) {
   .booking-panel {

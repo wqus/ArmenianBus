@@ -91,6 +91,10 @@ async function mock(context: BrowserContext, signedIn = true, role = 'PASSENGER'
         seat_number: 1,
         company_name: 'Перевозчик',
         cancellation_allowed: state.booking === 'HELD',
+        route_status: 'ACTIVE',
+        payment_status: state.exists ? state.status : null,
+        refund_status: null,
+        refund_required: false,
       })
     }
     return reply({ code: 'NOT_FOUND', message: 'Missing' }, 404)

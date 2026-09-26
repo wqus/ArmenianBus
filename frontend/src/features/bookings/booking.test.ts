@@ -21,6 +21,10 @@ const b = {
   seat_number: 1,
   company_name: 'Carrier',
   cancellation_allowed: true,
+  route_status: 'ACTIVE',
+  payment_status: null,
+  refund_status: null,
+  refund_required: false,
 }
 afterEach(() => vi.restoreAllMocks())
 
@@ -36,6 +40,10 @@ it('validates private booking data including clock, price, seat and terminal sta
     { id: '../admin' },
     { seat_number: 0 },
     { cancellation_allowed: 'true' },
+    { payment_status: 'PAID' },
+    { route_status: 'INVALID' },
+    { refund_status: 'REFUNDED' },
+    { refund_status: 'OPEN', refund_required: false },
   ])
     expect(() => readDetails({ ...b, ...changes })).toThrow()
   expect(readBooking({ ...b, server_time: undefined })).toHaveProperty('id', id)

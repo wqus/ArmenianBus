@@ -2,6 +2,7 @@ import { ApiError } from '../../shared/api/client'
 import type { Session } from '../auth/session'
 import { loadBooking } from '../bookings/booking'
 import type { BookingDetails } from '../bookings/booking'
+import { refundSummary } from '../bookings/refund'
 import { isUuid } from '../trips/trip'
 
 export type Payment = {
@@ -104,6 +105,8 @@ export async function paymentKey(
 }
 
 export function paymentMessage(payment: Payment | null, booking: BookingDetails) {
+  const refund = refundSummary(booking)
+  if (refund) return refund
   if (payment?.review_reason)
     return {
       title: 'Платёж требует проверки',

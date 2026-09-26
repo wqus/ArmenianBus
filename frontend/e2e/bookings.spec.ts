@@ -52,6 +52,10 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     seat_number: 1,
     company_name: 'Перевозчик',
     cancellation_allowed: state.status === 'HELD',
+    route_status: 'ACTIVE',
+    payment_status: state.status === 'PAID' ? 'SUCCEEDED' : null,
+    refund_status: null,
+    refund_required: false,
   })
   await context.route('**/api/v1/**', async (route) => {
     const path = new URL(route.request().url()).pathname
