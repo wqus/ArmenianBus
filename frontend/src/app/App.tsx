@@ -13,7 +13,8 @@ import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
 import { Protected } from '../features/auth/Protected'
 import { AuthPage } from '../pages/AuthPages'
-import { AccountPage, AdminProfilePage, CarrierProfilePage } from '../pages/AccountPages'
+import { AccountPage, CarrierProfilePage } from '../pages/AccountPages'
+import { AdminLayout, AdminOverviewPage, AdminListPage, AdminDetailPage } from '../pages/AdminPages'
 import { CarrierLayout } from '../features/carrier/CarrierLayout'
 import { CarrierBusesPage, CreateBusPage, CarrierBusPage } from '../pages/CarrierBusPages'
 import { CarrierRoutesPage, CreateRoutePage, CarrierRoutePage } from '../pages/CarrierRoutePages'
@@ -185,7 +186,11 @@ export function App() {
                   <Route path="payment/result" element={<PaymentPage result />} />
                 </Route>
                 <Route element={<Protected role="ADMIN" />}>
-                  <Route path="admin" element={<AdminProfilePage />} />
+                  <Route path="admin" element={<AdminLayout />}>
+                    <Route index element={<AdminOverviewPage />} />
+                    <Route path=":kind" element={<AdminListPage />} />
+                    <Route path=":kind/:id" element={<AdminDetailPage />} />
+                  </Route>
                 </Route>
                 {DesignSystemPage && <Route path="design-system" element={<DesignSystemPage />} />}
                 <Route path="*" element={<NotFoundPage />} />

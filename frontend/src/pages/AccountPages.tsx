@@ -47,7 +47,7 @@ export function AccountPage() {
         <div className="profile-actions">
           {user.role === 'PASSENGER' && <ButtonLink to="/bookings">Мои бронирования</ButtonLink>}
           {user.role === 'CARRIER' && <ButtonLink to="/carrier">Профиль перевозчика</ButtonLink>}
-          {user.role === 'ADMIN' && <ButtonLink to="/admin">Доступ администратора</ButtonLink>}
+          {user.role === 'ADMIN' && <ButtonLink to="/admin">Кабинет администратора</ButtonLink>}
           <Button variant="secondary" busy={busy} onClick={() => void logout()}>
             Выйти из аккаунта
           </Button>
@@ -114,17 +114,6 @@ export function CarrierProfilePage() {
           Мой профиль
         </ButtonLink>
       </div>
-    </div>
-  )
-}
-
-export function AdminProfilePage() {
-  return (
-    <div className="container information-page">
-      <PageHeading eyebrow="АДМИНИСТРАТОРУ" title="Доступ подтверждён">
-        Вход выполнен с правами администратора ArmeniaBus.
-      </PageHeading>
-      <ButtonLink to="/account">Мой профиль</ButtonLink>
     </div>
   )
 }
