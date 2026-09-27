@@ -73,13 +73,15 @@ Backup отказывается перезаписывать существую�
 
 ## Production-шаблон
 
+D1 расширяет этот шаблон frontend-образом и same-origin HTTPS: актуальные переменные APP_DOMAIN/WEB_IMAGE, окружения и проверка полного стека описаны в [environments.md](environments.md).
+
 Использовать **отдельный** `compose.production.yaml`, не объединять его с development compose. Начальная конфигурация: `.env.production.example`. Хранить заполненный env-файл вне репозитория с ограниченными правами. Сгенерировать три независимых случайных секрета; для паролей БД использовать hex, чтобы не требовалось URL-encoding. Переменные окружения доступны администратору Docker — отдельное secret-хранилище пока не подключено.
 
 Порядок после подготовки сервера, DNS, домена, секретов, firewall и резервного хранилища:
 
 ```powershell
 docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env config --quiet
-docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env build api
+docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env build api proxy
 docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env up -d db redis
 docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env run --rm migrate
 docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armeniabus.env up -d api worker payment-worker notification-worker proxy
@@ -88,7 +90,7 @@ docker compose -p armeniabus -f compose.production.yaml --env-file /secure/armen
 APP_IMAGE должен обозначать проверенный release, не плавающий development tag. В дальнейшем предпочтительна доставка проверенного образа из registry. На обновлении сначала проверить backup, применить миграции сервисом migrate, затем пересоздать приложения из нового образа.
 
 - Только Caddy публикует 80/443; API/БД/Redis не публикуют порты. DNS должен указывать на сервер, 80/443 доступны для TLS issuance. Реальный сертификат в этой работе не выпускался.
-- Uvicorn доверяет forwarded headers только конкретному адресу Caddy в отдельной edge-сети; не заменять его на `*`. При конфликте подсети изменить EDGE_SUBNET и PROXY_IP согласованно. Если добавляется CDN/proxy перед Caddy, отдельно настроить доверенные адреса и проверить защиту от подделки IP.
+- Uvicorn доверяет forwarded headers только конкретному адресу Caddy в отдельной edge-сети; не заменять его на `*`. При конфликте подсети изменить EDGE_SUBNET, EDGE_DYNAMIC_RANGE и PROXY_IP согласованно; статический PROXY_IP должен быть вне динамического диапазона. Если добавляется CDN/proxy перед Caddy, отдельно настроить доверенные адреса и проверить защиту от подделки IP.
 - Приложения запускаются не от root, с read-only root filesystem, ограничением памяти/процессов, без Linux capabilities и с no-new-privileges. `/tmp` — ограниченный tmpfs. Docker журналы ротируются.
 - `deploy/init-app-db.sh` создаёт runtime-роль `armeniabus_app` без superuser/CREATEDB и права DML через default privileges. DDL выполняет только сервис migrate от владельца. Init-script действует **только на новом пустом PostgreSQL volume**; на существующем требуется отдельное создание роли/GRANT на существующие таблицы оператором. Не удалять volume ради применения init-script. Изменение пароля в env также не меняет существующую роль автоматически.
 - Redis используется для вспомогательных функций, доступен только внутри backend-сети. Компрометация сервера/Docker или приложения остаётся отдельным риском; этот шаблон не реализует сетевую изоляцию между всеми доверенными внутренними сервисами.

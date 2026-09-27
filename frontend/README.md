@@ -18,7 +18,7 @@ npm run dev
 
 Маршруты: `/`, `/search`, `/trips/:id`, `/carriers`, `/help`, `/register`, `/login`; приватные `/bookings`, `/bookings/:id`, `/bookings/:id/payment`, `/payment/result?booking=UUID`, `/trips/:id/book?seat=UUID` (PASSENGER), `/account`, `/carrier` (CARRIER), `/admin` (ADMIN). Остальные — 404. `/design-system` доступен только в development: компоненты и настоящий `/api/v1/health/ready`. Он не входит в production bundle.
 
-Vite проксирует `/api` к backend, поэтому клиент работает с same-origin адресами `/api/v1`. API должен быть запущен отдельно через корневой Docker Compose. При будущей публикации frontend сервер должен отдавать `index.html` для клиентских маршрутов и отдельно проксировать `/api`; такой публичный frontend deployment ещё не настроен. `vite preview` — просмотр сборки, не production-сервер.
+Vite проксирует `/api` к backend, поэтому клиент работает с same-origin адресами `/api/v1`. API должен быть запущен отдельно через корневой Docker Compose. D1 добавляет Docker-образ со статической сборкой и Caddy: SPA fallback и same-origin `/api` проверяются отдельным smoke-набором. Инструкции: [окружения](../docs/environments.md). Публичный сервер ещё не развёрнут. `vite preview` — просмотр сборки, не production-сервер.
 
 ## Структура и границы
 
@@ -88,3 +88,5 @@ F9: [кабинет администратора](../docs/frontend-admin.md) —
 F10: [устойчивость и доступность](../docs/frontend-hardening.md) — стабильные названия кнопок, skeleton-состояния, сообщения при потере сети/ограничениях браузера, lazy loading приватных страниц и безопасное восстановление. Запросы не отправляются под другой учётной записью, обнаруженной во время refresh.
 
 Проверки F10: 50 unit-тестов, полный повтор 112 E2E desktop/mobile Edge (10 live в отдельном API/PostgreSQL), 7 дополнительных сценариев production bundle в Edge. TypeScript/build, ESLint, Prettier и axe проходят; снимки просмотрены. В предварительном прогоне исправлены начальный фокус и гонка позднего ответа при загрузке следующего раздела. Firefox и WebKit скачать не удалось из-за таймаутов официальных CDN; их проверка остаётся открытой, матрица добавлена в CI. Удалённый CI не запускался. Backend и миграции не менялись; тестовое окружение очищено, настоящие платежи и письма не выполнялись.
+
+D1: [совместный HTTPS-стек](../docs/environments.md) собирается через `deploy/frontend.Dockerfile`. Шрифты сохраняются отдельными файлами для CSP `font-src 'self'`. Три deployment smoke-теста проверяют настоящий Caddy/API/PostgreSQL, а не Vite proxy; запускать из корня через `python scripts/deployment_smoke.py`. Секреты и сертификат временные, тестовый проект удаляется после проверки. Публичный deploy не выполнялся.

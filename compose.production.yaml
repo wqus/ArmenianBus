@@ -4,8 +4,8 @@ x-environment: &environment
   DATABASE_URL: postgresql+asyncpg://armeniabus_app:${POSTGRES_APP_PASSWORD:?Set POSTGRES_APP_PASSWORD}@db:5432/${POSTGRES_DB:-armeniabus}
   REDIS_URL: redis://redis:6379/0
   JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY}
-  ALLOWED_HOSTS: '["${API_DOMAIN:?Set API_DOMAIN}","localhost"]'
-  CORS_ORIGINS: ${CORS_ORIGINS:-[]}
+  ALLOWED_HOSTS: '["${APP_DOMAIN:?Set APP_DOMAIN}","localhost"]'
+  CORS_ORIGINS: '["https://${APP_DOMAIN:?Set APP_DOMAIN}${ORIGIN_PORT_SUFFIX:-}"]'
   WORKER_STALE_SECONDS: ${WORKER_STALE_SECONDS:-600}
   REQUEST_MAX_BYTES: ${REQUEST_MAX_BYTES:-65536}
   REQUEST_BODY_TIMEOUT_SECONDS: ${REQUEST_BODY_TIMEOUT_SECONDS:-10}
@@ -13,7 +13,7 @@ x-environment: &environment
   YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID:-}
   YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY:-}
   YOOKASSA_TEST_MODE: ${YOOKASSA_TEST_MODE:-true}
-  PAYMENT_RETURN_URL: ${PAYMENT_RETURN_URL:-https://example.invalid/payment/result}
+  PAYMENT_RETURN_URL: https://${APP_DOMAIN:?Set APP_DOMAIN}${ORIGIN_PORT_SUFFIX:-}/payment/result
   NOTIFICATIONS_ENABLED: ${NOTIFICATIONS_ENABLED:-false}
   SMTP_HOST: ${SMTP_HOST:-}
   SMTP_PORT: ${SMTP_PORT:-465}
@@ -134,15 +134,21 @@ services:
       start_period: 30s
 
   proxy:
-    image: caddy:2
+    image: ${WEB_IMAGE:?Set WEB_IMAGE to the matching frontend release tag}
+    build:
+      context: .
+      dockerfile: deploy/frontend.Dockerfile
     restart: unless-stopped
-    ports: ["80:80", "443:443", "443:443/udp"]
+    ports:
+      - "${PROXY_BIND:-0.0.0.0}:${HTTP_PORT:-80}:80"
+      - "${PROXY_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:443"
+      - "${PROXY_BIND:-0.0.0.0}:${HTTPS_PORT:-443}:443/udp"
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     environment:
-      API_DOMAIN: ${API_DOMAIN:?Set API_DOMAIN}
+      APP_DOMAIN: ${APP_DOMAIN:?Set APP_DOMAIN}
+      TLS_ISSUER: ${TLS_ISSUER:-acme}
     networks:
       edge:
         ipv4_address: ${PROXY_IP:-172.30.10.2}
@@ -158,6 +164,7 @@ networks:
     ipam:
       config:
         - subnet: ${EDGE_SUBNET:-172.30.10.0/24}
+          ip_range: ${EDGE_DYNAMIC_RANGE:-172.30.10.128/25}
 
 volumes:
   postgres_data:

@@ -20,3 +20,4 @@ backups/
 *.dump
 *.dump.json
 !.env.production.example
+!.env.staging.example

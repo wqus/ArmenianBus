@@ -1,0 +1,12 @@
+**
+!frontend/
+!frontend/**
+!deploy/
+!deploy/Caddyfile
+frontend/node_modules/
+frontend/dist/
+frontend/test-results/
+frontend/playwright-report/
+frontend/.env*
+frontend/*.tsbuildinfo
+frontend/*.log
