@@ -1,0 +1,72 @@
+name: Release images
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-images
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Select unique release tags
+        shell: bash
+        run: |
+          repository="${GITHUB_REPOSITORY,,}"
+          release="${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "APP_IMAGE=ghcr.io/${repository}/api:${release}" >> "$GITHUB_ENV"
+          echo "WEB_IMAGE=ghcr.io/${repository}/web:${release}" >> "$GITHUB_ENV"
+      - name: Build the release pair
+        run: |
+          docker build --target runtime --label "org.opencontainers.image.revision=$GITHUB_SHA" --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" -t "$APP_IMAGE" .
+          docker build -f deploy/frontend.Dockerfile --label "org.opencontainers.image.revision=$GITHUB_SHA" --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" -t "$WEB_IMAGE" .
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Verify these exact images before publishing
+        run: python scripts/deployment_smoke.py --skip-build --api-image "$APP_IMAGE" --web-image "$WEB_IMAGE"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested images and record immutable references
+        run: |
+          docker push "$APP_IMAGE"
+          docker push "$WEB_IMAGE"
+          python scripts/release_manifest.py --api-image "$APP_IMAGE" --web-image "$WEB_IMAGE" --commit "$GITHUB_SHA" --output release.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            release.json
+            compose.production.yaml
+            deploy/init-app-db.sh
+            scripts/release_deploy.py
+            scripts/release_manifest.py
+            scripts/database_backup.py
+          if-no-files-found: error
+          retention-days: 90

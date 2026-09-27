@@ -3,6 +3,7 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
@@ -108,4 +109,4 @@ jobs:
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
-      - run: python scripts/deployment_smoke.py
+      - run: python scripts/deployment_smoke.py --release-drill

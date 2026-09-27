@@ -21,3 +21,6 @@ backups/
 *.dump.json
 !.env.production.example
 !.env.staging.example
+release-state/
+release.json
+*.release.lock

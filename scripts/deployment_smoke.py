@@ -13,14 +13,17 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-build", action="store_true", help="Reuse deployment-smoke images")
+    parser.add_argument("--api-image", default="armeniabus-api:deployment-smoke")
+    parser.add_argument("--web-image", default="armeniabus-web:deployment-smoke")
+    parser.add_argument("--release-drill", action="store_true")
     args = parser.parse_args()
     project = f"armeniabus-deployment-smoke-{secrets.token_hex(4)}"
     env = {
         **os.environ,
         "COMPOSE_PROFILES": "",
         "RUN_DEPLOYMENT_SMOKE": "1",
-        "APP_IMAGE": "armeniabus-api:deployment-smoke",
-        "WEB_IMAGE": "armeniabus-web:deployment-smoke",
+        "APP_IMAGE": args.api_image,
+        "WEB_IMAGE": args.web_image,
         "APP_DOMAIN": "armeniabus.localhost",
         "POSTGRES_DB": "armeniabus_deployment_test",
         "POSTGRES_USER": "armeniabus",
@@ -92,6 +95,10 @@ def main():
         if not npm:
             raise RuntimeError("Node.js 24 / npm is required for the browser smoke")
         run([npm, "--prefix", "frontend", "run", "test:deployment"])
+        if args.release_drill:
+            from release_drill import drill
+
+            drill(run, compose, project, ROOT)
     finally:
         # Only the unique project allocated above, including its synthetic DB and local CA.
         run([*compose, "down", "--volumes", "--remove-orphans"])

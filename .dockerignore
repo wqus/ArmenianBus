@@ -14,5 +14,8 @@ node_modules/
 frontend/
 dist/
 backups/
+release-state/
+release.json
+*.release.lock
 *.dump
 *.dump.json
