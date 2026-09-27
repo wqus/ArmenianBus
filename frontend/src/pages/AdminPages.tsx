@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useParams, useSearchParams } from 'react-router'
-import { Button, ButtonLink, Field as Input, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Field as Input, Notice, Loading, PageHeading } from '../shared/ui'
 import { readPage } from '../features/carrier/contracts'
 import { Pager } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
@@ -84,7 +84,7 @@ export function AdminOverviewPage() {
         Обновить состояние
       </Button>
       {query.isPending ? (
-        <Notice title="Загружаем состояние…" />
+        <Loading title="Загружаем состояние…" />
       ) : query.isError ? (
         <Notice title="Не удалось проверить операции" error>
           {adminError(query.error)}
@@ -235,7 +235,7 @@ function ListContent({ kind }: { kind: string }) {
             Обновить список
           </Button>
           {query.isPending ? (
-            <Notice title="Загружаем список…" />
+            <Loading title="Загружаем список…" />
           ) : query.isError ? (
             <Notice title="Список недоступен" error>
               {adminError(query.error)}
@@ -425,7 +425,7 @@ function DetailContent({ kind, id }: { kind: string; id: string }) {
         <Notice title="Запрос выполнен">Проверьте актуальное состояние записи ниже.</Notice>
       )}
       {query.isPending ? (
-        <Notice title="Загружаем запись…" />
+        <Loading title="Загружаем запись…" />
       ) : query.isError ? (
         <Notice title="Запись недоступна" error>
           {adminError(query.error)}

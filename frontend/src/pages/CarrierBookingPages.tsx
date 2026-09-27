@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
-import { Button, ButtonLink, Field, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 import { readDetails, statusLabels, type BookingDetails } from '../features/bookings/booking'
 import { BookingFinancials } from '../features/bookings/BookingFinancials'
 import { bookingFilterParams } from '../features/bookings/filters'
@@ -134,7 +134,7 @@ export function CarrierBookingsPage() {
             Обновить бронирования
           </Button>
           {query.isPending ? (
-            <Notice title="Загружаем бронирования…" />
+            <Loading title="Загружаем бронирования…" />
           ) : query.isError ? (
             <Notice title="Не удалось загрузить бронирования" error>
               {carrierError(query.error)}
@@ -183,7 +183,7 @@ function BookingContent({ id }: { id: string }) {
         Обновить бронь
       </Button>
       {query.isPending ? (
-        <Notice title="Загружаем бронь…" />
+        <Loading title="Загружаем бронь…" />
       ) : query.isError ? (
         <Notice title="Не удалось проверить бронь" error>
           {carrierError(query.error)}

@@ -30,6 +30,9 @@ function isProblem(value: unknown): value is ApiProblem {
 // Callers opt into same-origin cookies only for the protected browser-auth transport.
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   if (!path.startsWith('/') || path.startsWith('//')) throw new Error('API path must be relative')
+  const target = new URL(`/api/v1${path}`, 'https://armeniabus.invalid')
+  if (path.includes('\\') || path.includes('#') || !target.pathname.startsWith('/api/v1/'))
+    throw new Error('API path must stay relative to /api/v1/')
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
   if (typeof options.body === 'string' && !headers.has('Content-Type'))
@@ -37,6 +40,7 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
   const timeout = AbortSignal.timeout(10_000)
   const signal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout
   let response: Response
+  let data: unknown
   try {
     response = await fetch(`/api/v1${path}`, {
       ...options,
@@ -45,6 +49,13 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
       credentials: options.credentials ?? 'omit',
       redirect: 'error',
     })
+    if (response.status === 204) return undefined as T
+    try {
+      data = await response.json()
+    } catch (error) {
+      if (signal.aborted) throw error
+      data = null
+    }
   } catch (error) {
     if (options.signal?.aborted) throw error
     throw new ApiError(0, {
@@ -54,8 +65,6 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
         : 'Не удалось связаться с сервисом. Проверьте соединение.',
     })
   }
-  if (response.status === 204) return undefined as T
-  const data: unknown = await response.json().catch(() => null)
   if (!response.ok) {
     throw new ApiError(
       response.status,

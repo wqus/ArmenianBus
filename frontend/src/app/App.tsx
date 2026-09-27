@@ -2,7 +2,7 @@ import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, NavLink, Outlet, Route, Routes, useLocation } from 'react-router'
-import { Brand, Button, Notice } from '../shared/ui'
+import { Brand, Button, Loading, ConnectionStatus } from '../shared/ui'
 import { HomePage } from '../pages/HomePage'
 import { SearchPage } from '../pages/SearchPage'
 import { TripPage } from '../pages/TripPage'
@@ -14,11 +14,43 @@ import { useSession } from '../features/auth/context'
 import { Protected } from '../features/auth/Protected'
 import { AuthPage } from '../pages/AuthPages'
 import { AccountPage, CarrierProfilePage } from '../pages/AccountPages'
-import { AdminLayout, AdminOverviewPage, AdminListPage, AdminDetailPage } from '../pages/AdminPages'
 import { CarrierLayout } from '../features/carrier/CarrierLayout'
-import { CarrierBusesPage, CreateBusPage, CarrierBusPage } from '../pages/CarrierBusPages'
-import { CarrierRoutesPage, CreateRoutePage, CarrierRoutePage } from '../pages/CarrierRoutePages'
-import { CarrierBookingsPage, CarrierBookingPage } from '../pages/CarrierBookingPages'
+const AdminLayout = lazy(() =>
+  import('../pages/AdminPages').then((m) => ({ default: m.AdminLayout })),
+)
+const AdminOverviewPage = lazy(() =>
+  import('../pages/AdminPages').then((m) => ({ default: m.AdminOverviewPage })),
+)
+const AdminListPage = lazy(() =>
+  import('../pages/AdminPages').then((m) => ({ default: m.AdminListPage })),
+)
+const AdminDetailPage = lazy(() =>
+  import('../pages/AdminPages').then((m) => ({ default: m.AdminDetailPage })),
+)
+const CarrierBusesPage = lazy(() =>
+  import('../pages/CarrierBusPages').then((m) => ({ default: m.CarrierBusesPage })),
+)
+const CreateBusPage = lazy(() =>
+  import('../pages/CarrierBusPages').then((m) => ({ default: m.CreateBusPage })),
+)
+const CarrierBusPage = lazy(() =>
+  import('../pages/CarrierBusPages').then((m) => ({ default: m.CarrierBusPage })),
+)
+const CarrierRoutesPage = lazy(() =>
+  import('../pages/CarrierRoutePages').then((m) => ({ default: m.CarrierRoutesPage })),
+)
+const CreateRoutePage = lazy(() =>
+  import('../pages/CarrierRoutePages').then((m) => ({ default: m.CreateRoutePage })),
+)
+const CarrierRoutePage = lazy(() =>
+  import('../pages/CarrierRoutePages').then((m) => ({ default: m.CarrierRoutePage })),
+)
+const CarrierBookingsPage = lazy(() =>
+  import('../pages/CarrierBookingPages').then((m) => ({ default: m.CarrierBookingsPage })),
+)
+const CarrierBookingPage = lazy(() =>
+  import('../pages/CarrierBookingPages').then((m) => ({ default: m.CarrierBookingPage })),
+)
 
 const DesignSystemPage = import.meta.env.DEV
   ? lazy(() => import('../pages/DesignSystemPage'))
@@ -47,7 +79,10 @@ function Shell() {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButton = useRef<HTMLButtonElement>(null)
   const location = useLocation()
+  const previousPath = useRef(location.pathname)
   useEffect(() => {
+    if (previousPath.current === location.pathname) return
+    previousPath.current = location.pathname
     document.getElementById('main-content')?.focus({ preventScroll: true })
     window.scrollTo({ top: 0 })
   }, [location.pathname])
@@ -110,10 +145,13 @@ function Shell() {
         </div>
       </header>
       <main id="main-content" tabIndex={-1}>
+        <ConnectionStatus />
+        {/* Retire the old form immediately, even while the destination module is loading. */}
         <Suspense
+          key={location.pathname}
           fallback={
             <div className="container section">
-              <Notice title="Открываем страницу…" />
+              <Loading title="Открываем страницу…" />
             </div>
           }
         >

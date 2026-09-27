@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { apiRequest } from './client'
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 describe('API boundary', () => {
   it('preserves conflict and request ID without retrying a mutation', async () => {
@@ -51,5 +54,51 @@ describe('API boundary', () => {
     })
     await expect(apiRequest('//other.example')).rejects.toThrow('relative')
     expect(fetch).toHaveBeenCalledTimes(1)
+  })
+  it('rejects paths that escape the API prefix before sending credentials', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    for (const path of [
+      '/../../outside',
+      '/%2e%2e/%2e%2e/outside',
+      '/\\outside',
+      '/health#fragment',
+    ])
+      await expect(apiRequest(path)).rejects.toThrow('relative')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+  it('preserves timeout and caller cancellation during response body download', async () => {
+    const timed = new AbortController()
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timed.signal)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        status: 200,
+        ok: true,
+        json: async () => {
+          timed.abort()
+          throw new DOMException('Timeout', 'AbortError')
+        },
+      })),
+    )
+    await expect(apiRequest('/slow')).rejects.toMatchObject({
+      problem: { code: 'REQUEST_TIMEOUT' },
+    })
+    vi.restoreAllMocks()
+    const caller = new AbortController()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        status: 200,
+        ok: true,
+        json: async () => {
+          caller.abort()
+          throw caller.signal.reason
+        },
+      })),
+    )
+    await expect(apiRequest('/slow', { signal: caller.signal })).rejects.toMatchObject({
+      name: 'AbortError',
+    })
   })
 })

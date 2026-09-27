@@ -21,7 +21,7 @@ import {
 import type { BookingFilters } from '../features/bookings/filters'
 import { departureDate, departureTime, formatPrice } from '../features/search/search'
 import { ApiError } from '../shared/api/client'
-import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 
 function useInvalidateAvailability() {
   const client = useQueryClient()
@@ -344,7 +344,7 @@ function BookingContent({ id }: { id: string }) {
           {bookingError(query.error)}
         </Notice>
       ) : !value ? (
-        <Notice title="Загружаем бронирование…" />
+        <Loading title="Загружаем бронирование…" />
       ) : (
         <section className="booking-panel">
           <div role="status">
@@ -537,7 +537,7 @@ export function BookingsPage() {
         </ButtonLink>
       </div>
       {query.isFetching ? (
-        <Notice title="Проверяем бронирования…" />
+        <Loading title="Проверяем бронирования…" />
       ) : query.isError ? (
         <Notice title="Не удалось загрузить бронирования" error>
           {bookingError(query.error)}

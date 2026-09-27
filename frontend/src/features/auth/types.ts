@@ -51,6 +51,8 @@ export function readAccess(value: unknown): Access {
 export function authMessage(error: unknown): string {
   if (!(error instanceof ApiError)) return 'Не удалось выполнить действие. Попробуйте ещё раз.'
   const messages: Record<string, string> = {
+    BROWSER_UNSUPPORTED:
+      'Вход недоступен в этом браузере. Откройте сайт в обновлённом браузере через HTTPS (или localhost). Поиск рейсов доступен без входа.',
     INVALID_CREDENTIALS: 'Неверная почта или пароль.',
     EMAIL_EXISTS: 'Эта почта уже зарегистрирована. Войдите в аккаунт.',
     USER_BLOCKED: 'Аккаунт заблокирован. Обратитесь к администратору сервиса.',

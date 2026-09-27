@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'react-router'
 import { ApiError } from '../shared/api/client'
-import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { departureDate, departureTime } from '../features/search/search'
 import { backToSearch, getTrip, isUuid, tripError } from '../features/trips/trip'
 import { SeatPicker } from '../features/trips/SeatPicker'
@@ -55,7 +55,7 @@ function TripDetails({ id }: { id: string }) {
             : tripError(query.error)}
         </Notice>
       ) : !trip ? (
-        <Notice title="Загружаем рейс…">Проверяем расписание и места.</Notice>
+        <Loading title="Загружаем рейс…">Проверяем расписание и места.</Loading>
       ) : (
         <>
           <section className="trip-overview" aria-label="Информация о рейсе">

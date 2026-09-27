@@ -186,3 +186,70 @@ it('ends a rejected session after one read retry without an infinite refresh loo
   expect(refreshes).toBe(2)
   expect(session.snapshot().status).toBe('anonymous')
 })
+
+it('never sends a write as a different account discovered during proactive refresh', async () => {
+  let refreshes = 0
+  const writes = vi.fn()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.endsWith('/refresh')) return json({ ...access(), expires_in: 1 + ++refreshes })
+      if (url.endsWith('/me')) return json({ ...user, id: refreshes === 1 ? 'first' : 'second' })
+      writes()
+      return json({ ok: true })
+    }),
+  )
+  const clear = vi.fn(),
+    session = new Session(clear)
+  await session.restore()
+  await expect(session.request('/write', { method: 'POST', body: '{}' })).rejects.toMatchObject({
+    name: 'AbortError',
+  })
+  expect(writes).not.toHaveBeenCalled()
+  expect(session.snapshot().user?.id).toBe('second')
+  expect(clear).toHaveBeenCalledTimes(1)
+})
+
+it('does not retry a read under a different identity after a 401', async () => {
+  let refreshes = 0,
+    reads = 0
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.endsWith('/refresh')) {
+        refreshes++
+        return json(access())
+      }
+      if (url.endsWith('/me')) return json({ ...user, id: refreshes === 1 ? 'first' : 'second' })
+      reads++
+      return json({ code: 'INVALID_ACCESS_TOKEN', message: 'Expired' }, 401)
+    }),
+  )
+  const session = new Session(vi.fn())
+  await session.restore()
+  await expect(session.request('/private')).rejects.toMatchObject({ name: 'AbortError' })
+  expect(reads).toBe(1)
+})
+
+it('keeps unsupported or restricted browser messaging recoverable without any auth request', async () => {
+  const fetch = vi.fn()
+  vi.stubGlobal('fetch', fetch)
+  vi.stubGlobal(
+    'BroadcastChannel',
+    class {
+      constructor() {
+        throw new Error('Disabled by browser')
+      }
+    },
+  )
+  const session = new Session(vi.fn()),
+    disconnect = session.connect()
+  await session.restore()
+  expect(session.snapshot()).toMatchObject({ status: 'unavailable', user: null })
+  expect(session.snapshot().message).toContain('Вход недоступен в этом браузере')
+  await expect(session.login({ email: user.email, password: 'password' })).rejects.toMatchObject({
+    problem: { code: 'BROWSER_UNSUPPORTED' },
+  })
+  expect(fetch).not.toHaveBeenCalled()
+  disconnect()
+})

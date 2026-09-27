@@ -4,10 +4,14 @@ import type { SessionState } from './types'
 
 type Login = { email: string; password: string }
 const LOCK = 'armeniabus-browser-session'
+const unsupported = () =>
+  new ApiError(0, { code: 'BROWSER_UNSUPPORTED', message: 'Browser session unavailable' })
+const supportsSession = () =>
+  typeof navigator !== 'undefined' && !!navigator.locks && typeof BroadcastChannel === 'function'
 
 async function sessionLock<T>(action: () => Promise<T>): Promise<T> {
   // HTTPS (and localhost) Web Locks serializes cookie rotation/login/logout across tabs.
-  if (!navigator.locks) throw new Error('Browser session requires Web Locks')
+  if (!supportsSession()) throw unsupported()
   return navigator.locks.request(LOCK, action)
 }
 
@@ -28,6 +32,7 @@ export class Session {
   private refreshJob: Promise<void> | null = null
   private listeners = new Set<() => void>()
   private channel: BroadcastChannel | null = null
+  private transportError: ApiError | null = null
 
   constructor(private clearPrivateData: () => void) {}
   snapshot = () => this.state
@@ -48,7 +53,15 @@ export class Session {
   }
 
   connect() {
-    const channel = new BroadcastChannel(LOCK)
+    let channel: BroadcastChannel
+    try {
+      if (!supportsSession()) throw unsupported()
+      channel = new BroadcastChannel(LOCK)
+      this.transportError = null
+    } catch {
+      this.transportError = unsupported()
+      return () => {}
+    }
     this.channel = channel
     channel.onmessage = (event: MessageEvent<unknown>) => {
       if (event.data !== 'login' && event.data !== 'logout') return
@@ -82,6 +95,11 @@ export class Session {
   }
 
   restore = (): Promise<void> => {
+    if (this.transportError) {
+      this.reset()
+      this.publish({ status: 'unavailable', user: null, message: authMessage(this.transportError) })
+      return Promise.resolve()
+    }
     if (this.refreshJob) return this.refreshJob
     const revision = this.revision
     const job = sessionLock(async () => {
@@ -118,6 +136,7 @@ export class Session {
   }
 
   async login(data: Login) {
+    if (this.transportError) throw this.transportError
     const revision = ++this.revision
     this.reset()
     this.publish({ status: 'loading', user: null })
@@ -145,10 +164,13 @@ export class Session {
   }
 
   async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const startedRevision = this.revision
     if (!this.token || Date.now() >= this.expiresAt - 30_000) await this.restore()
     const token = this.token
     if (!token)
       throw new ApiError(401, { code: 'UNAUTHORIZED', message: 'Authentication required' })
+    // A refresh may discover another signed-in account. Never send the old intent as that user.
+    if (startedRevision !== this.revision) throw new DOMException('Session changed', 'AbortError')
     const revision = this.revision
     const perform = (access: string) => {
       const headers = new Headers(options.headers)
@@ -171,6 +193,7 @@ export class Session {
       if (this.token === token) await this.restore()
       // Reads may retry once after refresh. Never replay a state-changing request.
       if (!this.token || (options.method ?? 'GET').toUpperCase() !== 'GET') throw error
+      if (revision !== this.revision) throw new DOMException('Session changed', 'AbortError')
       try {
         result = await perform(this.token)
       } catch (retryError) {

@@ -17,7 +17,7 @@ import { carrierListParams } from '../features/carrier/paths'
 import { Pager, WriteResult } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
 import { departureDate, departureTime, formatPrice } from '../features/search/search'
-import { Button, ButtonLink, Field, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 
 function RouteInfo({ route }: { route: OwnRoute }) {
   return (
@@ -94,7 +94,7 @@ export function CarrierRoutesPage() {
               {carrierError(query.error)}
             </Notice>
           ) : query.isFetching || !query.data ? (
-            <Notice title="Загружаем рейсы…" />
+            <Loading title="Загружаем рейсы…" />
           ) : (
             <>
               {!query.data.items.length && <Notice title="Рейсов на этой странице нет" />}
@@ -389,7 +389,7 @@ function RouteContent({ id, edit }: { id: string; edit: boolean }) {
           {carrierError(query.error)}
         </Notice>
       ) : !route ? (
-        <Notice title="Загружаем рейс…" />
+        <Loading title="Загружаем рейс…" />
       ) : edit ? (
         ['DRAFT', 'ACTIVE'].includes(route.status) ? (
           <RouteForm key={route.id} initial={route} />

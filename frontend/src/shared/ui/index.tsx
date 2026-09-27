@@ -1,4 +1,4 @@
-import { useEffect, useId } from 'react'
+import { useEffect, useId, useSyncExternalStore } from 'react'
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
 import { Link } from 'react-router'
 
@@ -20,7 +20,8 @@ export function Button({
       aria-busy={busy}
       {...props}
     >
-      {busy ? 'Подождите…' : children}
+      {busy && <span className="button-spinner" aria-hidden="true" />}
+      {children}
     </button>
   )
 }
@@ -82,6 +83,43 @@ export function Notice({
     <div className={`notice ${error ? 'notice--error' : ''}`} role={error ? 'alert' : 'status'}>
       <strong>{title}</strong>
       {children && <p>{children}</p>}
+    </div>
+  )
+}
+
+export function Loading({ title, children }: { title: string; children?: ReactNode }) {
+  return (
+    <div className="loading-block">
+      <div role="status">
+        <strong>{title}</strong>
+        {children && <p>{children}</p>}
+      </div>
+      <div className="loading-lines" aria-hidden="true">
+        <div className="skeleton" />
+        <div className="skeleton" />
+      </div>
+    </div>
+  )
+}
+
+function subscribeConnection(callback: () => void) {
+  window.addEventListener('online', callback)
+  window.addEventListener('offline', callback)
+  return () => {
+    window.removeEventListener('online', callback)
+    window.removeEventListener('offline', callback)
+  }
+}
+export function ConnectionStatus() {
+  const online = useSyncExternalStore(
+    subscribeConnection,
+    () => navigator.onLine,
+    () => true,
+  )
+  return online ? null : (
+    <div className="connection-status" role="status">
+      Нет соединения с сетью. Показанные данные могут устареть. После восстановления сети проверьте
+      результат операции перед повторной попыткой.
     </div>
   )
 }

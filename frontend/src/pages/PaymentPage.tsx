@@ -13,7 +13,7 @@ import {
 } from '../features/payments/payment'
 import { isUuid } from '../features/trips/trip'
 import { formatPrice } from '../features/search/search'
-import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 
 function PaymentContent({ id }: { id: string }) {
   const { session, user } = useSession()
@@ -129,7 +129,7 @@ function PaymentContent({ id }: { id: string }) {
           Обновите результат. До проверки не повторяйте оплату.
         </Notice>
       ) : !value || !message ? (
-        <Notice title="Проверяем оплату…" />
+        <Loading title="Проверяем оплату…" />
       ) : (
         <section className="booking-panel">
           <div role="status">

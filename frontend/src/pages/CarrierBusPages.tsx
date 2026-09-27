@@ -5,7 +5,7 @@ import { carrierError, readBus, readBusDetails, readPage } from '../features/car
 import { carrierListParams } from '../features/carrier/paths'
 import { Pager, WriteResult } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
-import { Button, ButtonLink, Field, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 
 export function CarrierBusesPage() {
   const [params, setParams] = useSearchParams()
@@ -42,7 +42,7 @@ export function CarrierBusesPage() {
           {carrierError(query.error)}
         </Notice>
       ) : query.isFetching || !query.data ? (
-        <Notice title="Загружаем автобусы…" />
+        <Loading title="Загружаем автобусы…" />
       ) : (
         <>
           {!query.data.items.length && <Notice title="Автобусов на этой странице нет" />}
@@ -182,7 +182,7 @@ function BusContent({ id }: { id: string }) {
           {carrierError(query.error)}
         </Notice>
       ) : !query.data ? (
-        <Notice title="Загружаем автобус…" />
+        <Loading title="Загружаем автобус…" />
       ) : (
         <section className="booking-panel">
           <h2>{query.data.name}</h2>

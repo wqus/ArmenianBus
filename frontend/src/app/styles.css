@@ -376,6 +376,47 @@
     background: #f1eef7;
     animation: pulse 1.5s ease-in-out infinite;
   }
+  .loading-block {
+    margin: 24px 0;
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+  }
+  .loading-block p {
+    margin-top: 8px;
+  }
+  .loading-lines {
+    display: grid;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .loading-lines .skeleton {
+    height: 24px;
+  }
+  .loading-lines .skeleton:last-child {
+    width: 65%;
+  }
+  .button-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .connection-status {
+    padding: 16px 24px;
+    color: var(--ink);
+    background: var(--lavender);
+    border-bottom: 1px solid var(--line);
+  }
   @keyframes pulse {
     50% {
       opacity: 0.5;

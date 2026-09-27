@@ -259,11 +259,22 @@ test('lost creation is not replayed and late completion cannot navigate away fro
   await page.getByLabel('Количество мест').fill('1')
   await page.getByRole('button', { name: 'Создать автобус' }).click()
   await expect.poll(() => state.writes.length).toBe(2)
+  let releaseModule!: () => void
+  const moduleGate = new Promise<void>((resolve) => {
+    releaseModule = resolve
+  })
+  await page.route('**/src/pages/CarrierRoutePages.tsx', async (route) => {
+    await moduleGate
+    await route.continue()
+  })
   await page
     .getByRole('navigation', { name: 'Кабинет перевозчика' })
     .getByRole('link', { name: 'Рейсы', exact: true })
     .click()
+  await expect(page.getByText('Открываем страницу…', { exact: true })).toBeVisible()
   release()
+  await expect(page).toHaveURL('/carrier/routes')
+  releaseModule()
   await expect(page.getByRole('heading', { name: 'Мои рейсы', exact: true })).toBeVisible()
   await expect(page).toHaveURL('/carrier/routes')
 })

@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import { useSession } from '../features/auth/context'
 import { authMessage, roleLabels } from '../features/auth/types'
-import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { readCarrier } from '../features/carrier/contracts'
 
 export function AccountPage() {
@@ -75,7 +75,7 @@ export function CarrierProfilePage() {
         Контактные данные и результат проверки профиля.
       </PageHeading>
       {profile.isPending ? (
-        <Notice title="Загружаем профиль…" />
+        <Loading title="Загружаем профиль…" />
       ) : profile.isError ? (
         <div className="auth-unavailable">
           <Notice title={authMessage(profile.error)} error />

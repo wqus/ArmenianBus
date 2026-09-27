@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router'
-import { Button, ButtonLink, Notice, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { SearchForm } from '../features/search/SearchForm'
 import {
   departureDate,
@@ -119,7 +119,7 @@ function Results({ input, params }: { input: SearchInput; params: URLSearchParam
               : `Рейсов на странице: ${data?.items.length ?? 0}`}
         </div>
         {query.isFetching ? (
-          <Notice title="Ищем рейсы…">Проверяем расписание и свободные места.</Notice>
+          <Loading title="Ищем рейсы…">Проверяем расписание и свободные места.</Loading>
         ) : query.isError ? (
           <Notice title="Не удалось загрузить рейсы" error>
             {searchError(query.error)}
