@@ -40,6 +40,13 @@ export function HelpPage() {
           </details>
         ))}
       </div>
+      <div className="information-note">
+        <h2>Связь с поддержкой</h2>
+        <p>
+          В тестовой версии канал поддержки ещё не подключён. Контакты и время работы появятся здесь
+          перед публичным запуском.
+        </p>
+      </div>
       <div className="page-back">
         <BackHome />
       </div>

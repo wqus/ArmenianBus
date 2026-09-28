@@ -232,6 +232,8 @@
   }
   .footer-links {
     display: flex;
+    flex-wrap: wrap;
+    max-width: 540px;
     gap: 24px;
     font-size: 12px;
     color: var(--muted);
@@ -239,6 +241,26 @@
   .footer-links a:hover {
     color: var(--primary);
     text-decoration: underline;
+  }
+  .legal-page {
+    max-width: 860px;
+  }
+  .legal-page .page-heading h1 {
+    overflow-wrap: anywhere;
+  }
+  .legal-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    margin-block: 24px;
+    font-size: 14px;
+  }
+  .legal-links a {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .legal-links a[aria-current='page'] {
+    font-weight: 700;
   }
   .footer-mark {
     font-size: 10px;

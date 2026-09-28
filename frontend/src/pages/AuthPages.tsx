@@ -219,6 +219,12 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                 {register ? 'Войти' : 'Зарегистрироваться'}
               </Link>
             </p>
+            {register && (
+              <p className="auth-switch">
+                Для ознакомления: <Link to="/terms">условия использования</Link> и{' '}
+                <Link to="/privacy">конфиденциальность</Link>. Пока это черновики для тестирования.
+              </p>
+            )}
           </>
         )}
       </section>

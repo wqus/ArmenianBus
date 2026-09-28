@@ -9,6 +9,7 @@ import { TripPage } from '../pages/TripPage'
 import { BookingPage, BookingsPage, CreateBookingPage } from '../pages/BookingPages'
 import { PaymentPage } from '../pages/PaymentPage'
 import { CarriersPage, HelpPage, NotFoundPage } from '../pages/InformationPages'
+import { LegalPage } from '../pages/LegalPages'
 import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
 import { Protected } from '../features/auth/Protected'
@@ -167,6 +168,9 @@ function Shell() {
           <div className="footer-links">
             <NavLink to="/help">О бронировании</NavLink>
             <NavLink to="/carriers">Для перевозчиков</NavLink>
+            <NavLink to="/terms">Условия использования</NavLink>
+            <NavLink to="/privacy">Конфиденциальность</NavLink>
+            <NavLink to="/refunds">Отмена и возвраты</NavLink>
           </div>
           <span className="footer-mark">РОССИЯ ↔ АРМЕНИЯ</span>
         </div>
@@ -197,6 +201,9 @@ export function App() {
                 <Route path="trips/:id" element={<TripPage />} />
                 <Route path="carriers" element={<CarriersPage />} />
                 <Route path="help" element={<HelpPage />} />
+                <Route path="terms" element={<LegalPage kind="terms" />} />
+                <Route path="privacy" element={<LegalPage kind="privacy" />} />
+                <Route path="refunds" element={<LegalPage kind="refunds" />} />
                 <Route path="login" element={<AuthPage key="login" />} />
                 <Route path="register" element={<AuthPage key="register" register />} />
                 <Route element={<Protected />}>
