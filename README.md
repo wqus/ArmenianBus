@@ -87,6 +87,8 @@ ADMIN видит пользователей, перевозчиков, рейс�
 
 ## Проверки
 
+Подготовка staging и диагностика платежей/SMTP без создания платежей и отправки писем: [docs/staging-integrations.md](docs/staging-integrations.md).
+
 Выпуск образов, обновление с проверенным backup и ограниченный откат кода: [docs/releases.md](docs/releases.md). Workflow подготовлен; GHCR и публичный deploy пока не запускались.
 
 На Python 3.12+:

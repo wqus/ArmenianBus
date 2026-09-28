@@ -38,6 +38,8 @@ Metadata из проверенного GET позволяет обработат
 
 ## Подключение тестового магазина
 
+Предварительная проверка конфигурации и доступа без создания платежа, а также сценарии приёмки: [staging-integrations.md](staging-integrations.md).
+
 В локальном `.env` задаются `PAYMENTS_ENABLED=true`, `YOOKASSA_SHOP_ID`, `YOOKASSA_SECRET_KEY`, `YOOKASSA_TEST_MODE=true`, `PAYMENT_RETURN_URL`. Ключ не передаётся через API пассажира и не коммитится. `test_mode` проверяет поле `test` ответа; сам режим магазина определяется выданными YooKassa ключами.
 
 Сначала собрать `api worker payment-worker`, применить `alembic upgrade head`, затем перезапустить сервисы. Для уведомлений понадобится доступный YooKassa HTTPS URL `/api/v1/webhooks/payments` и настройка событий в кабинете магазина. Сам localhost для внешних webhook недоступен. Return URL ведёт на frontend `/payment/result`; при создании Payment backend добавляет `booking=<UUID>`, сохраняя адрес в payload для повторов. Страница читает состояние API, не доверяя параметрам успеха: [frontend-payments.md](frontend-payments.md). Origin возврата должен совпадать с адресом открытого frontend, чтобы сохранить браузерную сессию и доступ к ключу попытки.
