@@ -112,9 +112,10 @@ class Deployment:
             args.project,
             "-f",
             str(ROOT / "compose.production.yaml"),
-            "--env-file",
-            str(args.env_file),
         ]
+        if args.compose_override:
+            self.base += ["-f", str(args.compose_override)]
+        self.base += ["--env-file", str(args.env_file)]
 
     def run(self, command):
         return subprocess.check_output(
@@ -228,11 +229,10 @@ class Deployment:
             str(archive),
             "--compose-file",
             str(ROOT / "compose.production.yaml"),
-            "--env-file",
-            str(self.args.env_file),
-            "--project-name",
-            self.args.project,
         ]
+        if self.args.compose_override:
+            common += ["--compose-file", str(self.args.compose_override)]
+        common += ["--env-file", str(self.args.env_file), "--project-name", self.args.project]
         script = str(ROOT / "scripts/database_backup.py")
         print("Creating database backup", flush=True)
         self.run([sys.executable, script, "backup", *common])
@@ -336,6 +336,11 @@ def main():
     parser.add_argument("action", choices=["apply", "rollback"])
     parser.add_argument("--project", required=True)
     parser.add_argument("--env-file", required=True, type=Path)
+    parser.add_argument(
+        "--compose-override",
+        type=Path,
+        help="Optional second Compose file used for every release and backup step",
+    )
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--ca-file", type=Path, help="Trusted private CA for an isolated drill")
@@ -347,6 +352,8 @@ def main():
         if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,62}", args.project):
             raise ValueError("Invalid Compose project name")
         args.env_file = args.env_file.resolve(strict=True)
+        if args.compose_override:
+            args.compose_override = args.compose_override.resolve(strict=True)
         args.state = args.state.resolve()
         if args.action == "apply" and args.manifest is None:
             raise ValueError("Apply requires --manifest")

@@ -4,6 +4,8 @@
 
 D1 добавляет общий frontend/API HTTPS-стек, отдельные настройки staging/production и воспроизводимый локальный deployment smoke. Инструкции: [окружения](docs/environments.md).
 
+Для VPS, где 80/443 уже заняты существующим Nginx, используйте отдельный [вариант размещения за Nginx](docs/vps-existing-nginx.md).
+
 ## Локальный запуск
 
 Нужны Docker Desktop с запущенным Linux Engine и Docker Compose. Для локальной разработки:

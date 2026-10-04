@@ -8,7 +8,7 @@
 
 Workflow использует `GITHUB_TOKEN` с `packages: write` только в publish job. Для чтения приватных образов на сервере нужен отдельный доступ `read:packages`; пароль передавать Docker через `--password-stdin`, не записывать в команды, репозиторий или журналы. См. [документацию GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
-Артефакт `release-<SHA>-<run>-<attempt>` сохраняется на 90 дней: manifest, production Compose, init SQL shell и Python-утилиты. Сохранить проверенный артефакт и журнал выпуска в защищённом хранилище на принятый срок поддержки. Не выполнять произвольные manifests из непроверенного источника: digest фиксирует содержимое, но сам по себе не удостоверяет автора. Базовые образы пока используют теги; повторная сборка того же SHA не гарантирует те же байты. На production переносится та же проверенная в staging пара digest без пересборки.
+Артефакт `release-<SHA>-<run>-<attempt>` сохраняется на 90 дней: manifest, production Compose, overlay и Caddyfile для существующего Nginx, init SQL shell и Python-утилиты. Сохранить проверенный артефакт и журнал выпуска в защищённом хранилище на принятый срок поддержки. Не выполнять произвольные manifests из непроверенного источника: digest фиксирует содержимое, но сам по себе не удостоверяет автора. Базовые образы пока используют теги; повторная сборка того же SHA не гарантирует те же байты. На production переносится та же проверенная в staging пара digest без пересборки.
 
 ## Подготовка сервера
 
@@ -42,6 +42,8 @@ python scripts/release_deploy.py apply --project armeniabus-staging --env-file /
 ```sh
 docker compose -p armeniabus-staging -f compose.production.yaml --env-file /secure/staging.env --env-file release-state/staging/active.env ps
 ```
+
+На хосте с уже работающим Nginx при каждом `apply` и `rollback` дополнительно передавать `--compose-override compose.existing-nginx.yaml`. Для ручных Compose-команд тоже указывать этот второй файл после `compose.production.yaml`; одинаковая пара применяется к backup и restore-check. Первичную настройку такого хоста описывает [vps-existing-nginx.md](vps-existing-nginx.md).
 
 Не запускать обычный `up` с устаревшими тегами из исходного env. Утилита обновления сама подставляет manifest, поэтому ей `active.env` не требуется. После приёмки staging повторить процедуру с тем же manifest, production project/env и отдельным каталогом состояния. Изменения env, Compose или схемы требуют отдельного плана совместимости; утилита не обновляет PostgreSQL/Redis и не выполняет zero-downtime deploy.
 

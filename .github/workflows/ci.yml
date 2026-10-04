@@ -56,7 +56,11 @@ jobs:
       - run: python -m pytest -q
       - run: docker compose config --quiet
       - run: docker compose -f compose.production.yaml --env-file .env.production.example config --quiet
+      - run: docker compose -f compose.production.yaml -f compose.existing-nginx.yaml --env-file .env.production.example config --quiet
+        env:
+          INGRESS_PROXY_IP: 172.18.0.2
       - run: docker compose -p armeniabus-staging -f compose.production.yaml --env-file .env.staging.example config --quiet
+      - run: docker run --rm -e APP_DOMAIN=bus.example.invalid -e INGRESS_PROXY_IP=172.18.0.2 -v "$PWD/deploy/Caddyfile.behind-nginx:/etc/caddy/Caddyfile:ro" caddy:2 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
       - run: docker build --target runtime -t armeniabus-api:ci .
 
   frontend:

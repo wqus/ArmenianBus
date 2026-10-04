@@ -1,0 +1,50 @@
+{
+	admin off
+	servers {
+		trusted_proxies static {$INGRESS_PROXY_IP}
+		trusted_proxies_strict
+		timeouts {
+			read_header 10s
+			read_body 15s
+			idle 60s
+		}
+	}
+}
+
+# The only public TLS endpoint is the existing Nginx. This listener has no host port.
+http://{$APP_DOMAIN} {
+	encode zstd gzip
+	header ?Cache-Control no-store
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	@api path /api /api/*
+	handle @api {
+		reverse_proxy api:8000 {
+			# Nginx redirects plain HTTP and terminates public HTTPS.
+			header_up X-Forwarded-Proto https
+		}
+	}
+	@privateFiles path /.* /docs /redoc /openapi.json /src/* /node_modules/*
+	handle @privateFiles {
+		respond 404
+	}
+	handle {
+		root * /srv
+		header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+		handle /assets/* {
+			@existing file
+			header @existing Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+		handle {
+			header Cache-Control no-store
+			try_files {path} /index.html
+			file_server
+		}
+	}
+}

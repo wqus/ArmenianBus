@@ -77,11 +77,43 @@ def test_config_fingerprint_ignores_images_in_compose_extensions_but_keeps_envir
     assert deploy.configuration_hash(before) != deploy.configuration_hash(after)
 
 
+def test_release_and_backup_use_the_same_compose_override(tmp_path):
+    override = tmp_path / "compose.existing-nginx.yaml"
+    args = Namespace(
+        project="test",
+        env_file=tmp_path / "env",
+        state=tmp_path / "release.json",
+        compose_override=override,
+    )
+    instance = deploy.Deployment(args, OLD)
+    assert instance.base.count("-f") == 2
+    assert instance.base[instance.base.index("-f") + 1] == str(
+        deploy.ROOT / "compose.production.yaml"
+    )
+    assert str(override) in instance.base
+    commands = []
+    instance.run = lambda command: commands.append(command) or ""
+    instance.backup("0010")
+    backup_commands = [command for command in commands if "database_backup.py" in command[1]]
+    assert len(backup_commands) == 2
+    for command in backup_commands:
+        files = [
+            command[index + 1]
+            for index, part in enumerate(command[:-1])
+            if part == "--compose-file"
+        ]
+        assert files == [str(deploy.ROOT / "compose.production.yaml"), str(override)]
+
+
 @pytest.fixture
 def operation(tmp_path, monkeypatch):
     events = []
     args = Namespace(
-        project="test", state=tmp_path / "journal.json", env_file=tmp_path / "env", ca_file=None
+        project="test",
+        state=tmp_path / "journal.json",
+        env_file=tmp_path / "env",
+        ca_file=None,
+        compose_override=None,
     )
 
     class FakeDeployment:
@@ -182,7 +214,7 @@ def test_schema_change_refuses_code_rollback_before_stop(operation):
 
 @pytest.mark.parametrize("changed", ["configuration", "daemon", "images"])
 def test_rollback_rejects_changed_environment_or_obsolete_journal(tmp_path, changed):
-    args = Namespace(project="test", env_file=tmp_path / "env")
+    args = Namespace(project="test", env_file=tmp_path / "env", compose_override=None)
     instance = deploy.Deployment(args, OLD)
     instance.fingerprint = "config"
     instance.daemon = "host"

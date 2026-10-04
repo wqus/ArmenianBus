@@ -64,6 +64,8 @@ jobs:
           path: |
             release.json
             compose.production.yaml
+            compose.existing-nginx.yaml
+            deploy/Caddyfile.behind-nginx
             deploy/init-app-db.sh
             scripts/release_deploy.py
             scripts/release_manifest.py

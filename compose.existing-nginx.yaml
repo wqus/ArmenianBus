@@ -1,0 +1,17 @@
+# Use with compose.production.yaml only when an existing Nginx owns public 80/443.
+# Requires Docker Compose with support for the !reset tag.
+services:
+  proxy:
+    ports: !reset []
+    volumes:
+      - ./deploy/Caddyfile.behind-nginx:/etc/caddy/Caddyfile:ro
+    networks:
+      ingress:
+        aliases: [armeniabus-web]
+    environment:
+      INGRESS_PROXY_IP: ${INGRESS_PROXY_IP:?Set the Nginx container IP on the shared network}
+
+networks:
+  ingress:
+    external: true
+    name: ${INGRESS_NETWORK:-nginx-proxy}
