@@ -126,6 +126,7 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   await page.getByRole('link', { name: 'Бронирования рейса' }).click()
   await expect(page.getByRole('article')).toHaveCount(1)
   await page.getByRole('link', { name: 'Открыть бронь' }).click()
+  await expect(page.getByRole('heading', { name: 'Бронь на ваш рейс', exact: true })).toBeVisible()
   await expect(page.getByText('Место удерживается', { exact: true })).toBeVisible()
   await page.getByRole('link', { name: 'Открыть рейс' }).click()
   await page.getByRole('link', { name: 'Изменить данные' }).click()

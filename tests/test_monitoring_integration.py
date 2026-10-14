@@ -6,6 +6,7 @@ import pytest
 from sqlalchemy import delete, func, select, text, update
 
 from armeniabus.core.config import Settings
+from armeniabus.healthcheck import check
 from armeniabus.infrastructure.db.session import create_session_factory
 from armeniabus.modules.admin.monitoring import WORKERS, WorkerHeartbeat, heartbeat, worker_state
 from tests.test_carriers_integration import world  # noqa: F401
@@ -18,17 +19,20 @@ def test_heartbeat_failure_recovery_disabled_and_staleness():
         engine, sessions = create_session_factory(Settings().database_url)
         try:
             await heartbeat(sessions, "test-worker", count=3)
+            assert await check("test-worker") == 0
             async with sessions() as db:
                 first = await db.get(WorkerHeartbeat, "test-worker")
                 success_at = first.last_success_at
                 assert first.last_count == 3
             await heartbeat(sessions, "test-worker", error="TimeoutError")
+            assert await check("test-worker") == 1
             async with sessions() as db:
                 failed = await db.get(WorkerHeartbeat, "test-worker")
                 now = await db.scalar(select(func.clock_timestamp()))
                 assert failed.last_success_at == success_at
                 assert worker_state(failed, now, 600) == "ERROR"
             await heartbeat(sessions, "test-worker", enabled=False)
+            assert await check("test-worker") == 0
             async with sessions() as db:
                 recovered = await db.get(WorkerHeartbeat, "test-worker")
                 assert recovered.last_error is None
@@ -38,6 +42,14 @@ def test_heartbeat_failure_recovery_disabled_and_staleness():
                     == "STALE"
                 )
                 assert worker_state(None, now, 600) == "MISSING"
+                await db.execute(
+                    update(WorkerHeartbeat)
+                    .where(WorkerHeartbeat.name == "test-worker")
+                    .values(last_seen_at=func.clock_timestamp() - text("interval '3 hours'"))
+                )
+                await db.commit()
+            assert await check("test-worker") == 1
+            assert await check("absent-test-worker") == 1
         finally:
             async with sessions() as db:
                 await db.execute(

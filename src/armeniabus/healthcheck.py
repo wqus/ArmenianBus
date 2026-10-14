@@ -2,26 +2,38 @@
 
 import argparse
 import asyncio
+import os
 
-from sqlalchemy import func, select
+import asyncpg
+from dotenv import load_dotenv
 
-from armeniabus.core.config import Settings
-from armeniabus.infrastructure.db.session import create_session_factory
-from armeniabus.modules.admin.monitoring import WORKERS, WorkerHeartbeat, worker_state
+from armeniabus.core.worker_health import WORKERS, heartbeat_state
 
 
 async def check(name):
-    settings = Settings()
-    engine, sessions = create_session_factory(settings.database_url)
+    # Avoid loading FastAPI, Pydantic and the ORM in a second process inside a
+    # CPU/memory-limited worker. The database heartbeat remains authoritative.
+    load_dotenv(".env")
+    url = os.environ["DATABASE_URL"]
+    if not url.startswith("postgresql+asyncpg://"):
+        raise ValueError("Expected the application asyncpg database URL")
+    stale_seconds = int(os.environ.get("WORKER_STALE_SECONDS", "600"))
+    if not 30 <= stale_seconds <= 7200:
+        raise ValueError("Invalid heartbeat age limit")
+    connection = await asyncpg.connect(url.replace("postgresql+asyncpg://", "postgresql://", 1))
     try:
-        async with sessions() as db:
-            now = await db.scalar(select(func.clock_timestamp()))
-            row = await db.get(WorkerHeartbeat, name)
-            state = worker_state(row, now, settings.worker_stale_seconds)
-            print(f"{name}: {state}")
-            return 0 if state in {"OK", "DISABLED"} else 1
+        row = await connection.fetchrow(
+            "SELECT last_seen_at, last_error, enabled, clock_timestamp() AS now "
+            "FROM worker_heartbeats WHERE name = $1",
+            name,
+        )
+        state = (
+            "MISSING" if row is None else heartbeat_state(**dict(row), stale_seconds=stale_seconds)
+        )
+        print(f"{name}: {state}")
+        return 0 if state in {"OK", "DISABLED"} else 1
     finally:
-        await engine.dispose()
+        await connection.close()
 
 
 if __name__ == "__main__":

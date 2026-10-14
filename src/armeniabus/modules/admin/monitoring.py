@@ -1,16 +1,15 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Mapped, mapped_column
 
+from armeniabus.core.worker_health import WORKERS, heartbeat_state
 from armeniabus.infrastructure.db.base import Base
 from armeniabus.modules.bookings.models import Booking
 from armeniabus.modules.notifications.models import Notification
 from armeniabus.modules.payments.models import Payment
 from armeniabus.modules.payments.refunds import RefundCase
-
-WORKERS = ("holds", "payments", "notifications")
 
 
 class WorkerHeartbeat(Base):
@@ -45,11 +44,13 @@ async def heartbeat(sessions, name, *, enabled=True, count=0, error=None):
 def worker_state(row, now, stale_seconds):
     if row is None:
         return "MISSING"
-    if row.last_seen_at < now - timedelta(seconds=stale_seconds):
-        return "STALE"
-    if row.last_error:
-        return "ERROR"
-    return "OK" if row.enabled else "DISABLED"
+    return heartbeat_state(
+        last_seen_at=row.last_seen_at,
+        last_error=row.last_error,
+        enabled=row.enabled,
+        now=now,
+        stale_seconds=stale_seconds,
+    )
 
 
 async def snapshot(db, stale_seconds):

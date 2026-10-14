@@ -274,6 +274,17 @@ def bootstrap_drill(images, commit, root):
                 ]
             )
             print("Bootstrap drill passed: pilot limits, first migration, HTTPS and workers")
+    except Exception:
+        # Inspect only state, never Config.Env (which contains generated credentials).
+        containers = output([*compose, "ps", "-aq"]).splitlines()
+        if containers:
+            subprocess.run(
+                ["docker", "inspect", "--format", "{{.Name}} {{json .State}}", *containers],
+                cwd=root,
+                env=environment,
+                check=False,
+            )
+        raise
     finally:
         # Only this newly allocated synthetic project; no production volume is eligible.
         try:

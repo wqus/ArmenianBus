@@ -373,6 +373,7 @@ test('carrier bookings are read-only, filterable and hide inaccessible or malfor
   expect(state.reads.at(-1)).toContain(`route_id=${id}`)
   await page.getByLabel('Статус брони', { exact: true }).selectOption('')
   await page.getByRole('link', { name: 'Открыть бронь' }).click()
+  await expect(page.getByRole('heading', { name: 'Бронь на ваш рейс', exact: true })).toBeVisible()
   await expect(page.getByText('Оплачено', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Отменить|Оплатить/ })).toHaveCount(0)
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])

@@ -58,7 +58,8 @@ services:
       - ./deploy/init-app-db.sh:/docker-entrypoint-initdb.d/10-app-role.sh:ro
     networks: [backend]
     healthcheck:
-      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      # TCP stays closed during the image's temporary initialization server.
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
       interval: 5s
       timeout: 3s
       retries: 20

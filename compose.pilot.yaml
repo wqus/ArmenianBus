@@ -34,14 +34,23 @@ services:
     mem_limit: 96m
     memswap_limit: 96m
     cpus: 0.05
+    healthcheck:
+      timeout: 30s
+      start_period: 60s
   payment-worker:
     mem_limit: 96m
     memswap_limit: 96m
     cpus: 0.05
+    healthcheck:
+      timeout: 30s
+      start_period: 60s
   notification-worker:
     mem_limit: 96m
     memswap_limit: 96m
     cpus: 0.05
+    healthcheck:
+      timeout: 30s
+      start_period: 60s
   proxy:
     mem_limit: 64m
     memswap_limit: 64m
