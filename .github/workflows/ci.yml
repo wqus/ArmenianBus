@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches-ignore: [main]
   pull_request:
   workflow_call:
 
@@ -57,6 +58,9 @@ jobs:
       - run: docker compose config --quiet
       - run: docker compose -f compose.production.yaml --env-file .env.production.example config --quiet
       - run: docker compose -f compose.production.yaml -f compose.existing-nginx.yaml --env-file .env.production.example config --quiet
+        env:
+          INGRESS_PROXY_IP: 172.18.0.2
+      - run: docker compose -f compose.production.yaml -f compose.existing-nginx.yaml -f compose.pilot.yaml --env-file .env.production.example config --quiet
         env:
           INGRESS_PROXY_IP: 172.18.0.2
       - run: docker compose -p armeniabus-staging -f compose.production.yaml --env-file .env.staging.example config --quiet

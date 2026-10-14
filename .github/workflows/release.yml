@@ -1,6 +1,8 @@
 name: Release images
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -65,10 +67,46 @@ jobs:
             release.json
             compose.production.yaml
             compose.existing-nginx.yaml
+            compose.pilot.yaml
             deploy/Caddyfile.behind-nginx
             deploy/init-app-db.sh
             scripts/release_deploy.py
             scripts/release_manifest.py
             scripts/database_backup.py
+            scripts/ci_deploy.py
           if-no-files-found: error
           retention-days: 90
+
+  deploy:
+    needs: publish
+    if: github.ref == 'refs/heads/main' && vars.PRODUCTION_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: release-artifact
+      - name: Deploy the tested release over pinned SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          DEPLOY_SSH_KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          RELEASE_COMMIT: ${{ github.sha }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: >-
+          python scripts/ssh_release.py --artifact release-artifact
+          --release-id "$RELEASE_ID" --commit "$RELEASE_COMMIT"
+          --repository "$RELEASE_REPOSITORY"

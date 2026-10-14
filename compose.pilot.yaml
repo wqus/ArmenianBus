@@ -1,0 +1,48 @@
+# Bounded single-CPU pilot on a shared VPS. Not a production capacity guarantee.
+# Sum of resident-memory ceilings for the seven running services: 832 MiB.
+# Migrations replace stopped writers during updates and do not add to that sum.
+services:
+  db:
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: 0.20
+    pids_limit: 64
+    command:
+      - postgres
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - max_connections=30
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=16MB
+  redis:
+    mem_limit: 64m
+    memswap_limit: 64m
+    cpus: 0.05
+    command: [redis-server, --maxmemory, 32mb, --maxmemory-policy, noeviction]
+  api:
+    mem_limit: 224m
+    memswap_limit: 224m
+    cpus: 0.40
+  migrate:
+    mem_limit: 224m
+    memswap_limit: 224m
+    cpus: 0.40
+  worker:
+    mem_limit: 96m
+    memswap_limit: 96m
+    cpus: 0.05
+  payment-worker:
+    mem_limit: 96m
+    memswap_limit: 96m
+    cpus: 0.05
+  notification-worker:
+    mem_limit: 96m
+    memswap_limit: 96m
+    cpus: 0.05
+  proxy:
+    mem_limit: 64m
+    memswap_limit: 64m
+    cpus: 0.10

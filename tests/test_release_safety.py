@@ -132,6 +132,11 @@ def operation(tmp_path, monkeypatch):
         def current_images(self):
             return OLD
 
+        def check_empty_project(self):
+            events.append("empty-project-guard")
+            if self.fail == "existing":
+                raise ValueError("Init refused: project containers already exist")
+
         def revision(self):
             return self.revision_value
 
@@ -145,6 +150,9 @@ def operation(tmp_path, monkeypatch):
             return "backup.dump"
 
         def compose(self, *command):
+            if command[0] in {"pull", "up"}:
+                events.append(command[0])
+                return
             assert command[-2:] == ("upgrade", "0010")
             events.append("migrate")
             if self.fail == "migrate":
@@ -200,6 +208,72 @@ def test_update_cannot_overwrite_an_existing_journal(operation):
         deploy.apply(args, RELEASE)
     assert "stop" not in events
     assert args.state.read_text() == "existing"
+
+
+def test_first_installation_creates_data_without_backup(operation):
+    args, events, _ = operation
+    deploy.initialize(args, RELEASE)
+    assert events == [
+        "preflight",
+        "empty-project-guard",
+        "pull",
+        "up",
+        "migrate",
+        "start-and-https",
+        "active-images",
+    ]
+    state = json.loads(args.state.read_text())
+    assert state["phase"] == "complete"
+    assert state["operation"] == "init"
+    assert "backup" not in state
+
+
+def test_first_installation_refuses_existing_project(operation):
+    args, events, fake = operation
+    fake.fail = "existing"
+    with pytest.raises(ValueError, match="Init refused"):
+        deploy.initialize(args, RELEASE)
+    assert "up" not in events
+    assert not args.state.exists()
+
+
+def test_first_installation_failure_preserves_journal_and_stops_writers(operation):
+    args, events, fake = operation
+    fake.fail = "migrate"
+    with pytest.raises(ValueError):
+        deploy.initialize(args, RELEASE)
+    assert events[-1] == "stop"
+    assert "start-and-https" not in events
+    assert json.loads(args.state.read_text())["phase"] == "migration"
+
+
+def test_init_refuses_existing_volume_even_without_containers(tmp_path):
+    args = Namespace(
+        project="test",
+        env_file=tmp_path / "env",
+        compose_override=None,
+        state=tmp_path / "init.json",
+    )
+    instance = deploy.Deployment(args, NEW)
+    instance.compose = lambda *args: ""
+    instance.run = lambda command: "unrelated_data\ntest_postgres_data"
+    with pytest.raises(ValueError, match="volume already exists"):
+        instance.check_empty_project()
+
+
+def test_init_refuses_history_even_if_volume_was_removed(tmp_path):
+    args = Namespace(
+        project="test",
+        env_file=tmp_path / "env",
+        compose_override=None,
+        state=tmp_path / "init.json",
+    )
+    instance = deploy.Deployment(args, NEW)
+    instance.compose = lambda *args: ""
+    instance.run = lambda command: ""
+    (tmp_path / "old.json").write_text(json.dumps({"format": 1, "project": "test"}))
+    with pytest.raises(ValueError, match="history already exists"):
+        instance.check_empty_project()
 
 
 def test_schema_change_refuses_code_rollback_before_stop(operation):

@@ -1,4 +1,4 @@
-"""Explicit maintenance-window update of an existing stack; no database downgrade or restore."""
+"""First installation and maintenance-window updates; no database downgrade or restore."""
 
 import argparse
 import contextlib
@@ -11,6 +11,7 @@ import socket
 import ssl
 import subprocess
 import sys
+import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -21,6 +22,23 @@ else:
 
 ROOT = Path(__file__).resolve().parents[1]
 WRITERS = ["api", "worker", "payment-worker", "notification-worker"]
+
+
+def compose_overrides(args):
+    value = args.compose_override
+    return value if isinstance(value, list) else [value] if value else []
+
+
+def check_available_memory(minimum_mib):
+    if not minimum_mib:
+        return
+    fields = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
+    available_mib = int(fields["MemAvailable"].split()[0]) // 1024
+    if available_mib < minimum_mib:
+        raise ValueError(
+            f"First installation needs at least {minimum_mib} MiB available; "
+            f"currently {available_mib} MiB. No application containers started."
+        )
 
 
 def configuration_hash(configuration):
@@ -96,6 +114,20 @@ def https_smoke(origin, ca_file=None):
             connection.close()
 
 
+def wait_for_https(origin, ca_file=None):
+    # Existing Nginx caches Docker DNS briefly, including negative answers on a first boot.
+    for attempt in range(6):
+        try:
+            https_smoke(origin, ca_file)
+            return
+        except ssl.SSLCertVerificationError:
+            raise
+        except (OSError, ValueError, http.client.HTTPException):
+            if attempt == 5:
+                raise
+            time.sleep(2)
+
+
 class Deployment:
     def __init__(self, args, images):
         self.args = args
@@ -113,8 +145,8 @@ class Deployment:
             "-f",
             str(ROOT / "compose.production.yaml"),
         ]
-        if args.compose_override:
-            self.base += ["-f", str(args.compose_override)]
+        for override in compose_overrides(args):
+            self.base += ["-f", str(override)]
         self.base += ["--env-file", str(args.env_file)]
 
     def run(self, command):
@@ -151,6 +183,21 @@ class Deployment:
         if any(images[item] != images["api"] for item in WRITERS):
             raise ValueError("API and workers must use the same existing image")
         return [images["api"], images["proxy"]]
+
+    def check_empty_project(self):
+        if self.compose("ps", "-a", "-q"):
+            raise ValueError("Init refused: project containers already exist")
+        volumes = self.run(["docker", "volume", "ls", "--format", "{{.Name}}"])
+        if f"{self.args.project}_postgres_data" in volumes.splitlines():
+            raise ValueError("Init refused: persistent database volume already exists")
+        for journal in self.args.state.parent.glob("*.json"):
+            if journal.name.endswith(".dump.json"):
+                continue
+            value = json.loads(journal.read_text())
+            if not isinstance(value, dict):
+                raise ValueError("Init refused: invalid deployment journal")
+            if value.get("format") == 1 and value.get("project") == self.args.project:
+                raise ValueError("Init refused: deployment history already exists")
 
     def check_rollback_target(self, state):
         if (
@@ -221,7 +268,7 @@ class Deployment:
             *WRITERS,
         )
         self.compose("up", "-d", "--no-build", "--pull", "never", "--no-deps", "--wait", "proxy")
-        https_smoke(self.origin, self.args.ca_file)
+        wait_for_https(self.origin, self.args.ca_file)
 
     def backup(self, revision):
         archive = self.args.state.with_suffix(".dump")
@@ -230,8 +277,8 @@ class Deployment:
             "--compose-file",
             str(ROOT / "compose.production.yaml"),
         ]
-        if self.args.compose_override:
-            common += ["--compose-file", str(self.args.compose_override)]
+        for override in compose_overrides(self.args):
+            common += ["--compose-file", str(override)]
         common += ["--env-file", str(self.args.env_file), "--project-name", self.args.project]
         script = str(ROOT / "scripts/database_backup.py")
         print("Creating database backup", flush=True)
@@ -305,6 +352,59 @@ def apply(args, manifest):
         raise
 
 
+def initialize(args, manifest):
+    deployment = Deployment(args, [manifest["api_image"], manifest["web_image"]])
+    deployment.preflight(manifest)
+    deployment.check_empty_project()
+    check_available_memory(getattr(args, "min_available_mib", 0))
+    state = {
+        "format": 1,
+        "project": args.project,
+        "operation": "init",
+        "new_images": deployment.image_ids,
+        "configuration_hash": deployment.fingerprint,
+        "daemon": deployment.daemon,
+        "target": manifest,
+        "phase": "prepared",
+    }
+    args.state.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with args.state.open("x", encoding="utf-8") as stream:
+        json.dump(state, stream, indent=2)
+    started = False
+    try:
+        # There is no existing application database to back up on a first installation.
+        deployment.compose("pull", "db", "redis")
+        started = True
+        deployment.compose("up", "-d", "--no-build", "--wait", "db", "redis")
+        state["phase"] = "migration"
+        save(args.state, state)
+        deployment.compose(
+            "run",
+            "--rm",
+            "--no-deps",
+            "--pull",
+            "never",
+            "migrate",
+            "alembic",
+            "upgrade",
+            manifest["schema_revision"],
+        )
+        if deployment.revision() != manifest["schema_revision"]:
+            raise ValueError("Database did not reach the release schema")
+        state["phase"] = "starting"
+        save(args.state, state)
+        deployment.start()
+        deployment.active_images()
+        state["phase"] = "complete"
+        save(args.state, state)
+        print("First installation complete; HTTPS readiness and frontend passed")
+    except Exception:
+        if started:
+            deployment.stop()
+        # Preserve all volumes and journal evidence; a partial init needs operator recovery.
+        raise
+
+
 def rollback(args, state):
     if state.get("project") != args.project or state.get("format") != 1:
         raise ValueError("Journal does not belong to this project")
@@ -333,17 +433,24 @@ def rollback(args, state):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["apply", "rollback"])
+    parser.add_argument("action", choices=["init", "apply", "rollback"])
     parser.add_argument("--project", required=True)
     parser.add_argument("--env-file", required=True, type=Path)
     parser.add_argument(
         "--compose-override",
         type=Path,
-        help="Optional second Compose file used for every release and backup step",
+        action="append",
+        help="Additional Compose file; repeat in order for ingress and pilot overlays",
     )
     parser.add_argument("--state", required=True, type=Path)
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--ca-file", type=Path, help="Trusted private CA for an isolated drill")
+    parser.add_argument(
+        "--min-available-mib",
+        type=int,
+        default=0,
+        help="First-installation memory check after image preparation",
+    )
     parser.add_argument(
         "--execute", action="store_true", help="Without this flag only print the plan"
     )
@@ -352,16 +459,22 @@ def main():
         if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,62}", args.project):
             raise ValueError("Invalid Compose project name")
         args.env_file = args.env_file.resolve(strict=True)
-        if args.compose_override:
-            args.compose_override = args.compose_override.resolve(strict=True)
+        args.compose_override = [path.resolve(strict=True) for path in compose_overrides(args)]
+        if args.min_available_mib < 0:
+            raise ValueError("Invalid memory threshold")
         args.state = args.state.resolve()
-        if args.action == "apply" and args.manifest is None:
+        release_action = args.action in {"init", "apply"}
+        if release_action and args.manifest is None:
             raise ValueError("Apply requires --manifest")
-        value = json.loads((args.manifest if args.action == "apply" else args.state).read_text())
-        if args.action == "apply":
+        value = json.loads((args.manifest if release_action else args.state).read_text())
+        if release_action:
             release_manifest.validate(value)
         if not args.execute:
             print(f"Plan for {args.project}: {args.action}; no commands executed.")
+            print(
+                "init: refuse existing containers/data -> verify images -> create DB/Redis -> "
+                "migrate -> start -> HTTPS smoke -> active.env"
+            )
             print(
                 "apply: verify images -> stop ingress/writers -> backup+restore drill -> "
                 "migrate -> start -> HTTPS smoke -> active.env"
@@ -372,7 +485,7 @@ def main():
             )
             return 0
         with lock(args.env_file.parent / f".{args.project}.release.lock"):
-            (apply if args.action == "apply" else rollback)(args, value)
+            {"init": initialize, "apply": apply, "rollback": rollback}[args.action](args, value)
     except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         if type(error) is ValueError:
             print(str(error), file=sys.stderr)

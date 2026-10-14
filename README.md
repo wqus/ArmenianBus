@@ -91,7 +91,7 @@ ADMIN видит пользователей, перевозчиков, рейс�
 
 Подготовка staging и диагностика платежей/SMTP без создания платежей и отправки писем: [docs/staging-integrations.md](docs/staging-integrations.md).
 
-Выпуск образов, обновление с проверенным backup и ограниченный откат кода: [docs/releases.md](docs/releases.md). Workflow подготовлен; GHCR и публичный deploy пока не запускались.
+Выпуск образов, обновление с проверенным backup и ограниченный откат кода: [docs/releases.md](docs/releases.md). Push в main запускает CI и выпуск; автоматический SSH-деплой включается после однократной настройки по [docs/automatic-deployment.md](docs/automatic-deployment.md). Первый deploy на VPS ещё требует проверки. Для ограниченного пилота подготовлен отдельный профиль памяти/CPU.
 
 На Python 3.12+:
 
