@@ -28,6 +28,10 @@ BUNDLE_FILES = (
     "scripts/ci_deploy.py",
 )
 
+# Bundle entries are allowlisted regular files with mode 644, without secrets.
+# GNU tar otherwise masks these permissions with the SSH shell's private umask.
+EXTRACT_COMMAND = 'tar --no-same-owner --same-permissions -xzf "$1" -C /opt/armeniabus/current'
+
 
 def make_bundle(directory, destination):
     with tarfile.open(destination, "w:gz") as archive:
@@ -99,7 +103,7 @@ def transfer(args):
         # Both the workflow concurrency group and this host lock serialize whole deployments,
         # including extraction into the stable bind-mount directory before Python takes its lock.
         program = (
-            'set -eu; umask 077; tar -xzf "$1" -C /opt/armeniabus/current; '
+            f"set -eu; umask 077; {EXTRACT_COMMAND}; "
             "exec python3 /opt/armeniabus/current/scripts/ci_deploy.py "
             '--release-id "$2" --commit "$3" --repository "$4" --registry-user "$5"'
         )

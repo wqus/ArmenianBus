@@ -1,5 +1,6 @@
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tarfile
@@ -70,6 +71,21 @@ def test_bundle_refuses_symlink_instead_of_deployment_script(artifact, tmp_path)
         pytest.skip("Symlink creation is unavailable on this platform")
     with pytest.raises(ValueError):
         ssh_release.make_bundle(artifact, tmp_path / "bundle.tar.gz")
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Requires Unix permission and umask semantics")
+def test_extracted_bind_mount_files_remain_readable_under_private_umask(artifact, tmp_path):
+    bundle = tmp_path / "bundle.tar.gz"
+    ssh_release.make_bundle(artifact, bundle)
+    target = tmp_path / "current"
+    target.mkdir(mode=0o700)
+    command = ssh_release.EXTRACT_COMMAND.replace(
+        "/opt/armeniabus/current", shlex.quote(str(target))
+    )
+    subprocess.run(["sh", "-c", f"umask 077; {command}", "sh", str(bundle)], check=True)
+    assert target.stat().st_mode & 0o777 == 0o700
+    for name in ssh_release.BUNDLE_FILES:
+        assert (target / name).stat().st_mode & 0o777 == 0o644
 
 
 @pytest.fixture
