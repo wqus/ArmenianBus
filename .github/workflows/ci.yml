@@ -97,6 +97,13 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - run: npm run test:browsers
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: frontend-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: frontend/test-results
+          retention-days: 7
+          if-no-files-found: ignore
       - if: always()
         run: docker compose -p armeniabus-auth-e2e --profile test down --volumes
         working-directory: .

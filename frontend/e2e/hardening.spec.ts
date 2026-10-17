@@ -204,7 +204,11 @@ test('lazy page failure offers manual reload and restores the intended route', a
   await page.goto('/admin')
   await expect(page.getByRole('heading', { name: 'Не удалось открыть страницу' })).toBeVisible()
   await page.unroute(moduleUrl)
-  await page.getByRole('button', { name: 'Обновить страницу' }).click()
+  await Promise.all([
+    page.waitForEvent('domcontentloaded'),
+    page.getByRole('button', { name: 'Обновить страницу' }).click(),
+  ])
+  await expect(page).toHaveURL('/admin')
   await expect(page.getByRole('heading', { name: 'Состояние операций' })).toBeVisible()
   expect(state.writes).toBe(0)
 })
@@ -214,9 +218,9 @@ test('JavaScript-disabled visitors see an explanation', async ({ browser }) => {
   const page = await context.newPage()
   await page.goto('http://127.0.0.1:5174/')
   await expect(page.locator('noscript')).toBeVisible()
-  await expect(page.locator('noscript')).toHaveJSProperty(
-    'textContent',
-    'Для работы ArmeniaBus включите JavaScript в настройках браузера.',
-  )
+  // Playwright's text matcher deliberately excludes noscript contents.
+  await expect
+    .poll(() => page.locator('noscript').textContent())
+    .toBe('Для работы ArmeniaBus включите JavaScript в настройках браузера.')
   await context.close()
 })
