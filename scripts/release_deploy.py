@@ -282,7 +282,7 @@ class Deployment:
             "--no-deps",
             "--wait",
             "--wait-timeout",
-            "120",
+            "180",
             *WRITERS,
         )
         self.compose("up", "-d", "--no-build", "--pull", "never", "--no-deps", "--wait", "proxy")
