@@ -76,32 +76,19 @@ docker compose -p armeniabus -f compose.production.yaml -f compose.existing-ngin
 
 Добавить отдельный `server_name bus.mathbot.site` в существующую конфигурацию Nginx после размещения сертификата по путям, доступным **внутри** контейнера. Пример: заменить пути сертификата на фактические, затем `nginx -t` перед `nginx -s reload`.
 
-```nginx
-server {
-    listen 80;
-    server_name bus.mathbot.site;
-    return 301 https://$host$request_uri;
-}
+Готовый HTTPS-блок для этой площадки: [deploy/nginx-armeniabus.conf](../deploy/nginx-armeniabus.conf).
+Заменить им только HTTPS-блок `bus.mathbot.site` с заглушкой 503. HTTP-блок с
+`return 301 https://bus.mathbot.site$request_uri;` сохранить.
 
-server {
-    listen 443 ssl;
-    server_name bus.mathbot.site;
-    ssl_certificate /etc/nginx/certs/bus_fullchain.pem;
-    ssl_certificate_key /etc/nginx/certs/bus_privkey.pem;
+Блок восстанавливает клиентский IP через `CF-Connecting-IP`, доверяя заголовку только
+официальным IPv4/IPv6-подсетям Cloudflare (проверены 2026-10-17). В приложение передаётся
+один проверенный `$remote_addr`, а входящая цепочка `X-Forwarded-For` заменяется.
+Доступ прямо к origin не позволяет подменить адрес через эти заголовки. Список подсетей
+нужно сверять с https://www.cloudflare.com/ips-v4/ и https://www.cloudflare.com/ips-v6/.
+Эти настройки действуют только для bus и не меняют остальные виртуальные хосты.
 
-    resolver 127.0.0.11 valid=10s ipv6=off;
-    location / {
-        set $armeniabus_backend armeniabus-web;
-        proxy_pass http://$armeniabus_backend:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
 
-Переменная в `proxy_pass` заставляет Nginx повторно разрешать Docker DNS после пересоздания веб-контейнера. Внешний HTTP перенаправляется на HTTPS; Caddy намеренно передаёт API `X-Forwarded-Proto: https`. Защита браузерной сессии, CSRF и return URL требуют единого HTTPS origin `https://bus.mathbot.site`. Отдельно проверить реальный клиентский IP за Cloudflare до открытия регистрации: текущие другие Nginx-хосты используют `$proxy_add_x_forwarded_for`, а приложение ограничивает попытки входа по адресу клиента.
+Переменная в `proxy_pass` заставляет Nginx повторно разрешать Docker DNS после пересоздания веб-контейнера. Внешний HTTP перенаправляется на HTTPS; Caddy намеренно передаёт API `X-Forwarded-Proto: https`. Защита браузерной сессии, CSRF и return URL требуют единого HTTPS origin `https://bus.mathbot.site`. После установки проверить реальный клиентский IP за Cloudflare до открытия регистрации: приложение ограничивает попытки входа по адресу клиента. Настройка bus не меняет заголовки других сайтов.
 
 До DNS-переключения проверить Nginx-ответ с заданным Host через `curl --resolve` или аналог и настоящий сертификат. После переключения проверить `/api/v1/health/ready`, frontend, вход/выход, webhook-путь, заголовки безопасности и отсутствие публичных портов БД/API/web. HTTP 404 на `/telegram/` другого проекта не служит проверкой ArmeniaBus.
 
