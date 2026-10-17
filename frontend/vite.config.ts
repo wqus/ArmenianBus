@@ -3,7 +3,12 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   plugins: [react()],
-  build: { assetsInlineLimit: 0 }, // Keep fonts as same-origin files under the deployment CSP.
+  build: {
+    assetsInlineLimit: 0, // Keep fonts as same-origin files under the deployment CSP.
+    // Avoid WebKit retaining failed preloads across reloads (WebKit bug 270357).
+    // Lazy imports remain split and are fetched normally when a route is opened.
+    modulePreload: false,
+  },
   server: {
     port: 5173,
     strictPort: true,

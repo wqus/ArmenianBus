@@ -59,6 +59,7 @@ test('registration, login errors, reload, role guard, and logout across tabs', a
   await page.goto('/account')
   await expect(page).toHaveURL(/\/login\?next=/)
   await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Регистрация', exact: true })).toBeVisible()
   await page.getByLabel('Электронная почта').fill(user.email)
   await page.getByLabel('Пароль', { exact: true }).fill(password)
   await page.getByRole('button', { name: 'Создать аккаунт' }).click()

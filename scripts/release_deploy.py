@@ -101,11 +101,13 @@ def https_smoke(origin, ca_file=None):
                 server_hostname=url.hostname,
             )
         try:
-            connection.request("GET", path)
+            connection.request(
+                "GET", path, headers={"User-Agent": "ArmeniaBus-Deployment-Check/1.0"}
+            )
             response = connection.getresponse()
             body = response.read(2_000_000)
             if response.status != 200:
-                raise ValueError("Public HTTPS smoke failed")
+                raise ValueError(f"Public HTTPS smoke failed ({path}: HTTP {response.status})")
             if path == "/" and b'<div id="root">' not in body:
                 raise ValueError("Frontend response is not the release application")
             if path != "/" and json.loads(body) != {"status": "ok"}:

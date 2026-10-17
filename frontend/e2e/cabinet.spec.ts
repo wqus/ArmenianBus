@@ -134,6 +134,10 @@ test('cabinet filters preserve URL history and pagination, reset offset and reje
   await page.goBack()
   await expect(page.getByLabel('Статус брони', { exact: true })).toHaveValue('CANCELLED')
   await page.getByRole('button', { name: 'Предстоящие', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Предстоящие', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   await page.getByLabel('Статус брони', { exact: true }).selectOption('')
   await expect(page.getByRole('article')).toHaveCount(1)
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
