@@ -19,6 +19,8 @@ jobs:
 
   publish:
     needs: checks
+    outputs:
+      artifact_id: ${{ steps.release-bundle.outputs.artifact-id }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -61,6 +63,7 @@ jobs:
           docker push "$WEB_IMAGE"
           python scripts/release_manifest.py --api-image "$APP_IMAGE" --web-image "$WEB_IMAGE" --commit "$GITHUB_SHA" --output release.json
       - uses: actions/upload-artifact@v7
+        id: release-bundle
         with:
           name: release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -92,7 +95,8 @@ jobs:
           python-version: "3.12"
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
         with:
-          name: release-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact-ids: ${{ needs.publish.outputs.artifact_id }}
+          merge-multiple: true
           path: release-artifact
       - name: Deploy the tested release over pinned SSH
         env:

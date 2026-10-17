@@ -29,16 +29,32 @@ def compose_overrides(args):
     return value if isinstance(value, list) else [value] if value else []
 
 
-def check_available_memory(minimum_mib):
+def check_available_memory(minimum_mib, timeout_seconds=0):
     if not minimum_mib:
         return
-    fields = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
-    available_mib = int(fields["MemAvailable"].split()[0]) // 1024
-    if available_mib < minimum_mib:
-        raise ValueError(
-            f"First installation needs at least {minimum_mib} MiB available; "
-            f"currently {available_mib} MiB. No application containers started."
-        )
+    deadline = time.monotonic() + timeout_seconds
+    waiting = False
+    while True:
+        fields = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
+        available_mib = int(fields["MemAvailable"].split()[0]) // 1024
+        if available_mib >= minimum_mib:
+            if waiting:
+                print(f"Memory check passed: {available_mib} MiB available", flush=True)
+            return
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise ValueError(
+                f"First installation needs at least {minimum_mib} MiB available; "
+                f"currently {available_mib} MiB. No application containers started."
+            )
+        if not waiting:
+            print(
+                f"Waiting up to {timeout_seconds}s for {minimum_mib} MiB available; "
+                f"currently {available_mib} MiB. No application containers started.",
+                flush=True,
+            )
+            waiting = True
+        time.sleep(min(10, remaining))
 
 
 def configuration_hash(configuration):
@@ -358,7 +374,9 @@ def initialize(args, manifest):
     deployment = Deployment(args, [manifest["api_image"], manifest["web_image"]])
     deployment.preflight(manifest)
     deployment.check_empty_project()
-    check_available_memory(getattr(args, "min_available_mib", 0))
+    check_available_memory(
+        getattr(args, "min_available_mib", 0), getattr(args, "memory_wait_seconds", 0)
+    )
     state = {
         "format": 1,
         "project": args.project,
@@ -454,6 +472,12 @@ def main():
         help="First-installation memory check after image preparation",
     )
     parser.add_argument(
+        "--memory-wait-seconds",
+        type=int,
+        default=0,
+        help="Wait at most this many seconds for first-installation memory (0-300)",
+    )
+    parser.add_argument(
         "--execute", action="store_true", help="Without this flag only print the plan"
     )
     args = parser.parse_args()
@@ -464,6 +488,8 @@ def main():
         args.compose_override = [path.resolve(strict=True) for path in compose_overrides(args)]
         if args.min_available_mib < 0:
             raise ValueError("Invalid memory threshold")
+        if not 0 <= args.memory_wait_seconds <= 300:
+            raise ValueError("Invalid memory wait timeout")
         args.state = args.state.resolve()
         release_action = args.action in {"init", "apply"}
         if release_action and args.manifest is None:
@@ -495,8 +521,9 @@ def main():
             # Commands contain identifiers/paths only; never expose captured service output.
             print(f"Failed command (exit {error.returncode}): {error.cmd}", file=sys.stderr)
         print(
-            f"Release operation failed ({type(error).__name__}). Inspect journal phase; "
-            "services may remain stopped. No automatic database rollback.",
+            f"Release operation failed ({type(error).__name__}). Inspect the journal if present; "
+            "a partial deployment may leave application services stopped. "
+            "No automatic database rollback.",
             file=sys.stderr,
         )
         return 1

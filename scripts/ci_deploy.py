@@ -79,6 +79,8 @@ def deploy(release_id, commit, repository, registry_user, token):
             str(ROOT / "compose.pilot.yaml"),
             "--min-available-mib",
             "896",
+            "--memory-wait-seconds",
+            "180",
         ]
     with tempfile.TemporaryDirectory(prefix="armeniabus-registry-") as directory:
         environment["DOCKER_CONFIG"] = directory

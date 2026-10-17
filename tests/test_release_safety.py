@@ -1,5 +1,6 @@
 import json
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
@@ -169,6 +170,25 @@ def operation(tmp_path, monkeypatch):
 
     monkeypatch.setattr(deploy, "Deployment", FakeDeployment)
     return args, events, FakeDeployment
+
+
+def test_memory_timeout_leaves_no_journal_or_started_services(operation, monkeypatch):
+    args, events, _ = operation
+    args.min_available_mib = 896
+    args.memory_wait_seconds = 30
+    clock = [0]
+
+    def sleep(seconds):
+        clock[0] += seconds
+
+    monkeypatch.setattr(Path, "read_text", lambda *a, **k: "MemAvailable: 915456 kB\n")
+    monkeypatch.setattr(deploy.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(deploy.time, "sleep", sleep)
+    with pytest.raises(ValueError, match="currently 894 MiB. No application containers started"):
+        deploy.initialize(args, RELEASE)
+    assert clock[0] == 30
+    assert not args.state.exists()
+    assert events == ["preflight", "empty-project-guard"]
 
 
 def test_update_backs_up_before_migration_and_records_recovery_state(operation):

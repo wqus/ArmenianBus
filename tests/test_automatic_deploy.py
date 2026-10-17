@@ -231,6 +231,25 @@ def test_low_memory_refuses_first_installation(monkeypatch):
         release_deploy.check_available_memory(896)
 
 
+def test_memory_wait_accepts_recovery_without_lowering_threshold(monkeypatch, capsys):
+    samples = iter((894, 895, 931))
+    clock = [0]
+    sleeps = []
+
+    def sleep(seconds):
+        sleeps.append(seconds)
+        clock[0] += seconds
+
+    monkeypatch.setattr(
+        Path, "read_text", lambda *a, **k: f"MemAvailable: {next(samples) * 1024} kB\n"
+    )
+    monkeypatch.setattr(release_deploy.time, "monotonic", lambda: clock[0])
+    monkeypatch.setattr(release_deploy.time, "sleep", sleep)
+    release_deploy.check_available_memory(896, timeout_seconds=180)
+    assert sleeps == [10, 10]
+    assert "931 MiB available" in capsys.readouterr().out
+
+
 def test_backup_keeps_both_ingress_and_pilot_overlays(tmp_path):
     ingress, pilot = tmp_path / "ingress.yaml", tmp_path / "pilot.yaml"
     args = SimpleNamespace(
