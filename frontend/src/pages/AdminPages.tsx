@@ -16,6 +16,7 @@ import { readAdminFilters } from '../features/admin/paths'
 import { operations, operationBody, adminError, type Operation } from '../features/admin/operations'
 import { useAdminRead, useAdminWrite } from '../features/admin/hooks'
 import { readHealth, workerLabels, stateLabels, queueLabels } from '../features/admin/health'
+import '../features/admin/admin.css'
 
 const date = (value: unknown) =>
   typeof value === 'string'
@@ -29,6 +30,15 @@ function Display({ field, value }: { field: Field; value: unknown }) {
   if (field.kind === 'json')
     return <pre className="admin-event">{JSON.stringify(value, null, 2)}</pre>
   if (field.kind === 'boolean') return <>{value ? 'Да' : 'Нет'}</>
+  if (
+    field.values &&
+    ['status', 'route_status', 'payment_status', 'refund_status'].includes(field.key)
+  )
+    return (
+      <span className="admin-status" data-status={String(value)}>
+        {labels[String(value)] ?? String(value)}
+      </span>
+    )
   return <>{field.values ? (labels[String(value)] ?? String(value)) : String(value)}</>
 }
 function RecordFields({
@@ -45,7 +55,7 @@ function RecordFields({
       {resources[kind].fields
         .filter((f) => !summary || resources[kind].summary.includes(f.key))
         .map((field) => (
-          <div key={field.key}>
+          <div key={field.key} data-field-kind={field.kind}>
             <dt>{field.label}</dt>
             <dd>
               <Display field={field} value={record[field.key]} />
@@ -57,18 +67,32 @@ function RecordFields({
 }
 export function AdminLayout() {
   return (
-    <div className="container information-page">
-      <nav className="carrier-nav" aria-label="Кабинет администратора">
+    <div className="container information-page admin-workspace">
+      <nav className="admin-navigation" aria-label="Кабинет администратора">
+        <p className="admin-navigation-caption">Управление</p>
         <NavLink to="/admin" end>
           Обзор
         </NavLink>
-        {Object.entries(resources).map(([key, resource]) => (
-          <NavLink key={key} to={`/admin/${key}`}>
-            {resource.title}
-          </NavLink>
+        {[
+          { title: 'Поездки и расчёты', keys: ['routes', 'bookings', 'payments', 'refund-cases'] },
+          { title: 'Участники', keys: ['users', 'carriers'] },
+          { title: 'Контроль', keys: ['notifications', 'audit'] },
+        ].map((group) => (
+          <div className="admin-navigation-group" key={group.title}>
+            <p>{group.title}</p>
+            <div>
+              {group.keys.map((key) => (
+                <NavLink key={key} to={`/admin/${key}`}>
+                  {resources[key].title}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
-      <Outlet />
+      <div className="admin-content">
+        <Outlet />
+      </div>
     </div>
   )
 }
@@ -92,12 +116,37 @@ export function AdminOverviewPage() {
       ) : (
         <>
           <p>Проверено: {date(query.data.checked_at)}</p>
-          <div className="booking-list">
+          <section className="admin-attention" aria-labelledby="admin-attention-title">
+            <h2 id="admin-attention-title">Очереди для проверки</h2>
+            <p>
+              Количество записей на момент проверки. Откройте очередь, чтобы разобраться с каждой
+              операцией.
+            </p>
+            <div className="admin-queue-links">
+              <Link to="/admin/payments?review_required=true">
+                <span>Платежи на проверке</span>
+                <strong>{query.data.queues.payments_for_review}</strong>
+                <span>Открыть платежи →</span>
+              </Link>
+              <Link to="/admin/refund-cases?status=OPEN">
+                <span>Открытые возвраты</span>
+                <strong>{query.data.queues.open_refunds}</strong>
+                <span>Открыть возвраты →</span>
+              </Link>
+              <Link to="/admin/notifications?status=FAILED">
+                <span>Ошибки доставки</span>
+                <strong>{query.data.queues.failed_notifications}</strong>
+                <span>Открыть уведомления →</span>
+              </Link>
+            </div>
+          </section>
+          <h2 className="admin-section-heading">Фоновые обработчики</h2>
+          <div className="admin-workers">
             {query.data.workers.map((w) => (
-              <section className="booking-panel" key={w.name}>
+              <section className="booking-panel admin-worker" data-state={w.state} key={w.name}>
                 <h2>{workerLabels[w.name]}</h2>
                 <p>
-                  <strong>{stateLabels[w.state]}</strong>
+                  <strong className="admin-worker-state">{stateLabels[w.state]}</strong>
                 </p>
                 <p>Последний сигнал: {date(w.last_seen_at)}</p>
                 <p>Последний успех: {date(w.last_success_at)}</p>
@@ -106,7 +155,7 @@ export function AdminOverviewPage() {
               </section>
             ))}
           </div>
-          <section className="booking-panel">
+          <section className="booking-panel admin-queue-detail">
             <h2>Очереди</h2>
             <dl className="admin-fields">
               {Object.entries(queueLabels).map(([key, label]) => (
@@ -120,11 +169,6 @@ export function AdminOverviewPage() {
               Самое раннее ожидающее уведомление:{' '}
               {date(query.data.queues.oldest_notification_due_at)}
             </p>
-            <div className="booking-actions">
-              <ButtonLink to="/admin/payments?review_required=true">Платежи на проверке</ButtonLink>
-              <ButtonLink to="/admin/refund-cases?status=OPEN">Открытые возвраты</ButtonLink>
-              <ButtonLink to="/admin/notifications?status=FAILED">Ошибки доставки</ButtonLink>
-            </div>
           </section>
         </>
       )}
@@ -243,19 +287,26 @@ function ListContent({ kind }: { kind: string }) {
           ) : (
             <>
               {!query.data.items.length && <Notice title="Записей на этой странице нет" />}
-              <div className="booking-list">
+              <div className="booking-list admin-records">
                 {query.data.items.map((record) => (
-                  <article key={record.id} className="booking-panel">
-                    <h2>
-                      {kind === 'users'
-                        ? String(record.email)
-                        : kind === 'carriers'
-                          ? String(record.company_name)
-                          : kind === 'audit'
-                            ? String(record.action)
-                            : `${resources[kind].title} · ${record.id.slice(0, 8)}`}
-                    </h2>
-                    <RecordFields kind={kind} record={record} summary={kind !== 'audit'} />
+                  <article
+                    key={record.id}
+                    className={`booking-panel admin-record${kind === 'audit' ? ' admin-audit-record' : ''}`}
+                  >
+                    <div className="admin-record-main">
+                      <h2>
+                        {kind === 'users'
+                          ? String(record.email)
+                          : kind === 'carriers'
+                            ? String(record.company_name)
+                            : kind === 'audit'
+                              ? String(record.action)
+                              : kind === 'routes' || kind === 'bookings'
+                                ? `${record.origin} → ${record.destination}`
+                                : `${resources[kind].title} · ${record.id.slice(0, 8)}`}
+                      </h2>
+                      <RecordFields kind={kind} record={record} summary={kind !== 'audit'} />
+                    </div>
                     {kind !== 'audit' && (
                       <ButtonLink secondary to={`/admin/${kind}/${record.id}`}>
                         Открыть запись
@@ -306,7 +357,7 @@ function ActionForm({
         : 'Идентификатор платежа у провайдера'
   return (
     <form
-      className="carrier-form"
+      className="carrier-form admin-action-form"
       onSubmit={(event) => {
         event.preventDefault()
         const body = operationBody(operation, value)
@@ -324,6 +375,8 @@ function ActionForm({
         confirm(body)
       }}
     >
+      <h3>{operation.label}</h3>
+      <p>{operation.description}</p>
       {operation.input && (
         <Input
           label={label}
@@ -431,66 +484,89 @@ function DetailContent({ kind, id }: { kind: string; id: string }) {
           {adminError(query.error)}
         </Notice>
       ) : (
-        <section className="booking-panel">
-          <h2>Данные записи</h2>
-          <RecordFields kind={kind} record={query.data} />
-          {kind === 'users' && query.data.role === 'ADMIN' && (
-            <Notice title="Административный аккаунт защищён" />
-          )}
-          {kind === 'refund-cases' && (
-            <Notice title="Ручной возврат">
-              Отметка оператора не является банковским подтверждением зачисления.
-            </Notice>
-          )}
-          {kind === 'carriers' && (
-            <ButtonLink secondary to={`/admin/routes?carrier_id=${id}`}>
-              Рейсы перевозчика
-            </ButtonLink>
-          )}
-          {kind === 'routes' && (
-            <ButtonLink secondary to={`/admin/bookings?route_id=${id}`}>
-              Брони рейса
-            </ButtonLink>
-          )}
-          {kind === 'bookings' && (
-            <div className="booking-actions">
-              <ButtonLink secondary to={`/admin/payments?booking_id=${id}`}>
-                Платежи брони
+        <div className="admin-detail-layout">
+          <section className="booking-panel admin-record-detail">
+            <h2>Данные записи</h2>
+            <RecordFields kind={kind} record={query.data} />
+            {kind === 'users' && query.data.role === 'ADMIN' && (
+              <Notice title="Административный аккаунт защищён" />
+            )}
+            {kind === 'carriers' && (
+              <ButtonLink secondary to={`/admin/routes?carrier_id=${id}`}>
+                Рейсы перевозчика
               </ButtonLink>
-              <ButtonLink secondary to={`/admin/notifications?booking_id=${id}`}>
-                Уведомления брони
+            )}
+            {kind === 'routes' && (
+              <ButtonLink secondary to={`/admin/bookings?route_id=${id}`}>
+                Брони рейса
               </ButtonLink>
-            </div>
-          )}
-          {!write.busy &&
-            !query.isFetching &&
-            (intent?.at === query.dataUpdatedAt ? (
-              <section className="cancel-confirm" aria-label="Подтверждение действия">
-                <h3>{intent.operation.label}</h3>
-                <p>{intent.operation.description}</p>
-                {intent.operation.input && (
-                  <p className="admin-input-review">
-                    Введённое значение: {String(intent.body[intent.operation.input])}
-                  </p>
-                )}
-                <div className="booking-actions">
-                  <Button onClick={() => void execute()}>Подтвердить действие</Button>
-                  <Button variant="secondary" onClick={() => setIntent(null)}>
-                    Вернуться без изменений
-                  </Button>
-                </div>
-              </section>
-            ) : (
-              operations(kind, query.data).map((operation) => (
-                <ActionForm
-                  key={`${operation.key}:${query.dataUpdatedAt}`}
-                  operation={operation}
-                  confirm={(body) => setIntent({ operation, body, at: query.dataUpdatedAt })}
-                />
-              ))
-            ))}
-          {write.busy && <Notice title="Выполняем действие…" />}
-        </section>
+            )}
+            {kind === 'bookings' && (
+              <div className="booking-actions">
+                <ButtonLink secondary to={`/admin/payments?booking_id=${id}`}>
+                  Платежи брони
+                </ButtonLink>
+                <ButtonLink secondary to={`/admin/notifications?booking_id=${id}`}>
+                  Уведомления брони
+                </ButtonLink>
+              </div>
+            )}
+          </section>
+          <section className="admin-actions-panel" aria-labelledby="admin-actions-title">
+            <h2 id="admin-actions-title">Действия с записью</h2>
+            <p className="admin-action-caption">
+              Проверьте последствия. Отправка запроса происходит только после отдельного
+              подтверждения.
+            </p>
+            {kind === 'payments' && query.data.test_mode === true && (
+              <Notice title="Тестовый платёж">Операция создана в тестовом режиме магазина.</Notice>
+            )}
+            {kind === 'payments' && query.data.review_reason !== null && (
+              <Notice title="Нужна проверка">
+                Сверьте запись с существующим платежом у провайдера. Не создавайте повторное
+                списание для проверки результата.
+              </Notice>
+            )}
+            {kind === 'refund-cases' && (
+              <Notice title="Ручной возврат">
+                Отметка оператора не является банковским подтверждением зачисления.
+              </Notice>
+            )}
+            {!write.busy && !query.isFetching && operations(kind, query.data).length === 0 && (
+              <p className="admin-readonly">
+                Для текущего состояния нет доступных операций. Данные и аудит можно просмотреть.
+              </p>
+            )}
+            {!write.busy &&
+              !query.isFetching &&
+              (intent?.at === query.dataUpdatedAt ? (
+                <section className="cancel-confirm" aria-label="Подтверждение действия">
+                  <h3>{intent.operation.label}</h3>
+                  <p>{intent.operation.description}</p>
+                  {intent.operation.input && (
+                    <p className="admin-input-review">
+                      Введённое значение: {String(intent.body[intent.operation.input])}
+                    </p>
+                  )}
+                  <div className="booking-actions">
+                    <Button onClick={() => void execute()}>Подтвердить действие</Button>
+                    <Button variant="secondary" onClick={() => setIntent(null)}>
+                      Вернуться без изменений
+                    </Button>
+                  </div>
+                </section>
+              ) : (
+                operations(kind, query.data).map((operation) => (
+                  <ActionForm
+                    key={`${operation.key}:${query.dataUpdatedAt}`}
+                    operation={operation}
+                    confirm={(body) => setIntent({ operation, body, at: query.dataUpdatedAt })}
+                  />
+                ))
+              ))}
+            {write.busy && <Notice title="Выполняем действие…" />}
+          </section>
+        </div>
       )}
     </>
   )

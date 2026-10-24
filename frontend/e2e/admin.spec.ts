@@ -329,3 +329,33 @@ test('operations health and admin forms are accessible on desktop and narrow scr
   await expect(page.getByRole('alert')).toContainText('Не удалось проверить операции')
   await expect(page.getByText('Работает', { exact: true })).toHaveCount(0)
 })
+
+test('overview queue links use server counts, keep zero visible and hide stale counts on failure', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(context)
+  state.health.queues.payments_for_review = 17
+  state.health.queues.open_refunds = 0
+  state.health.queues.failed_notifications = 9
+  await page.goto('/admin')
+  const queues = page.getByRole('region', { name: 'Очереди для проверки' })
+  const payments = queues.getByRole('link', { name: /Платежи на проверке/ })
+  await expect(payments.locator('strong')).toHaveText('17')
+  await expect(
+    queues.getByRole('link', { name: /Открытые возвраты/ }).locator('strong'),
+  ).toHaveText('0')
+  await expect(queues.getByRole('link', { name: /Ошибки доставки/ }).locator('strong')).toHaveText(
+    '9',
+  )
+  await payments.click()
+  await expect(page).toHaveURL('/admin/payments?review_required=true')
+  await expect(page.getByRole('article')).toHaveCount(1)
+  await page.goto('/admin')
+  await expect(queues).toBeVisible()
+  state.mode = 'read-error'
+  await page.getByRole('button', { name: 'Обновить состояние' }).click()
+  await expect(page.getByRole('alert')).toContainText('Не удалось проверить операции')
+  await expect(queues).toHaveCount(0)
+  expect(state.writes).toEqual([])
+})
