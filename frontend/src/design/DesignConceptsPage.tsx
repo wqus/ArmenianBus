@@ -1,7 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
 import './concepts.css'
+import './calm.css'
+import gergeti from './assets/gergeti-1920.webp'
+import gergetiSmall from './assets/gergeti-960.webp'
+import village from './assets/village-1920.webp'
+import villageSmall from './assets/village-960.webp'
 
 const concepts = {
+  calm: {
+    number: '04',
+    name: 'Спокойная дорога',
+    subtitle: 'К новым местам и близким людям.',
+    description:
+      'Спокойный вариант по вашим референсам: фотографии, тёплый белый фон, приглушённый зелёный и привычные формы. Поиск — сразу под фотографией, данные рейса — без лишнего декора.',
+    heading: (
+      <>
+        Хорошая поездка
+        <br />
+        начинается спокойно.
+      </>
+    ),
+    detail:
+      'Выберите рейс между Россией и Арменией. Мы поможем пройти путь от поиска до бронирования места.',
+    motif: 'Дорога к близким',
+  },
   transit: {
     number: '01',
     name: 'Маршрут',
@@ -123,7 +145,7 @@ function RouteArt({ theme }: { theme: Concept }) {
 }
 
 export default function DesignConceptsPage() {
-  const [theme, setTheme] = useState<Concept>('transit')
+  const [theme, setTheme] = useState<Concept>('calm')
   const [screen, setScreen] = useState<Screen>('home')
   const [origin, setOrigin] = useState('Москва')
   const [destination, setDestination] = useState('Ереван')
@@ -135,7 +157,7 @@ export default function DesignConceptsPage() {
   const concept = concepts[theme]
   const route = routes[selectedRoute]
   useEffect(() => {
-    document.title = 'ArmeniaBus · три направления дизайна'
+    document.title = 'ArmeniaBus · варианты дизайна'
   }, [])
   function navigate(next: Screen) {
     setScreen(next)
@@ -257,7 +279,24 @@ export default function DesignConceptsPage() {
             aria-label="ArmeniaBus — главная"
           >
             <span className="dc-brand-mark" aria-hidden="true">
-              ↗
+              {theme === 'calm' ? (
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <rect
+                    x="5"
+                    y="4"
+                    width="18"
+                    height="18"
+                    rx="4"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <path d="M5 14h18M9 22v3m10-3v3M10 8h8" stroke="currentColor" strokeWidth="1.5" />
+                  <circle cx="9" cy="18" r="1.3" fill="currentColor" />
+                  <circle cx="19" cy="18" r="1.3" fill="currentColor" />
+                </svg>
+              ) : (
+                '↗'
+              )}
             </span>
             ArmeniaBus<span className="dc-brand-dot">.</span>
           </button>
@@ -269,6 +308,18 @@ export default function DesignConceptsPage() {
         {screen === 'home' ? (
           <>
             <section className="dc-hero">
+              {theme === 'calm' && (
+                <picture className="dc-photo-hero">
+                  <source srcSet={`${gergetiSmall} 960w, ${gergeti} 1920w`} sizes="100vw" />
+                  <img
+                    src={gergeti}
+                    alt="Троицкая церковь в Гергети на фоне гор Кавказа, Грузия"
+                    width="1920"
+                    height="1326"
+                    fetchPriority="high"
+                  />
+                </picture>
+              )}
               <div className="dc-hero-copy">
                 <p className="dc-kicker">ПОЕЗДКИ МЕЖДУ РОССИЕЙ И АРМЕНИЕЙ</p>
                 <h1 ref={heading} tabIndex={-1}>
@@ -279,43 +330,89 @@ export default function DesignConceptsPage() {
                   Выбрать направление <span aria-hidden="true">↓</span>
                 </a>
               </div>
-              <RouteArt theme={theme} />
+              {theme === 'calm' ? (
+                <p className="dc-photo-caption">Гергети, Грузия · фото-настроение поездки</p>
+              ) : (
+                <RouteArt theme={theme} />
+              )}
             </section>
             <section className="dc-search-section" id="dc-search" aria-label="Поиск поездки">
               <div className="dc-section-label">
-                <span>01 / ВАША ПОЕЗДКА</span>
-                <span>Начнём с направления</span>
+                <span>{theme === 'calm' ? 'Куда вы хотите поехать?' : '01 / ВАША ПОЕЗДКА'}</span>
+                <span>
+                  {theme === 'calm' ? 'Выберите направление и дату' : 'Начнём с направления'}
+                </span>
               </div>
               {renderSearchForm()}
               <p className="dc-fine">
                 Время отправления указано по UTC. Данные в этом макете — примеры.
               </p>
             </section>
-            <section className="dc-journey">
-              <div>
-                <p className="dc-kicker">ОТ ПЛАНОВ К ВСТРЕЧЕ</p>
-                <h2>
-                  Понятно на
-                  <br />
-                  <em>каждом шаге.</em>
-                </h2>
-              </div>
-              <ol>
-                {[
-                  ['Найдите свой рейс', 'Сравните время отправления, цену и доступные места.'],
-                  ['Выберите место', 'Проверьте рейс перед созданием бронирования.'],
-                  ['Подтвердите поездку', 'На оплату удержанного места — 10 минут.'],
-                ].map(([title, text], index) => (
-                  <li key={title}>
-                    <span>0{index + 1}</span>
-                    <div>
-                      <h3>{title}</h3>
-                      <p>{text}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
+            {theme === 'calm' && (
+              <section className="dc-calm-help" aria-labelledby="dc-calm-help-title">
+                <div>
+                  <p className="dc-kicker">ВАША ПОЕЗДКА</p>
+                  <h2 id="dc-calm-help-title">Всё важное — до отправления</h2>
+                  <p>
+                    Сравните время и стоимость, выберите свободное место. Детали бронирования
+                    останутся в личном кабинете.
+                  </p>
+                  <details>
+                    <summary>Какое время указано в расписании?</summary>
+                    <p>
+                      В этом макете и текущем приложении время отправления указано по UTC. Перед
+                      поездкой проверьте его с учётом своего часового пояса.
+                    </p>
+                  </details>
+                  <details>
+                    <summary>Когда место закрепляется за мной?</summary>
+                    <p>
+                      Выбор номера ещё не создаёт бронь. В приложении место удерживается на 10 минут
+                      после подтверждения бронирования. Этот прототип не создаёт удержаний.
+                    </p>
+                  </details>
+                </div>
+                <figure>
+                  <img
+                    src={village}
+                    srcSet={`${villageSmall} 960w, ${village} 1920w`}
+                    sizes="(max-width: 800px) 100vw, 45vw"
+                    alt="Дома на зелёном склоне в окружении гор"
+                    width="1920"
+                    height="1280"
+                    loading="lazy"
+                  />
+                  <figcaption>Немного вдохновения для следующей поездки</figcaption>
+                </figure>
+              </section>
+            )}
+            {theme !== 'calm' && (
+              <section className="dc-journey">
+                <div>
+                  <p className="dc-kicker">ОТ ПЛАНОВ К ВСТРЕЧЕ</p>
+                  <h2>
+                    Понятно на
+                    <br />
+                    <em>каждом шаге.</em>
+                  </h2>
+                </div>
+                <ol>
+                  {[
+                    ['Найдите свой рейс', 'Сравните время отправления, цену и доступные места.'],
+                    ['Выберите место', 'Проверьте рейс перед созданием бронирования.'],
+                    ['Подтвердите поездку', 'На оплату удержанного места — 10 минут.'],
+                  ].map(([title, text], index) => (
+                    <li key={title}>
+                      <span>0{index + 1}</span>
+                      <div>
+                        <h3>{title}</h3>
+                        <p>{text}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
           </>
         ) : screen === 'search' ? (
           <section className="dc-results dc-content">
@@ -470,7 +567,7 @@ export default function DesignConceptsPage() {
         )}
         <footer className="dc-footer">
           <span>ArmeniaBus · {concept.subtitle}</span>
-          <span>Концепция {concept.number} / 03 · Локальный просмотр</span>
+          <span>Концепция {concept.number} / 04 · Локальный просмотр</span>
         </footer>
       </main>
     </div>
