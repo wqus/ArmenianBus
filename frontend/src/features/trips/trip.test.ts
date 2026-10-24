@@ -65,6 +65,25 @@ it('rejects duplicated or malformed seat identities, numbers and statuses', () =
   }
 })
 
+it('never invents a layout for legacy buses or accepts a layout with wrong capacity', () => {
+  expect(parseTrip(id, route, availability).layoutId).toBeNull()
+  for (const layout_id of ['unknown', 'van-8-v1', 8]) {
+    expect(() => parseTrip(id, route, { ...availability, layout_id })).toThrow()
+  }
+  const seats = Array.from({ length: 8 }, (_, n) => ({
+    id: `${String(n + 1).padStart(8, '0')}-3333-4333-8333-333333333333`,
+    seat_number: n + 1,
+    status: 'FREE',
+  }))
+  expect(
+    parseTrip(
+      id,
+      { ...route, capacity: 8 },
+      { ...availability, layout_id: 'van-8-v1', seats, free_seats: 8 },
+    ).layoutId,
+  ).toBe('van-8-v1')
+})
+
 it('keeps a validated search context and ignores arbitrary return targets', () => {
   const params = new URLSearchParams({
     origin: 'Москва',

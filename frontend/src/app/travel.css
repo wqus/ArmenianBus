@@ -335,6 +335,90 @@ h3 {
   border-radius: 3px;
   border-color: #9fa89f;
 }
+.trip-page .page-heading {
+  margin-top: 24px;
+}
+.trip-overview {
+  background: transparent;
+  border-radius: 0;
+  border-inline: 0;
+  padding: 24px 0;
+}
+.trip-overview dt {
+  font-size: 14px;
+}
+.trip-overview dd {
+  font-size: 17px;
+}
+.seat-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  gap: 56px;
+  align-items: start;
+}
+.seat-mobile-action {
+  display: none;
+}
+.seat-picker legend {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+.seat-legend {
+  font-size: 14px;
+}
+.seat-dot--paid {
+  background: #dce0da;
+}
+.seat-dot--held {
+  background: #f1e4c8;
+}
+.seat-choice {
+  background: #f0f1e9;
+  padding: 24px;
+  border-radius: 4px;
+}
+.seat-choice h2 {
+  font-size: 23px;
+  margin-top: 8px;
+}
+.seat-choice-price {
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 600;
+}
+.seat-choice .button {
+  width: 100%;
+}
+.seat {
+  border-radius: 4px;
+  box-shadow: none;
+}
+.seat--free {
+  border-color: #82947d;
+  color: var(--ink);
+}
+.seat--paid {
+  background: #dce0da;
+  color: #4d5848;
+}
+.seat[aria-pressed='true'] {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: none;
+}
+.booking-panel {
+  border-radius: 4px;
+  box-shadow: none;
+}
+.booking-panel h2 {
+  font-size: 24px;
+}
+.hold-timer {
+  border-radius: 4px;
+  background: #f0f1e9;
+  border-color: var(--line);
+}
 
 @media (max-width: 1000px) {
   .search-fields {
@@ -352,6 +436,42 @@ h3 {
   }
 }
 @media (max-width: 800px) {
+  body:has(.seat-mobile-action) .site-footer {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+  .seat-layout:has(.seat-mobile-action) {
+    padding-bottom: 88px;
+  }
+  .seat-mobile-action {
+    display: flex;
+    position: fixed;
+    z-index: 40;
+    inset: auto 0 0;
+    padding: 12px 20px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: #faf9f5;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .seat-mobile-action > span {
+    display: grid;
+    font-size: 14px;
+  }
+  .seat-mobile-action strong {
+    font-weight: 600;
+  }
+  .seat-mobile-action > span > span {
+    color: var(--muted);
+  }
+  .seat-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .trip-overview {
+    padding: 20px 0;
+    border-radius: 0;
+  }
   .travel-hero {
     min-height: clamp(460px, 68svh, 640px);
     padding-block: 48px;

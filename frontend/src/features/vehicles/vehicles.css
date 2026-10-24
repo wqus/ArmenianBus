@@ -1,0 +1,170 @@
+.cabin {
+  width: min(100%, 350px);
+  margin: 24px auto;
+  padding: 22px 18px 18px;
+  border: 2px solid #9fa89f;
+  border-radius: 60px 60px 18px 18px;
+  background: #f4f4ee;
+  color: #29352e;
+}
+.cabin-front {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #c5ccc0;
+  padding: 12px 2px 18px;
+  font-size: 12px;
+  color: #536059;
+}
+.cabin-driver {
+  display: grid;
+  gap: 4px;
+}
+.cabin-driver > span {
+  font-size: 28px;
+  color: #536059;
+  line-height: 1;
+}
+.cabin-aisle,
+.cabin-rear {
+  text-align: center;
+  font-size: 12px;
+  margin-block: 12px;
+  color: #536059;
+}
+.cabin-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+.cabin-row {
+  display: grid;
+  gap: 8px;
+}
+.cabin-seat {
+  appearance: none;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid #82947d;
+  border-bottom-width: 5px;
+  border-radius: 7px 7px 4px 4px;
+  background: #fff;
+  color: #29352e;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+}
+.cabin-seat--free:hover:not(:disabled) {
+  background: #e5eddf;
+}
+.cabin-seat--held {
+  background: #f1e4c8;
+  border-color: #a58241;
+  color: #644a1c;
+}
+.cabin-seat--paid {
+  background: #dce0da;
+  border-color: #98a092;
+  color: #4d5848;
+}
+.cabin-seat[aria-pressed='true'] {
+  background: #3b5845;
+  color: #fff;
+  border-color: #294332;
+}
+.cabin-seat[aria-pressed='true']:hover:not(:disabled) {
+  background: #294332;
+}
+.cabin-seat:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+}
+.cabin-seat:disabled[aria-pressed='true'] {
+  outline: 2px dashed #fff;
+  outline-offset: -6px;
+}
+.cabin-seat--preview {
+  font-size: 14px;
+}
+.seat-dot--selected {
+  background: #3b5845;
+  border-color: #294332;
+}
+.vehicle-create-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+  gap: 40px;
+  align-items: start;
+}
+.vehicle-create-layout .carrier-form {
+  max-width: none;
+}
+.vehicle-preview {
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: #f4f4ee;
+  border-radius: 4px;
+}
+.vehicle-preview h2 {
+  font-size: 22px;
+}
+.vehicle-preview p {
+  font-size: 14px;
+}
+.layout-confirm {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.layout-confirm input {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: #3b5845;
+}
+.layout-help {
+  font-size: 14px;
+  color: var(--muted);
+}
+.layout-help a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.vehicle-support {
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: #f4f4ee;
+  display: grid;
+  gap: 12px;
+}
+.vehicle-support a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 800px) {
+  .vehicle-create-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .vehicle-preview {
+    padding: 18px;
+  }
+}
+@media (max-width: 380px) {
+  .cabin {
+    padding-inline: 10px;
+  }
+  .cabin-row {
+    gap: 5px;
+  }
+}

@@ -194,25 +194,33 @@ test('carrier activation and role gates prevent operational requests', async ({
   await expect(page.getByRole('article')).toHaveCount(1)
 })
 
-test('bus capacity validation, single create, rename, archive conflict and confirmation', async ({
+test('bus layout confirmation, single create, rename, archive conflict and confirmation', async ({
   page,
   context,
 }) => {
   const state = await mock(context)
   await page.goto('/carrier/buses/new')
   await page.getByLabel('Название автобуса').fill('Новый автобус')
-  await page.getByLabel('Количество мест').fill('101')
-  await page.getByRole('button', { name: 'Создать автобус' }).click()
-  await expect(page.getByRole('alert')).toContainText('от 1 до 100')
+  await expect(page.getByRole('button', { name: 'Создать автобус' })).toBeDisabled()
   expect(state.writes).toHaveLength(0)
-  await page.getByLabel('Количество мест').fill('2')
+  await page.getByLabel('Модель транспорта').selectOption('sprinter')
+  await expect(page.getByLabel('Количество мест')).toHaveValue('19')
+  await expect(page.getByLabel('Количество мест')).toHaveAttribute('readonly', '')
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('van-8-v1')
+  await page.getByRole('checkbox', { name: /Подтверждаю/ }).check()
   await page.getByRole('button', { name: 'Создать автобус' }).evaluate((el) => {
     ;(el as HTMLButtonElement).click()
     ;(el as HTMLButtonElement).click()
   })
   await expect(page).toHaveURL(`/carrier/buses/${id}`)
   expect(state.writes).toHaveLength(1)
-  await expect(page.locator('.carrier-seat-list li')).toHaveCount(2)
+  expect(state.writes[0].body).toMatchObject({
+    capacity: 8,
+    layout_id: 'van-8-v1',
+    vehicle_model_id: 'sprinter',
+    layout_confirmed: true,
+  })
+  await expect(page.locator('.carrier-seat-list li')).toHaveCount(8)
   await expect(page.getByLabel('Количество мест')).toHaveCount(0)
   await page.getByLabel('Название автобуса').fill('Переименованный')
   await page.getByRole('button', { name: 'Сохранить название' }).click()
@@ -232,6 +240,28 @@ test('bus capacity validation, single create, rename, archive conflict and confi
   await expect(page.getByRole('article')).toHaveCount(0)
 })
 
+test('layout suggestions require fresh confirmation and unsupported layouts lead to support', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(context)
+  await page.goto('/carrier/buses/new')
+  await page.getByLabel('Модель транспорта').selectOption('sprinter')
+  await expect(page.getByLabel('Схема салона', { exact: true })).toHaveValue('minibus-19-v1')
+  await page.getByRole('checkbox', { name: /Подтверждаю/ }).check()
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('minibus-16-v1')
+  await expect(page.getByRole('checkbox', { name: /Подтверждаю/ })).not.toBeChecked()
+  await expect(page.getByRole('button', { name: 'Создать автобус' })).toBeDisabled()
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('unsupported')
+  await expect(page.getByRole('checkbox', { name: /Подтверждаю/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Создать автобус' })).toBeDisabled()
+  await expect(
+    page.getByRole('link', { name: 'Написать на support@mathbot.site' }),
+  ).toHaveAttribute('href', /^mailto:support@mathbot.site\?subject=/)
+  expect(state.writes).toHaveLength(0)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+})
+
 test('lost creation is not replayed and late completion cannot navigate away from a new page', async ({
   page,
   context,
@@ -240,7 +270,9 @@ test('lost creation is not replayed and late completion cannot navigate away fro
   state.mode = 'lost'
   await page.goto('/carrier/buses/new')
   await page.getByLabel('Название автобуса').fill('Сохранённый')
-  await page.getByLabel('Количество мест').fill('1')
+  await page.getByLabel('Модель транспорта').selectOption('other')
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('van-8-v1')
+  await page.getByRole('checkbox', { name: /Подтверждаю/ }).check()
   await page.getByRole('button', { name: 'Создать автобус' }).click()
   await expect(
     page.getByText('Проверьте список перед новой попыткой', { exact: true }),
@@ -256,7 +288,9 @@ test('lost creation is not replayed and late completion cannot navigate away fro
   })
   await page.goto('/carrier/buses/new')
   await page.getByLabel('Название автобуса').fill('Поздний ответ')
-  await page.getByLabel('Количество мест').fill('1')
+  await page.getByLabel('Модель транспорта').selectOption('other')
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('van-8-v1')
+  await page.getByRole('checkbox', { name: /Подтверждаю/ }).check()
   await page.getByRole('button', { name: 'Создать автобус' }).click()
   await expect.poll(() => state.writes.length).toBe(2)
   let releaseModule!: () => void

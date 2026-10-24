@@ -1,9 +1,15 @@
 import { ApiError, apiRequest } from '../../shared/api/client'
 import { isRoute, readSearch, searchUrl } from '../search/search'
 import type { SearchRoute } from '../search/search'
+import { findLayout } from '../vehicles/catalog'
 
 export type Seat = { id: string; seat_number: number; status: 'FREE' | 'HELD' | 'PAID' }
-export type Trip = { route: SearchRoute & { bus_id: string }; seats: Seat[]; freeSeats: number }
+export type Trip = {
+  route: SearchRoute & { bus_id: string }
+  seats: Seat[]
+  freeSeats: number
+  layoutId: string | null
+}
 export const isUuid = (value: unknown): value is string =>
   typeof value === 'string' &&
   value.length === 36 &&
@@ -64,11 +70,18 @@ export function parseTrip(id: string, route: unknown, availability: unknown): Tr
   }
   const freeSeats = seats.filter((seat) => seat.status === 'FREE').length
   if (availability.free_seats !== freeSeats) return invalidResponse()
+  const layoutId = 'layout_id' in availability ? availability.layout_id : null
+  if (
+    layoutId !== null &&
+    (!findLayout(layoutId) || findLayout(layoutId)!.capacity !== route.capacity)
+  )
+    return invalidResponse()
   // These are separate reads: the seat response owns the displayed availability count.
   return {
     route: { ...route, bus_id: route.bus_id },
     seats: seats.sort((a, b) => a.seat_number - b.seat_number),
     freeSeats,
+    layoutId: layoutId as string | null,
   }
 }
 

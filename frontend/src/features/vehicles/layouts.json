@@ -1,0 +1,185 @@
+{
+  "layouts": [
+    {
+      "id": "van-8-v1",
+      "title": "Минивэн · 8 мест",
+      "kind": "van",
+      "capacity": 8,
+      "columns": 4,
+      "rows": [
+        [1, null, 2, 3],
+        [4, null, 5, 6],
+        [7, null, 8, null]
+      ]
+    },
+    {
+      "id": "minibus-16-v1",
+      "title": "Микроавтобус · 16 мест",
+      "kind": "minibus",
+      "capacity": 16,
+      "columns": 4,
+      "rows": [
+        [1, null, 2, 3],
+        [4, null, 5, 6],
+        [7, null, 8, 9],
+        [10, null, 11, 12],
+        [13, 14, 15, 16]
+      ]
+    },
+    {
+      "id": "minibus-19-v1",
+      "title": "Микроавтобус · 19 мест",
+      "kind": "minibus",
+      "capacity": 19,
+      "columns": 4,
+      "rows": [
+        [1, null, 2, 3],
+        [4, null, 5, 6],
+        [7, null, 8, 9],
+        [10, null, 11, 12],
+        [13, null, 14, 15],
+        [16, 17, 18, 19]
+      ]
+    },
+    {
+      "id": "minibus-22-v1",
+      "title": "Микроавтобус · 22 места",
+      "kind": "minibus",
+      "capacity": 22,
+      "columns": 4,
+      "rows": [
+        [1, null, 2, 3],
+        [4, null, 5, 6],
+        [7, null, 8, 9],
+        [10, null, 11, 12],
+        [13, null, 14, 15],
+        [16, null, 17, 18],
+        [19, 20, 21, 22]
+      ]
+    },
+    {
+      "id": "midi-29-v1",
+      "title": "Малый автобус · 29 мест",
+      "kind": "midi",
+      "capacity": 29,
+      "columns": 5,
+      "rows": [
+        [1, 2, null, 3, 4],
+        [5, 6, null, 7, 8],
+        [9, 10, null, 11, 12],
+        [13, 14, null, 15, 16],
+        [17, 18, null, 19, 20],
+        [21, 22, null, 23, 24],
+        [25, 26, 27, 28, 29]
+      ]
+    },
+    {
+      "id": "coach-49-v1",
+      "title": "Автобус · 49 мест",
+      "kind": "coach",
+      "capacity": 49,
+      "columns": 5,
+      "rows": [
+        [1, 2, null, 3, 4],
+        [5, 6, null, 7, 8],
+        [9, 10, null, 11, 12],
+        [13, 14, null, 15, 16],
+        [17, 18, null, 19, 20],
+        [21, 22, null, 23, 24],
+        [25, 26, null, 27, 28],
+        [29, 30, null, 31, 32],
+        [33, 34, null, 35, 36],
+        [37, 38, null, 39, 40],
+        [41, 42, null, 43, 44],
+        [45, 46, 47, 48, 49]
+      ]
+    },
+    {
+      "id": "coach-53-v1",
+      "title": "Автобус · 53 места",
+      "kind": "coach",
+      "capacity": 53,
+      "columns": 5,
+      "rows": [
+        [1, 2, null, 3, 4],
+        [5, 6, null, 7, 8],
+        [9, 10, null, 11, 12],
+        [13, 14, null, 15, 16],
+        [17, 18, null, 19, 20],
+        [21, 22, null, 23, 24],
+        [25, 26, null, 27, 28],
+        [29, 30, null, 31, 32],
+        [33, 34, null, 35, 36],
+        [37, 38, null, 39, 40],
+        [41, 42, null, 43, 44],
+        [45, 46, null, 47, 48],
+        [49, 50, 51, 52, 53]
+      ]
+    },
+    {
+      "id": "coach-57-v1",
+      "title": "Автобус · 57 мест",
+      "kind": "coach",
+      "capacity": 57,
+      "columns": 5,
+      "rows": [
+        [1, 2, null, 3, 4],
+        [5, 6, null, 7, 8],
+        [9, 10, null, 11, 12],
+        [13, 14, null, 15, 16],
+        [17, 18, null, 19, 20],
+        [21, 22, null, 23, 24],
+        [25, 26, null, 27, 28],
+        [29, 30, null, 31, 32],
+        [33, 34, null, 35, 36],
+        [37, 38, null, 39, 40],
+        [41, 42, null, 43, 44],
+        [45, 46, null, 47, 48],
+        [49, 50, null, 51, 52],
+        [53, 54, 55, 56, 57]
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "sprinter",
+      "name": "Mercedes-Benz Sprinter",
+      "recommended_layout_id": "minibus-19-v1"
+    },
+    {
+      "id": "transit",
+      "name": "Ford Transit",
+      "recommended_layout_id": "minibus-16-v1"
+    },
+    {
+      "id": "gazelle-next",
+      "name": "ГАЗель NEXT",
+      "recommended_layout_id": "minibus-19-v1"
+    },
+    {
+      "id": "county",
+      "name": "Hyundai County",
+      "recommended_layout_id": "midi-29-v1"
+    },
+    {
+      "id": "tourismo",
+      "name": "Mercedes-Benz Tourismo",
+      "recommended_layout_id": "coach-49-v1"
+    },
+    {
+      "id": "lions-coach",
+      "name": "MAN Lion’s Coach",
+      "recommended_layout_id": "coach-53-v1"
+    },
+    {
+      "id": "setra",
+      "name": "Setra",
+      "recommended_layout_id": "coach-49-v1"
+    },
+    {
+      "id": "other",
+      "name": "Другая модель",
+      "recommended_layout_id": null
+    }
+  ]
+}

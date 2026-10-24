@@ -53,6 +53,7 @@ jobs:
       - run: python -m pip check
       - run: python -m ruff check src tests migrations scripts
       - run: python scripts/sync_city_catalog.py --check
+      - run: python scripts/sync_bus_layouts.py --check
       - run: alembic upgrade head
       - run: alembic check
       - run: python -m pytest -q

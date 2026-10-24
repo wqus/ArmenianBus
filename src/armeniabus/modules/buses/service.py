@@ -43,11 +43,29 @@ async def owned_bus(db: AsyncSession, user: User, bus_id: uuid.UUID, *, lock: bo
 
 async def create_bus(db: AsyncSession, user: User, data: BusCreate) -> BusPublic:
     profile = await own_profile(db, user.id, active=True, lock=True)
-    bus = Bus(carrier_id=profile.id, name=data.name, capacity=data.capacity)
+    bus = Bus(
+        carrier_id=profile.id,
+        name=data.name,
+        capacity=data.capacity,
+        layout_id=data.layout_id,
+        vehicle_model_id=data.vehicle_model_id,
+    )
     db.add(bus)
     await db.flush()
     db.add_all([Seat(bus_id=bus.id, seat_number=n) for n in range(1, data.capacity + 1)])
-    record_audit(db, user.id, "bus.created", "bus", bus.id, {"capacity": data.capacity})
+    record_audit(
+        db,
+        user.id,
+        "bus.created",
+        "bus",
+        bus.id,
+        {
+            "capacity": data.capacity,
+            "layout_id": data.layout_id,
+            "vehicle_model_id": data.vehicle_model_id,
+            "layout_confirmed": data.layout_confirmed,
+        },
+    )
     await db.flush()
     result = await bus_details(db, bus)
     await db.commit()

@@ -151,5 +151,6 @@ class AvailableSeat(BaseModel):
 class RouteSeats(BaseModel):
     route_id: uuid.UUID
     bus_id: uuid.UUID
+    layout_id: str | None = None
     free_seats: int
     seats: list[AvailableSeat]

@@ -78,7 +78,9 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   ).toBe(200)
   await page.getByRole('button', { name: 'Проверить активацию' }).click()
   await page.getByLabel('Название автобуса').fill('Автобус F8')
-  await page.getByLabel('Количество мест').fill('2')
+  await page.getByLabel('Модель транспорта').selectOption('other')
+  await page.getByLabel('Схема салона', { exact: true }).selectOption('van-8-v1')
+  await page.getByRole('checkbox', { name: /Подтверждаю/ }).check()
   await page.getByRole('button', { name: 'Создать автобус' }).click()
   await expect(page.getByRole('heading', { name: 'Автобус F8' })).toBeVisible()
   const busId = new URL(page.url()).pathname.split('/').at(-1)!
@@ -117,6 +119,19 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   ).toBe(201)
   const passenger = await login(passengerEmail)
   const bus = await (await request.get(`${api}/buses/${busId}`, { headers: carrier })).json()
+  expect(bus.layout_id).toBe('van-8-v1')
+  expect(bus.capacity).toBe(8)
+  const availability = await (await request.get(`${api}/routes/${routeId}/seats`)).json()
+  expect(availability.layout_id).toBe(bus.layout_id)
+  await page.goto(`/trips/${routeId}`)
+  await expect(page.locator('.cabin-seat')).toHaveCount(8)
+  await page.getByRole('button', { name: 'Место 1, свободно', exact: true }).click()
+  await expect(page.getByRole('link', { name: 'Перейти к бронированию' })).toHaveAttribute(
+    'href',
+    `/trips/${routeId}/book?seat=${bus.seats[0].id}`,
+  )
+  await page.goto(`/carrier/routes/${routeId}`)
+  await expect(page.getByRole('heading', { name: 'Управление рейсом', exact: true })).toBeVisible()
   const held = await request.post(`${api}/bookings`, {
     headers: passenger,
     data: { route_id: routeId, seat_id: bus.seats[0].id },

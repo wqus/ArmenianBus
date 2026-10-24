@@ -6,6 +6,8 @@ import { carrierListParams } from '../features/carrier/paths'
 import { Pager, WriteResult } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
 import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
+import { findLayout, findVehicleModel, layouts, vehicleModels } from '../features/vehicles/catalog'
+import { LayoutPreview } from '../features/vehicles/SeatMap'
 
 export function CarrierBusesPage() {
   const [params, setParams] = useSearchParams()
@@ -69,13 +71,17 @@ export function CreateBusPage() {
   const write = useCarrierWrite()
   const navigate = useNavigate()
   const [name, setName] = useState('')
-  const [capacity, setCapacity] = useState('')
+  const [modelId, setModelId] = useState('')
+  const [layoutId, setLayoutId] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
+  const layout = findLayout(layoutId)
+  const supportUrl = `mailto:support@mathbot.site?subject=${encodeURIComponent('Схема салона для armatrans')}&body=${encodeURIComponent(`Название транспорта: ${name}\nМодель: ${findVehicleModel(modelId)?.name ?? ''}\nЧисло пассажирских мест:\nПрикладываю схему с нумерацией и фото салона.`)}`
   const [error, setError] = useState('')
   async function submit(event: React.SubmitEvent) {
     event.preventDefault()
     if (write.uncertain || write.busy) return
-    if (!name.trim() || name.trim().length > 200 || !/^(?:[1-9]\d?|100)$/.test(capacity)) {
-      setError('Укажите название и целое количество мест от 1 до 100.')
+    if (!name.trim() || name.trim().length > 200 || !layout || !modelId || !confirmed) {
+      setError('Выберите модель и схему, затем подтвердите нумерацию мест.')
       return
     }
     setError('')
@@ -83,7 +89,13 @@ export function CreateBusPage() {
       readBusDetails(
         await write.session.request('/buses', {
           method: 'POST',
-          body: JSON.stringify({ name: name.trim(), capacity: Number(capacity) }),
+          body: JSON.stringify({
+            name: name.trim(),
+            capacity: layout.capacity,
+            layout_id: layout.id,
+            vehicle_model_id: modelId,
+            layout_confirmed: confirmed,
+          }),
         }),
       ),
     )
@@ -92,35 +104,116 @@ export function CreateBusPage() {
   return (
     <>
       <PageHeading eyebrow="АВТОПАРК" title="Новый автобус">
-        После создания можно менять название. Для другой вместимости создайте новый автобус.
+        Выберите модель, проверьте салон и нумерацию. Схема закрепляется при создании автобуса.
       </PageHeading>
-      <form className="carrier-form booking-panel" onSubmit={(event) => void submit(event)}>
-        <Field
-          label="Название автобуса"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          maxLength={200}
-          required
-        />
-        <Field
-          label="Количество мест"
-          inputMode="numeric"
-          value={capacity}
-          onChange={(event) => setCapacity(event.target.value)}
-          required
-        />
-        {error && <Notice title={error} error />}
-        <WriteResult message={write.message} />
-        {write.uncertain ? (
-          <Notice title="Проверьте список перед новой попыткой">
-            Автобус мог сохраниться. Найдите его в списке, чтобы не создать дубликат.
-          </Notice>
-        ) : (
-          <Button type="submit" busy={write.busy}>
-            Создать автобус
-          </Button>
-        )}
-      </form>
+      <div className="vehicle-create-layout">
+        <form className="carrier-form booking-panel" onSubmit={(event) => void submit(event)}>
+          <div className="field booking-status-filter">
+            <label htmlFor="vehicle-model">Модель транспорта</label>
+            <select
+              id="vehicle-model"
+              value={modelId}
+              required
+              disabled={write.busy || write.uncertain}
+              onChange={(event) => {
+                const model = findVehicleModel(event.target.value)
+                setModelId(event.target.value)
+                setLayoutId(model?.recommended_layout_id ?? '')
+                setConfirmed(false)
+                if (!name || name === findVehicleModel(modelId)?.name) {
+                  setName(model && model.id !== 'other' ? model.name : '')
+                }
+              }}
+            >
+              <option value="">Выберите модель</option>
+              {vehicleModels.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Field
+            label="Название автобуса"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={200}
+            required
+          />
+          <div className="field booking-status-filter">
+            <label htmlFor="vehicle-layout">Схема салона</label>
+            <select
+              id="vehicle-layout"
+              value={layoutId}
+              required
+              disabled={write.busy || write.uncertain}
+              onChange={(event) => {
+                setLayoutId(event.target.value)
+                setConfirmed(false)
+              }}
+            >
+              <option value="">Выберите схему</option>
+              {layouts.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+              <option value="unsupported">Ни одна схема не подходит</option>
+            </select>
+          </div>
+          <p className="layout-help">
+            Модель предлагает стартовый шаблон, а не заводскую комплектацию. Если салон отличается,
+            выберите другую схему. Водитель и сопровождающий в число пассажиров не входят.
+          </p>
+          <Field label="Количество мест" value={layout?.capacity ?? ''} readOnly />
+          {layout && (
+            <label className="layout-confirm">
+              <input
+                type="checkbox"
+                checked={confirmed}
+                required
+                disabled={write.busy || write.uncertain}
+                onChange={(event) => setConfirmed(event.target.checked)}
+              />
+              Подтверждаю: расположение и номера пассажирских мест совпадают с моим транспортом.
+            </label>
+          )}
+          <div className="vehicle-support">
+            <strong>Не нашли подходящую схему?</strong>
+            <p>
+              Не подбирайте похожую наугад. Отправьте модель, вместимость, фото салона и план с
+              номерами мест — поддержка поможет добавить вариант.
+            </p>
+            <a href={supportUrl}>Написать на support@mathbot.site</a>
+          </div>
+          {error && <Notice title={error} error />}
+          <WriteResult message={write.message} />
+          {write.uncertain ? (
+            <Notice title="Проверьте список перед новой попыткой">
+              Автобус мог сохраниться. Найдите его в списке, чтобы не создать дубликат.
+            </Notice>
+          ) : (
+            <Button type="submit" busy={write.busy} disabled={!layout || !confirmed || !modelId}>
+              Создать автобус
+            </Button>
+          )}
+        </form>
+        <aside className="vehicle-preview" aria-labelledby="vehicle-preview-title">
+          <h2 id="vehicle-preview-title">Проверьте салон</h2>
+          {layout ? (
+            <>
+              <p>{layout.title}. Пассажиры увидят эту нумерацию.</p>
+              <LayoutPreview layout={layout} />
+            </>
+          ) : (
+            <p>Выберите подходящую схему. Для нестандартного салона обратитесь в поддержку.</p>
+          )}
+          <p>
+            Вид сверху. Схематично, без масштаба и расположения дверей. После создания изменить
+            схему нельзя — для другой комплектации создайте отдельный автобус.
+          </p>
+        </aside>
+      </div>
       <ButtonLink secondary to="/carrier/buses">
         К автобусам
       </ButtonLink>
@@ -187,6 +280,17 @@ function BusContent({ id }: { id: string }) {
         <section className="booking-panel">
           <h2>{query.data.name}</h2>
           <p>Вместимость: {query.data.capacity}</p>
+          {query.data.layout_id && findLayout(query.data.layout_id) ? (
+            <>
+              <p>Схема: {findLayout(query.data.layout_id)!.title}</p>
+              <LayoutPreview layout={findLayout(query.data.layout_id)!} />
+            </>
+          ) : (
+            <p className="layout-help">
+              Схема не подтверждена: пассажир видит список номеров. Для салона со схемой создайте
+              новый автобус.
+            </p>
+          )}
           <form className="carrier-form" onSubmit={(event) => void rename(event)}>
             <Field
               label="Название автобуса"

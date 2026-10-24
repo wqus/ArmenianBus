@@ -29,6 +29,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "armeniabus.modules.cities" = ["catalog.json"]
+"armeniabus.modules.buses" = ["layouts.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

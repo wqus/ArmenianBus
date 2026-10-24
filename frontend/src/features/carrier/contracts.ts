@@ -1,5 +1,6 @@
 import { ApiError } from '../../shared/api/client'
 import { isUuid } from '../trips/trip'
+import { findLayout, findVehicleModel } from '../vehicles/catalog'
 
 export const routeLabels = {
   DRAFT: 'Черновик',
@@ -14,6 +15,8 @@ export type Bus = {
   carrier_id: string
   name: string
   capacity: number
+  layout_id?: string | null
+  vehicle_model_id?: string | null
   created_at: string
 }
 export type BusDetails = Bus & { seats: { id: string; seat_number: number }[] }
@@ -61,7 +64,10 @@ export function readBus(v: unknown): Bus {
     !Number.isInteger(b.capacity) ||
     b.capacity! < 1 ||
     b.capacity! > 100 ||
-    !timestamp(b.created_at)
+    !timestamp(b.created_at) ||
+    (b.layout_id != null &&
+      (!findLayout(b.layout_id) || findLayout(b.layout_id)!.capacity !== b.capacity)) ||
+    (b.vehicle_model_id != null && !findVehicleModel(b.vehicle_model_id))
   )
     throw invalid()
   return b as Bus

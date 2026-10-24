@@ -127,6 +127,7 @@ async def route_seats(db: AsyncSession, route_id: uuid.UUID) -> RouteSeats:
             select(
                 Route.id,
                 Route.bus_id,
+                Bus.layout_id,
                 Seat.id.label("seat_id"),
                 Seat.seat_number,
                 seat_status(now).label("status"),
@@ -147,6 +148,7 @@ async def route_seats(db: AsyncSession, route_id: uuid.UUID) -> RouteSeats:
     return RouteSeats(
         route_id=route_id,
         bus_id=rows[0].bus_id,
+        layout_id=rows[0].layout_id,
         free_seats=sum(seat.status == "FREE" for seat in seats),
         seats=seats,
     )

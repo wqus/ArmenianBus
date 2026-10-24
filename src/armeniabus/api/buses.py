@@ -8,6 +8,7 @@ from armeniabus.api.dependencies import require_role
 from armeniabus.api.errors import ErrorBody
 from armeniabus.infrastructure.db.session import get_db_session
 from armeniabus.modules.buses import service
+from armeniabus.modules.buses.layouts import CATALOG
 from armeniabus.modules.buses.schemas import BusCreate, BusPage, BusPublic, BusUpdate
 from armeniabus.modules.users.models import User, UserRole
 
@@ -33,6 +34,11 @@ async def list_own(
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> BusPage:
     return await service.list_buses(db, user, limit, offset)
+
+
+@router.get("/layouts")
+def layouts():
+    return CATALOG
 
 
 @router.get("/{bus_id}", response_model=BusPublic)

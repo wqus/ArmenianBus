@@ -31,6 +31,8 @@ class Bus(Base):
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
+    layout_id: Mapped[str | None] = mapped_column(String(64))
+    vehicle_model_id: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

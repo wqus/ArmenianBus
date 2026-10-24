@@ -97,6 +97,7 @@ function TripDetails({ id }: { id: string }) {
             price={trip.route.price}
             busy={query.isFetching}
             routeId={trip.route.id}
+            layoutId={trip.layoutId}
           />
         </>
       )}

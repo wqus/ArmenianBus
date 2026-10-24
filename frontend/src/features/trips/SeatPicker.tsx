@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Button, ButtonLink, Notice } from '../../shared/ui'
 import { formatPrice } from '../search/search'
 import type { Seat } from './trip'
+import { findLayout } from '../vehicles/catalog'
+import { SeatMap } from '../vehicles/SeatMap'
 
 const labels = { FREE: 'Свободно', HELD: 'Временно удерживается', PAID: 'Занято' }
 
@@ -10,12 +12,15 @@ export function SeatPicker({
   price,
   busy,
   routeId,
+  layoutId,
 }: {
   seats: Seat[]
   price: string
   busy: boolean
   routeId: string
+  layoutId?: string | null
 }) {
+  const layout = findLayout(layoutId)
   const [selection, setSelection] = useState<{ seats: Seat[]; id: string | null; lost: boolean }>({
     seats,
     id: null,
@@ -38,9 +43,15 @@ export function SeatPicker({
         <fieldset className="seat-picker" disabled={busy} aria-describedby="seat-picker-help">
           <legend>Выберите место</legend>
           <p id="seat-picker-help" className="seat-help">
-            Места перечислены по номерам. Их расположение в салоне уточняйте у перевозчика.
+            {layout
+              ? 'Схема подтверждена перевозчиком. Передняя часть салона — сверху. Масштаб и расположение дверей не показаны.'
+              : 'Для этого автобуса схема салона не подтверждена. Выберите место по номеру; расположение уточняйте у перевозчика.'}
           </p>
           <ul className="seat-legend" aria-label="Обозначения мест">
+            <li>
+              <span className="seat-dot seat-dot--selected" />
+              Выбрано
+            </li>
             <li>
               <span className="seat-dot seat-dot--free" />
               Свободно
@@ -54,24 +65,40 @@ export function SeatPicker({
               Занято
             </li>
           </ul>
-          <div className="seat-grid">
-            {seats.map((seat) => (
-              <button
-                type="button"
-                key={seat.id}
-                className={`seat seat--${seat.status.toLowerCase()}`}
-                disabled={seat.status !== 'FREE'}
-                aria-pressed={chosen?.id === seat.id}
-                aria-label={`Место ${seat.seat_number}, ${labels[seat.status].toLowerCase()}`}
-                onClick={() =>
-                  setSelection({ seats, id: chosen?.id === seat.id ? null : seat.id, lost: false })
-                }
-              >
-                <strong>{seat.seat_number}</strong>
-                <span>{chosen?.id === seat.id ? 'Выбрано' : labels[seat.status]}</span>
-              </button>
-            ))}
-          </div>
+          {layout ? (
+            <SeatMap
+              layout={layout}
+              seats={seats}
+              selectedId={chosen?.id}
+              disabled={busy}
+              onSelect={(id) =>
+                setSelection({ seats, id: chosen?.id === id ? null : id, lost: false })
+              }
+            />
+          ) : (
+            <div className="seat-grid">
+              {seats.map((seat) => (
+                <button
+                  type="button"
+                  key={seat.id}
+                  className={`seat seat--${seat.status.toLowerCase()}`}
+                  disabled={seat.status !== 'FREE'}
+                  aria-pressed={chosen?.id === seat.id}
+                  aria-label={`Место ${seat.seat_number}, ${labels[seat.status].toLowerCase()}`}
+                  onClick={() =>
+                    setSelection({
+                      seats,
+                      id: chosen?.id === seat.id ? null : seat.id,
+                      lost: false,
+                    })
+                  }
+                >
+                  <strong>{seat.seat_number}</strong>
+                  <span>{chosen?.id === seat.id ? 'Выбрано' : labels[seat.status]}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </fieldset>
       </div>
       <aside className="seat-choice" aria-labelledby="seat-choice-title">
@@ -117,6 +144,19 @@ export function SeatPicker({
           </div>
         )}
       </aside>
+      {chosen && !busy && (
+        <div
+          className="seat-mobile-action"
+          role="region"
+          aria-label="Выбранное место и бронирование"
+        >
+          <span>
+            <strong>Место {chosen.seat_number}</strong>
+            <span>{formatPrice(price)}</span>
+          </span>
+          <ButtonLink to={`/trips/${routeId}/book?seat=${chosen.id}`}>Бронировать</ButtonLink>
+        </div>
+      )}
     </div>
   )
 }
