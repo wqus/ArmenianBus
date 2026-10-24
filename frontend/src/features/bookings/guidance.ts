@@ -1,5 +1,16 @@
 import type { BookingDetails } from './booking'
 
+export function hasPaidConfirmation(
+  booking: Pick<BookingDetails, 'status' | 'route_status' | 'refund_status' | 'payment_status'>,
+): boolean {
+  return (
+    booking.status === 'PAID' &&
+    booking.payment_status === 'SUCCEEDED' &&
+    booking.refund_status === null &&
+    ['ACTIVE', 'DEPARTED'].includes(booking.route_status)
+  )
+}
+
 export function bookingGuidance(
   booking: Pick<BookingDetails, 'status' | 'route_status' | 'refund_status' | 'payment_status'>,
 ): string {

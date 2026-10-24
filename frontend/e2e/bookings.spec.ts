@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import type { BrowserContext } from '@playwright/test'
+import type { BrowserContext, Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
 const trip = '11111111-1111-4111-8111-111111111111'
@@ -22,6 +22,17 @@ const routeData = {
   capacity: 1,
   free_seats: 1,
 }
+const passenger = {
+  passenger_first_name: 'Արամ',
+  passenger_last_name: 'Петросян',
+  passenger_phone: '+37499123456',
+}
+async function fillPassenger(page: Page) {
+  await page.getByLabel('Имя пассажира', { exact: true }).fill(passenger.passenger_first_name)
+  await page.getByLabel('Фамилия пассажира', { exact: true }).fill(passenger.passenger_last_name)
+  await page.getByLabel('Телефон пассажира', { exact: true }).fill(passenger.passenger_phone)
+}
+
 const checkout = `/trips/${trip}/book?seat=${seat}`
 
 async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true) {
@@ -37,6 +48,7 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     createGate: Promise.resolve(),
   }
   const booking = () => ({
+    ...passenger,
     id,
     route_id: trip,
     seat_id: seat,
@@ -90,7 +102,11 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     if (path === '/api/v1/bookings' && route.request().method() === 'POST') {
       state.posts++
       expect(route.request().headers().authorization).toBe('Bearer mock-access')
-      expect(route.request().postDataJSON()).toEqual({ route_id: trip, seat_id: seat })
+      expect(route.request().postDataJSON()).toEqual({
+        route_id: trip,
+        seat_id: seat,
+        ...passenger,
+      })
       if (state.mode === 'conflict')
         return reply({ code: 'BOOKING_CONFLICT', message: 'Taken' }, 409)
       state.exists = true
@@ -135,6 +151,7 @@ test('login returns to the chosen seat, creates once, restores hold on reload an
   await page.getByRole('button', { name: 'Войти', exact: true }).click()
   await expect(page).toHaveURL(checkout)
   expect(state.posts).toBe(0)
+  await fillPassenger(page)
   await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
   await expect(page).toHaveURL(`/bookings/${id}`)
   await expect(page.getByRole('timer')).toContainText(/0[9]:[0-5]\d/)
@@ -156,6 +173,84 @@ test('login returns to the chosen seat, creates once, restores hold on reload an
     await page.setViewportSize({ width, height: 900 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
   }
+})
+
+test('passenger validation keeps the seat free and focuses the field; contacts stay off browser storage', async ({
+  page,
+  context,
+}, testInfo) => {
+  const state = await mock(context)
+  await page.goto(checkout)
+  const submit = page.getByRole('button', { name: 'Удержать место', exact: true })
+  await submit.click()
+  await expect(page.getByLabel('Имя пассажира', { exact: true })).toBeFocused()
+  expect(state.posts).toBe(0)
+  await fillPassenger(page)
+  await page.getByLabel('Телефон пассажира', { exact: true }).fill('89991234567')
+  await submit.click()
+  await expect(page.getByLabel('Телефон пассажира', { exact: true })).toBeFocused()
+  expect(state.posts).toBe(0)
+  await page.getByLabel('Телефон пассажира', { exact: true }).fill('+374 (99) 123-456')
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.screenshot({ path: testInfo.outputPath('passenger-form.png'), fullPage: true })
+  const storage = await page.evaluate(() =>
+    JSON.stringify([localStorage, sessionStorage, location.href]),
+  )
+  expect(storage).not.toContain(passenger.passenger_first_name)
+  expect(storage).not.toContain('123-456')
+  await submit.click()
+  await expect(page).toHaveURL(`/bookings/${id}`)
+  await expect(page.getByText('Արամ Петросян', { exact: true })).toBeVisible()
+  await expect(page.getByText('+37499123456', { exact: true })).toBeVisible()
+})
+
+test('paid confirmation refreshes before printing and disappears on cancellation or read failure', async ({
+  page,
+  context,
+}, testInfo) => {
+  const state = await mock(context)
+  state.status = 'PAID'
+  await page.addInitScript(() => {
+    window.print = () => {
+      document.documentElement.dataset.printCalls = String(
+        Number(document.documentElement.dataset.printCalls ?? '0') + 1,
+      )
+    }
+  })
+  await page.goto(`/bookings/${id}`)
+  const confirmation = page.getByRole('region', { name: 'Подтверждение оплаченной брони' })
+  await expect(confirmation).toContainText('Արամ Петросян')
+  const print = page.getByRole('button', { name: 'Распечатать / сохранить PDF' })
+  await print.click()
+  await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1')
+  await page.emulateMedia({ media: 'print' })
+  await expect(confirmation).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Обновить статус' })).toBeHidden()
+  await expect(page.getByRole('navigation', { name: 'Основная навигация' })).toBeHidden()
+  await page.screenshot({
+    path: testInfo.outputPath('paid-confirmation-print.png'),
+    fullPage: true,
+  })
+  if (testInfo.project.name === 'desktop') {
+    const pdf = await page.pdf({ format: 'A4', path: testInfo.outputPath('confirmation.pdf') })
+    expect(pdf.toString('latin1').match(/\/Type \/Page\b/g)?.length).toBe(1)
+  }
+  await page.emulateMedia({ media: 'screen' })
+  state.status = 'CANCELLED'
+  await print.click()
+  await expect(confirmation).toHaveCount(0)
+  await expect(page.getByRole('alert')).toContainText('Не удалось подтвердить')
+  await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1')
+  state.status = 'PAID'
+  await page.getByRole('button', { name: 'Обновить статус' }).click()
+  await expect(confirmation).toBeVisible()
+  state.mode = 'get-error'
+  await print.click()
+  await expect(confirmation).toHaveCount(0)
+  await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1')
+  expect(state.posts).toBe(0)
+  expect(state.deletes).toBe(0)
 })
 
 test('expired countdown removes checkout action without inventing a server status or sending a mutation', async ({
@@ -209,6 +304,7 @@ test('a lost create response is recovered from own bookings without replaying PO
   const state = await mock(context)
   state.mode = 'lost'
   await page.goto(checkout)
+  await fillPassenger(page)
   await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('бронь могла сохраниться')
   await expect(page.getByRole('button', { name: 'Удержать место', exact: true })).toHaveCount(0)
@@ -225,6 +321,7 @@ test('conflict offers a new selection and carrier cannot create a passenger book
   const state = await mock(context)
   state.mode = 'conflict'
   await page.goto(checkout)
+  await fillPassenger(page)
   await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('место уже удерживается')
   expect(state.posts).toBe(1)
@@ -281,6 +378,7 @@ test('double submit is guarded; a late response respects navigation and lost can
     release = resolve
   })
   await page.goto(checkout)
+  await fillPassenger(page)
   const button = page.getByRole('button', { name: 'Удержать место', exact: true })
   await expect(button).toBeEnabled()
   await button.evaluate((button) => {

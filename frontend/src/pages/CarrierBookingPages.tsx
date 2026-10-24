@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from 'react-router'
 import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 import { readDetails, statusLabels, type BookingDetails } from '../features/bookings/booking'
 import { BookingFinancials } from '../features/bookings/BookingFinancials'
+import { PassengerInfo } from '../features/bookings/PassengerInfo'
 import { bookingFilterParams } from '../features/bookings/filters'
 import { carrierBookingParams } from '../features/carrier/paths'
 import { carrierError, readPage, routeLabels } from '../features/carrier/contracts'
@@ -44,6 +45,7 @@ function BookingInfo({ booking: b }: { booking: BookingDetails }) {
         </div>
       </dl>
       <BookingFinancials booking={b} />
+      <PassengerInfo passenger={b} />
     </>
   )
 }

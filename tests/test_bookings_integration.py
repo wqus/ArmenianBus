@@ -40,6 +40,9 @@ def reserve(trip, *, passenger=0, seat=0, route=None, **extra):
         json={
             "route_id": (route or trip["route"])["id"],
             "seat_id": trip["buses"][0]["seats"][seat]["id"],
+            "passenger_first_name": "Արամ",
+            "passenger_last_name": "Петросян",
+            "passenger_phone": "+37499123456",
             **extra,
         },
     )
@@ -105,6 +108,43 @@ def test_hold_snapshot_availability_ownership_and_cancellation(trip):
     successor = held(trip, passenger=1)
     assert successor["id"] != booking["id"]
     assert client.get(path, headers=owner).json()["amount"] == "4500.50"
+
+
+def test_passenger_contacts_are_private_persisted_and_excluded_from_audit(trip):
+    booking = held(trip, passenger_first_name=" Արամ ", passenger_phone="+374 (99) 123-456")
+    expected = {
+        "passenger_first_name": "Արամ",
+        "passenger_last_name": "Петросян",
+        "passenger_phone": "+37499123456",
+    }
+    client = trip["world"].client
+    path = f"/api/v1/cabinet/bookings/{booking['id']}"
+    for url, headers in [
+        (path, trip["passengers"][0]),
+        (f"/api/v1/carriers/me/bookings/{booking['id']}", trip["headers"]),
+    ]:
+        response = client.get(url, headers=headers)
+        assert response.status_code == 200, response.text
+        assert {key: response.json()[key] for key in expected} == expected
+    assert client.get(path, headers=trip["passengers"][1]).status_code == 404
+    public = client.get(f"/api/v1/routes/{booking['route_id']}").text
+    seats = client.get(f"/api/v1/routes/{booking['route_id']}/seats").text
+    assert all(value not in public + seats for value in expected.values())
+    audit = asyncio.run(
+        scalar(
+            select(AuditLog.event_data).where(
+                AuditLog.entity_id == uuid.UUID(booking["id"]), AuditLog.action == "booking.created"
+            )
+        )
+    )
+    assert audit == {}
+
+
+def test_invalid_passenger_contact_does_not_hold_a_seat(trip):
+    response = reserve(trip, passenger_phone="12345")
+    assert response.status_code == 422
+    assert "12345" not in response.text
+    assert search(trip, trip["route"])["items"][0]["free_seats"] == 2
 
 
 def test_fifty_concurrent_requests_have_one_winner_without_redis(trip):

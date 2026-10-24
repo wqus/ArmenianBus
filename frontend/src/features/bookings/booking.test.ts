@@ -44,6 +44,9 @@ it('validates private booking data including clock, price, seat and terminal sta
     { route_status: 'INVALID' },
     { refund_status: 'REFUNDED' },
     { refund_status: 'OPEN', refund_required: false },
+    { passenger_first_name: 123 },
+    { passenger_last_name: 'А\u200bБ' },
+    { passenger_phone: '89991234567' },
   ])
     expect(() => readDetails({ ...b, ...changes })).toThrow()
   expect(readBooking({ ...b, server_time: undefined })).toHaveProperty('id', id)

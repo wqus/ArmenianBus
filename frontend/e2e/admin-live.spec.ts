@@ -106,7 +106,13 @@ test('real admin activates a carrier, blocks its account, cancels its route and 
   const passenger = await login(passengerEmail)
   const held = await request.post(`${api}/bookings`, {
     headers: passenger,
-    data: { route_id: route.id, seat_id: bus.seats[0].id },
+    data: {
+      route_id: route.id,
+      seat_id: bus.seats[0].id,
+      passenger_first_name: 'Арам',
+      passenger_last_name: 'Петросян',
+      passenger_phone: '+37499123456',
+    },
   })
   expect(held.status()).toBe(201)
   const booking = await held.json()

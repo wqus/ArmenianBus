@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router'
 import { useSession } from '../features/auth/context'
 import { remainingSeconds } from '../features/bookings/booking'
 import { JourneySummary, BookingSupport } from '../features/bookings/JourneySummary'
+import { PassengerInfo } from '../features/bookings/PassengerInfo'
 import {
   confirmationUrl,
   loadCheckout,
@@ -133,7 +134,10 @@ function PaymentContent({ id }: { id: string }) {
         <Loading title="Проверяем оплату…" />
       ) : (
         <div className="passenger-checkout payment-checkout">
-          <JourneySummary journey={value.booking} />
+          <div>
+            <JourneySummary journey={value.booking} />
+            <PassengerInfo passenger={value.booking} />
+          </div>
           <section className="booking-panel checkout-action payment-panel">
             <div
               role="status"

@@ -136,7 +136,13 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   await expect(page.getByRole('heading', { name: 'Управление рейсом', exact: true })).toBeVisible()
   const held = await request.post(`${api}/bookings`, {
     headers: passenger,
-    data: { route_id: routeId, seat_id: bus.seats[0].id },
+    data: {
+      route_id: routeId,
+      seat_id: bus.seats[0].id,
+      passenger_first_name: 'Арам',
+      passenger_last_name: 'Петросян',
+      passenger_phone: '+37499123456',
+    },
   })
   expect(held.status()).toBe(201)
   const booking = await held.json()

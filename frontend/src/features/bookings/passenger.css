@@ -362,3 +362,55 @@
     width: 100%;
   }
 }
+.passenger-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 1.5rem;
+  min-width: 0;
+}
+.passenger-form legend {
+  font-weight: 600;
+  font-size: 1.15rem;
+}
+.passenger-form .field {
+  margin-top: 1rem;
+}
+.passenger-contact {
+  border-top: 1px solid var(--border, #d9d6cb);
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  overflow-wrap: anywhere;
+}
+.paid-confirmation {
+  margin-top: 2rem;
+  border: 1px solid #c4c9bb;
+  padding: 1.5rem;
+}
+.paid-confirmation .journey-summary {
+  border: 0;
+}
+@media print {
+  body:has(.paid-confirmation)
+    *:not(:has(.paid-confirmation)):not(.paid-confirmation, .paid-confirmation *) {
+    display: none !important;
+  }
+  body:has(.paid-confirmation) *:has(.paid-confirmation) {
+    display: block;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    max-width: none;
+  }
+  body:has(.paid-confirmation) .paid-confirmation {
+    width: 100%;
+    margin: 0;
+    padding: 16mm;
+    border: 0;
+    background: white;
+    color: black;
+    font-size: 11pt;
+  }
+  .paid-confirmation .journey-summary h2 {
+    font-size: 24pt;
+  }
+}

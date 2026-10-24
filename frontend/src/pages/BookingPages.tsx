@@ -13,8 +13,11 @@ import {
 } from '../features/bookings/booking'
 import type { BookingDetails, TimedBooking } from '../features/bookings/booking'
 import { BookingFinancials } from '../features/bookings/BookingFinancials'
+import { PassengerInfo } from '../features/bookings/PassengerInfo'
+import { PaidConfirmation } from '../features/bookings/PaidConfirmation'
+import { emptyPassenger, normalizePassenger, passengerErrors } from '../features/bookings/passenger'
 import { JourneySummary, BookingSupport } from '../features/bookings/JourneySummary'
-import { bookingGuidance } from '../features/bookings/guidance'
+import { bookingGuidance, hasPaidConfirmation } from '../features/bookings/guidance'
 import '../features/bookings/passenger.css'
 import {
   bookingFilterParams,
@@ -24,7 +27,7 @@ import {
 import type { BookingFilters } from '../features/bookings/filters'
 import { departureDate, departureTime, formatPrice } from '../features/search/search'
 import { ApiError } from '../shared/api/client'
-import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
+import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 
 function useInvalidateAvailability() {
   const client = useQueryClient()
@@ -52,6 +55,9 @@ function CreateBooking({ routeId, seatId }: { routeId: string; seatId: string })
     'idle',
   )
   const [message, setMessage] = useState('')
+  const [passenger, setPassenger] = useState(emptyPassenger)
+  const [errors, setErrors] = useState<ReturnType<typeof passengerErrors>>({})
+  const form = useRef<HTMLFormElement>(null)
   const query = useQuery({
     queryKey: ['public-trip', routeId],
     queryFn: ({ signal }) => getTrip(routeId, signal),
@@ -70,13 +76,25 @@ function CreateBooking({ routeId, seatId }: { routeId: string; seatId: string })
       seat?.status !== 'FREE'
     )
       return
+    const invalid = passengerErrors(passenger)
+    setErrors(invalid)
+    if (Object.keys(invalid).length) {
+      form.current
+        ?.querySelector<HTMLInputElement>('[name="' + Object.keys(invalid)[0] + '"]')
+        ?.focus()
+      return
+    }
     pending.current = true
     setState('sending')
     try {
       const booking = readBooking(
         await session.request('/bookings', {
           method: 'POST',
-          body: JSON.stringify({ route_id: routeId, seat_id: seatId }),
+          body: JSON.stringify({
+            route_id: routeId,
+            seat_id: seatId,
+            ...normalizePassenger(passenger),
+          }),
         }),
       )
       if (
@@ -147,13 +165,54 @@ function CreateBooking({ routeId, seatId }: { routeId: string; seatId: string })
             {seat?.status === 'FREE' ? (
               <>
                 <p className="booking-amount">Место {seat.seat_number}</p>
-                <Button
-                  busy={state === 'sending'}
-                  disabled={query.isFetching}
-                  onClick={() => void create()}
+                <form
+                  ref={form}
+                  className="passenger-form"
+                  noValidate
+                  onSubmit={(event) => {
+                    event.preventDefault()
+                    void create()
+                  }}
                 >
-                  Удержать место
-                </Button>
+                  <fieldset disabled={state === 'sending'}>
+                    <legend>Кто поедет</legend>
+                    <p className="seat-help">
+                      Укажите данные человека, который поедет, даже если оформляете бронь для
+                      другого. Телефон нужен для связи по поездке.
+                    </p>
+                    {(
+                      [
+                        ['passenger_first_name', 'Имя пассажира', 'given-name'],
+                        ['passenger_last_name', 'Фамилия пассажира', 'family-name'],
+                        ['passenger_phone', 'Телефон пассажира', 'tel'],
+                      ] as const
+                    ).map(([key, label, autoComplete]) => (
+                      <Field
+                        key={key}
+                        name={key}
+                        label={label}
+                        autoComplete={autoComplete}
+                        type={key === 'passenger_phone' ? 'tel' : 'text'}
+                        required
+                        maxLength={key === 'passenger_phone' ? 40 : 100}
+                        value={passenger[key]}
+                        error={errors[key]}
+                        hint={
+                          key === 'passenger_phone'
+                            ? 'С кодом страны, например +374… или +7…'
+                            : undefined
+                        }
+                        onChange={(event) => {
+                          setPassenger({ ...passenger, [key]: event.target.value })
+                          setErrors((current) => ({ ...current, [key]: undefined }))
+                        }}
+                      />
+                    ))}
+                  </fieldset>
+                  <Button type="submit" busy={state === 'sending'} disabled={query.isFetching}>
+                    Удержать место
+                  </Button>
+                </form>
                 <p className="seat-help">Это временное удержание. Оплата ещё не выполнена.</p>
               </>
             ) : (
@@ -277,6 +336,15 @@ function BookingContent({ id }: { id: string }) {
   const pending = useRef(false)
   const [confirm, setConfirm] = useState<'HELD' | 'PAID' | null>(null)
   const [error, setError] = useState('')
+  const [printing, setPrinting] = useState(false)
+  const printingPending = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
   const query = useQuery({
     queryKey: ['booking', user?.id, id],
     queryFn: ({ signal }) => loadBooking(session, id, signal),
@@ -291,6 +359,28 @@ function BookingContent({ id }: { id: string }) {
         : false,
   })
   const value = query.data
+  async function printConfirmation() {
+    if (printingPending.current || busy || query.isFetching || query.isError) return
+    printingPending.current = true
+    setPrinting(true)
+    setError('')
+    try {
+      const fresh = await query.refetch()
+      if (!mounted.current) return
+      if (fresh.isError || !fresh.data || !hasPaidConfirmation(fresh.data.booking)) {
+        setError('Не удалось подтвердить действующую оплаченную бронь. Проверьте её статус.')
+        return
+      }
+      // Wait for the refreshed confirmation to be committed to the DOM before printing.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      )
+      if (mounted.current && document.querySelector('.paid-confirmation')) window.print()
+    } finally {
+      printingPending.current = false
+      if (mounted.current) setPrinting(false)
+    }
+  }
   const [now, setNow] = useState(() => performance.now())
   useEffect(() => {
     if (value?.booking.status !== 'HELD') return
@@ -367,10 +457,24 @@ function BookingContent({ id }: { id: string }) {
           </div>
           <section className="booking-panel booking-detail">
             <BookingInfo booking={value.booking} />
+            <PassengerInfo passenger={value.booking} />
             <BookingFinancials booking={value.booking} />
+            {hasPaidConfirmation(value.booking) && !query.isFetching && (
+              <PaidConfirmation booking={value.booking} />
+            )}
           </section>
           <aside className="booking-panel checkout-action" aria-labelledby="booking-actions-title">
             <h2 id="booking-actions-title">Что дальше</h2>
+            {hasPaidConfirmation(value.booking) && (
+              <Button
+                variant="secondary"
+                busy={printing}
+                disabled={busy || query.isFetching}
+                onClick={() => void printConfirmation()}
+              >
+                Распечатать / сохранить PDF
+              </Button>
+            )}
             <p className="checkout-amount">
               {formatPrice(value.booking.amount)}
               <span>за одного пассажира</span>

@@ -125,7 +125,13 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   const passenger = await register('PASSENGER')
   const holdResponse = await request.post(`${api}/bookings`, {
     headers: passenger,
-    data: { route_id: route.id, seat_id: bus.seats[0].id },
+    data: {
+      route_id: route.id,
+      seat_id: bus.seats[0].id,
+      passenger_first_name: 'Арам',
+      passenger_last_name: 'Петросян',
+      passenger_phone: '+37499123456',
+    },
   })
   expect(holdResponse.status()).toBe(201)
   const booking = await holdResponse.json()
@@ -158,6 +164,9 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
     (response) =>
       response.url().endsWith('/api/v1/bookings') && response.request().method() === 'POST',
   )
+  await page.getByLabel('Имя пассажира', { exact: true }).fill('Арам')
+  await page.getByLabel('Фамилия пассажира', { exact: true }).fill('Петросян')
+  await page.getByLabel('Телефон пассажира', { exact: true }).fill('+37499123456')
   await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
   const browserCreated = await createResponse
   expect(browserCreated.status()).toBe(201)
@@ -205,6 +214,9 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
     (response) =>
       response.url().endsWith('/api/v1/bookings') && response.request().method() === 'POST',
   )
+  await page.getByLabel('Имя пассажира', { exact: true }).fill('Арам')
+  await page.getByLabel('Фамилия пассажира', { exact: true }).fill('Петросян')
+  await page.getByLabel('Телефон пассажира', { exact: true }).fill('+37499123456')
   await page.getByRole('button', { name: 'Удержать место', exact: true }).click()
   const expiring = await (await expiringResponse).json()
   await expect(page.getByRole('timer')).toBeVisible()

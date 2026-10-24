@@ -12,6 +12,9 @@ export type Booking = {
   currency: 'RUB'
   held_until: string
   created_at: string
+  passenger_first_name?: string | null
+  passenger_last_name?: string | null
+  passenger_phone?: string | null
 }
 export type BookingDetails = Booking & {
   server_time: string
@@ -49,7 +52,14 @@ export function readBooking(data: unknown): Booking {
     !/[1-9]/.test(b.amount) ||
     b.currency !== 'RUB' ||
     !timestamp(b.held_until) ||
-    !timestamp(b.created_at)
+    !timestamp(b.created_at) ||
+    [b.passenger_first_name, b.passenger_last_name].some(
+      (name) =>
+        name != null &&
+        (typeof name !== 'string' || !name.trim() || [...name].length > 100 || /\p{C}/u.test(name)),
+    ) ||
+    (b.passenger_phone != null &&
+      (typeof b.passenger_phone !== 'string' || !/^\+[1-9][0-9]{7,14}$/.test(b.passenger_phone)))
   )
     throw invalid()
   return b as Booking
