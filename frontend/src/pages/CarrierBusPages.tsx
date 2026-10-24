@@ -48,11 +48,14 @@ export function CarrierBusesPage() {
       ) : (
         <>
           {!query.data.items.length && <Notice title="Автобусов на этой странице нет" />}
-          <div className="booking-list">
+          <div className="booking-list carrier-records">
             {query.data.items.map((bus) => (
-              <article className="booking-panel" key={bus.id}>
-                <h2>{bus.name}</h2>
-                <p>Мест: {bus.capacity}</p>
+              <article className="booking-panel carrier-record" key={bus.id}>
+                <div className="carrier-record-main">
+                  <p className="carrier-record-caption">Автопарк · {bus.capacity} мест</p>
+                  <h2>{bus.name}</h2>
+                  <p>{findLayout(bus.layout_id)?.title ?? 'Без подтверждённой схемы салона'}</p>
+                </div>
                 <ButtonLink to={`/carrier/buses/${bus.id}`}>Открыть автобус</ButtonLink>
               </article>
             ))}
@@ -277,7 +280,7 @@ function BusContent({ id }: { id: string }) {
       ) : !query.data ? (
         <Loading title="Загружаем автобус…" />
       ) : (
-        <section className="booking-panel">
+        <section className="booking-panel carrier-bus-detail">
           <h2>{query.data.name}</h2>
           <p>Вместимость: {query.data.capacity}</p>
           {query.data.layout_id && findLayout(query.data.layout_id) ? (

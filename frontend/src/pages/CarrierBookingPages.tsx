@@ -14,17 +14,35 @@ import { departureDate, departureTime, formatPrice } from '../features/search/se
 function BookingInfo({ booking: b }: { booking: BookingDetails }) {
   return (
     <>
-      <p>
+      <h2>
         {b.origin} → {b.destination}
+      </h2>
+      <p className="carrier-status" data-status={b.status}>
+        {statusLabels[b.status]}
       </p>
-      <p>
-        {departureDate.format(new Date(b.departure_at))} ·{' '}
-        {departureTime.format(new Date(b.departure_at))} UTC · Место {b.seat_number}
-      </p>
-      <p>
-        <strong>{statusLabels[b.status]}</strong> · {formatPrice(b.amount)}
-      </p>
-      <p>Рейс: {routeLabels[b.route_status]}</p>
+      <dl className="carrier-facts">
+        <div>
+          <dt>Отправление · UTC</dt>
+          <dd>
+            <time dateTime={b.departure_at}>
+              {departureDate.format(new Date(b.departure_at))} ·{' '}
+              {departureTime.format(new Date(b.departure_at))} UTC
+            </time>
+          </dd>
+        </div>
+        <div>
+          <dt>Место</dt>
+          <dd>{b.seat_number}</dd>
+        </div>
+        <div>
+          <dt>Сумма брони</dt>
+          <dd>{formatPrice(b.amount)}</dd>
+        </div>
+        <div>
+          <dt>Рейс</dt>
+          <dd>{routeLabels[b.route_status]}</dd>
+        </div>
+      </dl>
       <BookingFinancials booking={b} />
     </>
   )
@@ -35,7 +53,7 @@ function RouteFilter({ value, apply }: { value: string; apply: (value: string) =
   const [error, setError] = useState('')
   return (
     <form
-      className="carrier-form"
+      className="carrier-form carrier-route-filter"
       onSubmit={(event) => {
         event.preventDefault()
         const id = draft.trim()
@@ -144,11 +162,12 @@ export function CarrierBookingsPage() {
               {query.data.items.length === 0 && (
                 <Notice title="Бронирований на этой странице нет" />
               )}
-              <div className="booking-list">
+              <div className="booking-list carrier-records">
                 {query.data.items.map((b) => (
-                  <article className="booking-panel" key={b.id}>
-                    <h2>Место {b.seat_number}</h2>
-                    <BookingInfo booking={b} />
+                  <article className="booking-panel carrier-record" key={b.id}>
+                    <div className="carrier-record-main">
+                      <BookingInfo booking={b} />
+                    </div>
                     <ButtonLink to={`/carrier/bookings/${b.id}`} secondary>
                       Открыть бронь
                     </ButtonLink>
@@ -189,9 +208,13 @@ function BookingContent({ id }: { id: string }) {
           {carrierError(query.error)}
         </Notice>
       ) : (
-        <section className="booking-panel">
+        <section className="booking-panel carrier-booking-detail">
           <p className="booking-reference">Номер брони: {query.data.id}</p>
           <BookingInfo booking={query.data} />
+          <p className="carrier-readonly">
+            Просмотр бронирования. Оплата и отмена выполняются пассажиром; вопросы возврата решаются
+            с администратором.
+          </p>
           <ButtonLink to={`/carrier/routes/${query.data.route_id}`} secondary>
             Открыть рейс
           </ButtonLink>

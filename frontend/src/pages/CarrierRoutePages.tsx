@@ -23,16 +23,27 @@ import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shar
 function RouteInfo({ route }: { route: OwnRoute }) {
   return (
     <>
+      <p className="carrier-status" data-status={route.status}>
+        {routeLabels[route.status]}
+      </p>
       <h2>
         {route.origin} → {route.destination}
       </h2>
-      <p>
-        {departureDate.format(new Date(route.departure_at))} ·{' '}
-        {departureTime.format(new Date(route.departure_at))} UTC
-      </p>
-      <p>
-        {routeLabels[route.status]} · {formatPrice(route.price)}
-      </p>
+      <dl className="carrier-facts">
+        <div>
+          <dt>Отправление · UTC</dt>
+          <dd>
+            <time dateTime={route.departure_at}>
+              {departureDate.format(new Date(route.departure_at))} ·{' '}
+              {departureTime.format(new Date(route.departure_at))} UTC
+            </time>
+          </dd>
+        </div>
+        <div>
+          <dt>Цена билета</dt>
+          <dd>{formatPrice(route.price)}</dd>
+        </div>
+      </dl>
     </>
   )
 }
@@ -99,10 +110,12 @@ export function CarrierRoutesPage() {
           ) : (
             <>
               {!query.data.items.length && <Notice title="Рейсов на этой странице нет" />}
-              <div className="booking-list">
+              <div className="booking-list carrier-records">
                 {query.data.items.map((route) => (
-                  <article className="booking-panel" key={route.id}>
-                    <RouteInfo route={route} />
+                  <article className="booking-panel carrier-record" key={route.id}>
+                    <div className="carrier-record-main">
+                      <RouteInfo route={route} />
+                    </div>
                     <ButtonLink to={`/carrier/routes/${route.id}`}>Управлять рейсом</ButtonLink>
                   </article>
                 ))}
@@ -195,99 +208,108 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
   }
   return (
     <form className="carrier-form booking-panel" onSubmit={(event) => void submit(event)}>
-      <div className="booking-status-filter">
-        <label htmlFor="route-bus">Автобус</label>
-        <select
-          id="route-bus"
-          value={busId}
-          disabled={buses.isFetching || buses.isError || write.busy}
-          onChange={(event) => setBusId(event.target.value)}
-        >
-          <option value="">Выберите автобус</option>
-          {busId && !buses.data?.items.some((bus) => bus.id === busId) && (
-            <option value={busId}>{selected.data?.name ?? 'Выбранный автобус'}</option>
-          )}
-          {!buses.isError &&
-            buses.data?.items.map((bus) => (
-              <option key={bus.id} value={bus.id}>
-                {bus.name} · {bus.capacity} мест
-              </option>
-            ))}
-        </select>
-      </div>
-      {buses.isError && (
-        <Notice title="Не удалось прочитать автопарк" error>
-          {carrierError(buses.error)}
-        </Notice>
-      )}
-      <div>
-        <Button
-          type="button"
-          variant="secondary"
-          busy={buses.isFetching}
-          onClick={() => void buses.refetch()}
-        >
-          Обновить автопарк
-        </Button>
-        <Pager offset={offset} next={buses.data?.next ?? false} change={setOffset} />
-      </div>
-      {selected.isError && (
-        <Notice title="Выбранный автобус недоступен" error>
-          {carrierError(selected.error)}
-        </Notice>
-      )}
-      {!buses.isFetching && !buses.data?.items.length && (
-        <ButtonLink secondary to="/carrier/buses/new">
-          Добавить автобус
-        </ButtonLink>
-      )}
-      <div className="booking-status-filter">
-        <label htmlFor="route-direction">Направление</label>
-        <select
-          id="route-direction"
-          value={direction}
-          onChange={(event) => {
-            setDirection(event.target.value as 'RU' | 'AM')
-            setOrigin('')
-            setDestination('')
-          }}
-        >
-          <option value="RU">Россия → Армения</option>
-          <option value="AM">Армения → Россия</option>
-        </select>
-      </div>
-      <CityInput
-        label="Город отправления"
-        name="origin"
-        value={origin}
-        onChange={setOrigin}
-        country={direction}
-        required
-      />
-      <CityInput
-        label="Город прибытия"
-        name="destination"
-        value={destination}
-        onChange={setDestination}
-        country={direction === 'RU' ? 'AM' : 'RU'}
-        required
-      />
-      <Field
-        label="Отправление (UTC)"
-        type="datetime-local"
-        value={departure}
-        onChange={(event) => setDeparture(event.target.value)}
-        required
-        hint="Укажите время в UTC. Часовой пояс вашего устройства не используется."
-      />
-      <Field
-        label="Цена билета, ₽"
-        inputMode="decimal"
-        value={price}
-        onChange={(event) => setPrice(event.target.value)}
-        required
-        hint="Например, 4500,50. Цена передаётся без округления."
-      />
+      <fieldset className="carrier-form-section">
+        <legend>1. Транспорт</legend>
+        <div className="booking-status-filter">
+          <label htmlFor="route-bus">Автобус</label>
+          <select
+            id="route-bus"
+            value={busId}
+            disabled={buses.isFetching || buses.isError || write.busy}
+            onChange={(event) => setBusId(event.target.value)}
+          >
+            <option value="">Выберите автобус</option>
+            {busId && !buses.data?.items.some((bus) => bus.id === busId) && (
+              <option value={busId}>{selected.data?.name ?? 'Выбранный автобус'}</option>
+            )}
+            {!buses.isError &&
+              buses.data?.items.map((bus) => (
+                <option key={bus.id} value={bus.id}>
+                  {bus.name} · {bus.capacity} мест
+                </option>
+              ))}
+          </select>
+        </div>
+        {buses.isError && (
+          <Notice title="Не удалось прочитать автопарк" error>
+            {carrierError(buses.error)}
+          </Notice>
+        )}
+        <div>
+          <Button
+            type="button"
+            variant="secondary"
+            busy={buses.isFetching}
+            onClick={() => void buses.refetch()}
+          >
+            Обновить автопарк
+          </Button>
+          <Pager offset={offset} next={buses.data?.next ?? false} change={setOffset} />
+        </div>
+        {selected.isError && (
+          <Notice title="Выбранный автобус недоступен" error>
+            {carrierError(selected.error)}
+          </Notice>
+        )}
+        {!buses.isFetching && !buses.data?.items.length && (
+          <ButtonLink secondary to="/carrier/buses/new">
+            Добавить автобус
+          </ButtonLink>
+        )}
+      </fieldset>
+      <fieldset className="carrier-form-section">
+        <legend>2. Маршрут</legend>
+        <div className="booking-status-filter">
+          <label htmlFor="route-direction">Направление</label>
+          <select
+            id="route-direction"
+            value={direction}
+            onChange={(event) => {
+              setDirection(event.target.value as 'RU' | 'AM')
+              setOrigin('')
+              setDestination('')
+            }}
+          >
+            <option value="RU">Россия → Армения</option>
+            <option value="AM">Армения → Россия</option>
+          </select>
+        </div>
+        <CityInput
+          label="Город отправления"
+          name="origin"
+          value={origin}
+          onChange={setOrigin}
+          country={direction}
+          required
+        />
+        <CityInput
+          label="Город прибытия"
+          name="destination"
+          value={destination}
+          onChange={setDestination}
+          country={direction === 'RU' ? 'AM' : 'RU'}
+          required
+        />
+      </fieldset>
+      <fieldset className="carrier-form-section">
+        <legend>3. Отправление и цена</legend>
+        <Field
+          label="Отправление (UTC)"
+          type="datetime-local"
+          value={departure}
+          onChange={(event) => setDeparture(event.target.value)}
+          required
+          hint="Укажите время в UTC. Часовой пояс вашего устройства не используется."
+        />
+        <Field
+          label="Цена билета, ₽"
+          inputMode="decimal"
+          value={price}
+          onChange={(event) => setPrice(event.target.value)}
+          required
+          hint="Стоимость для одного пассажира, в рублях. Например, 4500,50."
+        />
+      </fieldset>
       {error && <Notice title={error} error />}
       <WriteResult message={write.message} />
       {write.uncertain ? (
@@ -404,9 +426,27 @@ function RouteContent({ id, edit }: { id: string; edit: boolean }) {
           <Notice title="Редактирование доступно только для черновика или опубликованного рейса" />
         )
       ) : (
-        <section className="booking-panel">
+        <section className="booking-panel carrier-route-detail">
           <RouteInfo route={route} />
           <p className="booking-reference">Номер рейса: {id}</p>
+          <div className="carrier-route-guidance">
+            <h3>Что дальше</h3>
+            <p>
+              {
+                {
+                  DRAFT:
+                    'Проверьте маршрут, время UTC, цену и автобус. После публикации рейс станет доступен пассажирам в поиске.',
+                  ACTIVE:
+                    'Рейс опубликован. Откройте бронирования перед посадкой. После запланированного времени можно отметить отправление.',
+                  DEPARTED:
+                    'Рейс отмечен как отправившийся. Когда поездка закончится, подтвердите её завершение.',
+                  COMPLETED: 'Рейс завершён. Данные рейса и бронирований доступны для просмотра.',
+                  CANCELLED:
+                    'Рейс отменён. Для оплаченных билетов проверяйте заявки на возврат с администратором; отмена не означает, что деньги уже поступили пассажиру.',
+                }[route.status]
+              }
+            </p>
+          </div>
           <div className="booking-actions">
             <ButtonLink secondary to={`/carrier/buses/${route.bus_id}`}>
               Автобус рейса

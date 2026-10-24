@@ -5,6 +5,8 @@ import { useSession } from '../features/auth/context'
 import { authMessage, roleLabels } from '../features/auth/types'
 import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { readCarrier } from '../features/carrier/contracts'
+import { CarrierNavigation } from '../features/carrier/CarrierNavigation'
+import '../features/carrier/carrier.css'
 
 export function AccountPage() {
   const { session, user } = useSession()
@@ -70,7 +72,8 @@ export function CarrierProfilePage() {
     BLOCKED: 'Профиль заблокирован',
   }
   return (
-    <div className="container information-page">
+    <div className="container information-page carrier-workspace">
+      <CarrierNavigation />
       <PageHeading eyebrow="ПЕРЕВОЗЧИКУ" title="Профиль компании">
         Контактные данные и результат проверки профиля.
       </PageHeading>

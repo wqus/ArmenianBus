@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { NavLink, Outlet } from 'react-router'
+import { Outlet } from 'react-router'
 import { useSession } from '../auth/context'
 import { carrierError, readCarrier } from './contracts'
 import { Button, ButtonLink, Notice } from '../../shared/ui'
+import { CarrierNavigation } from './CarrierNavigation'
+import './carrier.css'
 
 export function CarrierLayout() {
   const { session, user } = useSession()
@@ -15,15 +17,8 @@ export function CarrierLayout() {
     refetchInterval: 15000,
   })
   return (
-    <div className="container information-page">
-      <nav className="carrier-nav" aria-label="Кабинет перевозчика">
-        <NavLink to="/carrier" end>
-          Компания
-        </NavLink>
-        <NavLink to="/carrier/buses">Автобусы</NavLink>
-        <NavLink to="/carrier/routes">Рейсы</NavLink>
-        <NavLink to="/carrier/bookings">Бронирования</NavLink>
-      </nav>
+    <div className="container information-page carrier-workspace">
+      <CarrierNavigation />
       {profile.isError ? (
         <Notice title="Не удалось проверить профиль" error>
           {carrierError(profile.error)}

@@ -1,0 +1,221 @@
+/* Operational pages share the travel palette; every rule is scoped to this workspace. */
+.carrier-workspace {
+  padding-top: 28px;
+}
+.carrier-workspace .carrier-nav {
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 40px;
+}
+.carrier-workspace .carrier-nav a {
+  padding: 16px 22px;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  font-size: 15px;
+}
+.carrier-workspace .carrier-nav a.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: transparent;
+  font-weight: 600;
+}
+.carrier-workspace .carrier-nav a:hover {
+  background: var(--lavender);
+}
+.carrier-workspace .page-heading {
+  margin-bottom: 28px;
+}
+.carrier-workspace .booking-actions {
+  gap: 12px;
+}
+.carrier-workspace .carrier-records {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  margin-block: 28px;
+  border-top: 1px solid var(--line);
+}
+.carrier-workspace .carrier-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 28px;
+  align-items: center;
+  padding: 28px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.carrier-record-main {
+  min-width: 0;
+}
+.carrier-workspace .carrier-record h2 {
+  font-size: 23px;
+  line-height: 1.35;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.carrier-record-main > p {
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+.carrier-record-main .carrier-record-caption {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+.carrier-workspace .carrier-status {
+  display: inline-block;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  margin: 0 0 10px;
+  color: var(--ink);
+  background: #f0f1eb;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.carrier-workspace .carrier-status[data-status='ACTIVE'],
+.carrier-workspace .carrier-status[data-status='PAID'] {
+  background: #e7efe3;
+  border-color: #a7baa0;
+  color: #324d32;
+}
+.carrier-workspace .carrier-status[data-status='CANCELLED'],
+.carrier-workspace .carrier-status[data-status='EXPIRED'] {
+  background: #f7eee5;
+  border-color: #c9b59e;
+  color: #75502c;
+}
+.carrier-workspace .carrier-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 40px;
+  margin: 20px 0;
+}
+.carrier-facts > div {
+  min-width: 0;
+}
+.carrier-facts dt {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.carrier-facts dd {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.carrier-workspace .carrier-form.booking-panel {
+  max-width: 760px;
+  padding: 28px;
+  background: #fffefa;
+}
+.carrier-workspace .vehicle-create-layout .carrier-form {
+  max-width: none;
+}
+.carrier-form-section {
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 24px 0 0;
+  margin: 0;
+  display: grid;
+  gap: 22px;
+}
+.carrier-form-section legend {
+  font-weight: 600;
+  font-size: 18px;
+  padding-right: 16px;
+}
+.carrier-workspace .carrier-route-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  max-width: 760px;
+  align-items: start;
+  gap: 16px;
+}
+.carrier-route-filter > .button {
+  margin-top: 30px;
+}
+.carrier-workspace .carrier-route-detail,
+.carrier-workspace .carrier-booking-detail,
+.carrier-workspace .carrier-bus-detail {
+  margin-top: 28px;
+  padding: 32px;
+  background: #fffefa;
+}
+.carrier-workspace .carrier-route-detail > h2,
+.carrier-workspace .carrier-booking-detail > h2,
+.carrier-workspace .carrier-bus-detail > h2 {
+  font-family: var(--display-font);
+  font-size: clamp(30px, 4vw, 40px);
+  overflow-wrap: anywhere;
+}
+.carrier-route-guidance,
+.carrier-readonly {
+  border-block: 1px solid var(--line);
+  padding-block: 20px;
+  margin-block: 24px;
+  max-width: 760px;
+}
+.carrier-route-guidance h3 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+.carrier-route-guidance p,
+.carrier-readonly {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.carrier-workspace .cancel-confirm {
+  background: #f7eee5;
+  border: 1px solid #c9b59e;
+  border-radius: 3px;
+}
+.carrier-workspace .booking-reference {
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.carrier-workspace .profile-card {
+  border-radius: 4px;
+  box-shadow: none;
+  background: #fffefa;
+}
+@media (max-width: 760px) {
+  .carrier-workspace .carrier-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 28px;
+  }
+  .carrier-workspace .carrier-nav a {
+    padding: 14px 8px;
+    font-size: 14px;
+  }
+  .carrier-workspace .carrier-record {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding-block: 24px;
+  }
+  .carrier-record > .button {
+    justify-self: start;
+  }
+  .carrier-workspace .carrier-form.booking-panel,
+  .carrier-workspace .carrier-route-detail,
+  .carrier-workspace .carrier-booking-detail,
+  .carrier-workspace .carrier-bus-detail {
+    padding: 20px 16px;
+  }
+  .carrier-workspace .carrier-route-filter {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .carrier-route-filter > .button {
+    margin-top: 0;
+  }
+  .carrier-workspace .carrier-facts {
+    gap: 16px 24px;
+  }
+}
