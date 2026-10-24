@@ -5,8 +5,6 @@ import './concepts.css'
 import './calm.css'
 import khorVirap from './assets/armenia-khor-virap-1920.webp'
 import khorVirapSmall from './assets/armenia-khor-virap-960.webp'
-import garni from './assets/armenia-garni-1920.webp'
-import garniSmall from './assets/armenia-garni-960.webp'
 
 const concepts = {
   calm: {
@@ -14,7 +12,7 @@ const concepts = {
     name: 'Просто о поездке',
     subtitle: 'К новым местам и близким людям.',
     description:
-      'Переработанный спокойный вариант: поиск на первом экране, обычная типографика, самостоятельные фотографии и конкретные тексты. Без текста поверх фото и рекламных слоганов.',
+      'Одна большая фотография Армении с мягким затемнением и текстом поверх. Ниже — поиск рейсов и практические ответы перед поездкой.',
     heading: (
       <>
         Автобусные рейсы
@@ -292,37 +290,52 @@ export default function DesignConceptsPage() {
         {screen === 'home' ? (
           <>
             {theme === 'calm' ? (
-              <section className="dc-calm-start" aria-label="Поиск автобусного рейса">
-                <div className="dc-calm-start-copy">
-                  <h1 ref={heading} tabIndex={-1}>
-                    {concept.heading}
-                  </h1>
-                  <p className="dc-description">{concept.detail}</p>
-                  <section id="dc-search" aria-label="Поиск поездки">
-                    {renderSearchForm()}
-                    <p className="dc-fine">Дата и время отправления указаны по UTC.</p>
-                  </section>
-                </div>
-                <figure className="dc-calm-main-photo">
+              <>
+                <section className="dc-calm-start" aria-label="Автобусные поездки в Армению">
                   <img
+                    className="dc-calm-hero-photo"
                     src={khorVirap}
                     srcSet={`${khorVirapSmall} 960w, ${khorVirap} 1920w`}
-                    sizes="(max-width: 800px) 100vw, 48vw"
+                    sizes="100vw"
                     alt="Монастырь Хор Вирап в Армении на фоне Арарата"
                     width="1920"
                     height="1276"
                     fetchPriority="high"
                   />
-                  <figcaption>
-                    Хор Вирап, Армения{' '}
-                    <a href="https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_Khor_Virap_Monastery,_Ararat_Plain,_Armenia.jpg">
-                      Фото: Vyacheslav Argenberg
-                    </a>{' '}
-                    · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> ·
-                    кадрировано
-                  </figcaption>
-                </figure>
-              </section>
+                  <div className="dc-calm-start-copy">
+                    <h1 ref={heading} tabIndex={-1}>
+                      {concept.heading}
+                    </h1>
+                    <p className="dc-description">
+                      К близким, по делам или навстречу новым местам. Выберите свой рейс между
+                      Россией и Арменией.
+                    </p>
+                    <a className="dc-calm-hero-link" href="#dc-search">
+                      Найти свою поездку <span aria-hidden="true">↓</span>
+                    </a>
+                  </div>
+                </section>
+                <p className="dc-calm-photo-credit">
+                  Хор Вирап, Армения{' '}
+                  <a href="https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_Khor_Virap_Monastery,_Ararat_Plain,_Armenia.jpg">
+                    Фото: Vyacheslav Argenberg
+                  </a>{' '}
+                  · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> ·
+                  кадрировано
+                </p>
+                <section
+                  className="dc-calm-search"
+                  id="dc-search"
+                  aria-labelledby="dc-search-title"
+                >
+                  <h2 id="dc-search-title">Куда отправимся?</h2>
+                  <p className="dc-calm-search-intro">
+                    Выберите города и дату — покажем подходящие рейсы.
+                  </p>
+                  {renderSearchForm()}
+                  <p className="dc-fine">Дата и время отправления указаны по UTC.</p>
+                </section>
+              </>
             ) : (
               <>
                 <section className="dc-hero">
@@ -358,6 +371,8 @@ export default function DesignConceptsPage() {
                     Сравните время и стоимость, выберите свободное место. Детали бронирования
                     останутся в личном кабинете.
                   </p>
+                </div>
+                <div>
                   <details>
                     <summary>Какое время указано в расписании?</summary>
                     <p>
@@ -373,25 +388,6 @@ export default function DesignConceptsPage() {
                     </p>
                   </details>
                 </div>
-                <figure>
-                  <img
-                    src={garni}
-                    srcSet={`${garniSmall} 960w, ${garni} 1920w`}
-                    sizes="(max-width: 800px) 100vw, 45vw"
-                    alt="Храм Гарни в Армении"
-                    width="1920"
-                    height="1276"
-                    loading="lazy"
-                  />
-                  <figcaption>
-                    Гарни, Армения{' '}
-                    <a href="https://commons.wikimedia.org/wiki/File:Garni_Temple,_Armenia.jpg">
-                      Фото: Vyacheslav Argenberg
-                    </a>{' '}
-                    · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> ·
-                    кадрировано
-                  </figcaption>
-                </figure>
               </section>
             )}
             {theme !== 'calm' && (
