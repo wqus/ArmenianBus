@@ -108,3 +108,55 @@ test('carrier registration creates pending company and preserves role restrictio
   await page.goto('/admin')
   await expect(page.getByRole('heading', { name: 'Нет доступа' })).toBeVisible()
 })
+
+test('registration is submitted once and a late response cannot leave the page selected by the user', async ({
+  page,
+  context,
+}) => {
+  await mockAuth(context)
+  let count = 0
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/api/v1/auth/register', async (route) => {
+    count++
+    await gate
+    return route.fulfill({ json: user, status: 201 })
+  })
+  await page.goto('/register')
+  await page.getByLabel('Электронная почта').fill(user.email)
+  await page.getByLabel('Пароль', { exact: true }).fill(password)
+  await page.locator('.auth-form').evaluate((element) => {
+    const form = element as HTMLFormElement
+    form.requestSubmit()
+    form.requestSubmit()
+  })
+  await expect.poll(() => count).toBe(1)
+  await page
+    .locator('.auth-panel')
+    .getByRole('link', { name: 'конфиденциальность', exact: true })
+    .click()
+  await expect(page).toHaveURL('/privacy')
+  const received = page.waitForResponse('**/api/v1/auth/register')
+  release()
+  await received
+  await page.waitForLoadState('networkidle')
+  await expect(page).toHaveURL('/privacy')
+  await expect(page.getByText('Аккаунт создан', { exact: true })).toHaveCount(0)
+  expect(count).toBe(1)
+})
+
+test('carrier role and booking return survive switching between login and registration', async ({
+  page,
+  context,
+}) => {
+  await mockAuth(context)
+  const next = '/bookings'
+  await page.goto(`/register?role=carrier&next=${encodeURIComponent(next)}`)
+  await expect(page.getByRole('radio', { name: 'Перевозчик', exact: true })).toBeChecked()
+  await page.locator('.auth-panel').getByRole('link', { name: 'Войти', exact: true }).click()
+  await page.getByRole('link', { name: 'Зарегистрироваться', exact: true }).click()
+  await expect(page.getByRole('radio', { name: 'Перевозчик', exact: true })).toBeChecked()
+  expect(new URL(page.url()).searchParams.get('next')).toBe(next)
+})

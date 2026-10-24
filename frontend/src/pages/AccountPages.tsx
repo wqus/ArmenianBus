@@ -7,6 +7,7 @@ import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { readCarrier } from '../features/carrier/contracts'
 import { CarrierNavigation } from '../features/carrier/CarrierNavigation'
 import '../features/carrier/carrier.css'
+import '../features/auth/account.css'
 
 export function AccountPage() {
   const { session, user } = useSession()
@@ -27,7 +28,7 @@ export function AccountPage() {
     }
   }
   return (
-    <div className="container information-page">
+    <div className="container information-page account-page">
       <PageHeading eyebrow="ЛИЧНЫЙ КАБИНЕТ" title="Мой профиль">
         Данные вашего аккаунта в armatrans.
       </PageHeading>

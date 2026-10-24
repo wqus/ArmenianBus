@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router'
 import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { SearchForm } from '../features/search/SearchForm'
+import { NearbyDates } from '../features/search/NearbyDates'
 import {
   departureDate,
   departureTime,
@@ -93,6 +94,7 @@ function Results({ input, params }: { input: SearchInput; params: URLSearchParam
           void query.refetch()
         }}
       />
+      <NearbyDates input={input} />
       <section className="search-results" aria-labelledby="results-title">
         <div className="results-heading">
           <div>

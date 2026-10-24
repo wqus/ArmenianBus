@@ -1,0 +1,116 @@
+.calm-auth {
+  gap: 80px;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr);
+  padding-block: 56px 80px;
+}
+.calm-auth .auth-aside {
+  padding: 32px 0;
+  min-height: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+.calm-auth .auth-aside h2 {
+  font-family: var(--display-font);
+  font-size: clamp(34px, 4vw, 48px);
+  line-height: 1.12;
+  font-weight: 600;
+  max-width: 420px;
+  margin-block: 24px;
+}
+.calm-auth .auth-aside > p {
+  max-width: 350px;
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.calm-auth .auth-aside-note {
+  margin-top: 44px;
+  gap: 16px;
+}
+.calm-auth .auth-aside-note p {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.calm-auth .auth-panel {
+  padding: 32px;
+  max-width: 520px;
+  background: #fffefa;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.calm-auth .auth-panel .page-heading h1 {
+  font-size: 40px;
+}
+.calm-auth .auth-form > fieldset {
+  gap: 22px;
+}
+.calm-auth .auth-form fieldset.role-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.calm-auth .role-choice legend {
+  font-size: 14px;
+  font-weight: 600;
+}
+.calm-auth .role-choice label {
+  border-radius: 3px;
+  font-size: 14px;
+  padding: 14px 10px;
+}
+.calm-auth .role-choice input {
+  flex-shrink: 0;
+}
+.auth-role-hint {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: -8px 0 0;
+}
+.calm-auth .password-toggle {
+  font-size: 13px;
+}
+.calm-auth .auth-switch {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.calm-auth .auth-legal {
+  font-size: 12px;
+}
+.account-page .profile-card {
+  border-radius: 4px;
+  background: #fffefa;
+  box-shadow: none;
+}
+.account-page .profile-card dd {
+  font-size: 17px;
+  font-weight: 500;
+}
+.account-page .profile-card dt {
+  font-size: 13px;
+}
+@media (max-width: 1000px) {
+  .calm-auth {
+    gap: 32px;
+  }
+  .calm-auth .auth-panel {
+    padding: 28px 24px;
+  }
+}
+@media (max-width: 760px) {
+  .calm-auth {
+    grid-template-columns: minmax(0, 1fr);
+    padding-block: 28px 56px;
+  }
+  .calm-auth .auth-panel {
+    padding: 24px 18px;
+  }
+  .calm-auth .auth-panel .page-heading h1 {
+    font-size: 36px;
+  }
+  .calm-auth .role-choice label {
+    font-size: 13px;
+    padding-inline: 8px;
+  }
+}

@@ -5,6 +5,7 @@ import { Button, Field, Notice, PageHeading } from '../shared/ui'
 import { apiRequest, ApiError } from '../shared/api/client'
 import { useSession } from '../features/auth/context'
 import { authMessage, safeReturnTo } from '../features/auth/types'
+import '../features/auth/account.css'
 
 function fieldErrors(error: unknown): Record<string, string> {
   if (!(error instanceof ApiError) || error.status !== 422 || !Array.isArray(error.problem.details))
@@ -38,6 +39,14 @@ export function AuthPage({ register = false }: { register?: boolean }) {
   const [fields, setFields] = useState<Record<string, string>>({})
   const errorElement = useRef<HTMLDivElement>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const pending = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
   const registration = location.state as { registered?: boolean; email?: string } | null
   useEffect(() => {
     if (error) errorElement.current?.focus()
@@ -45,7 +54,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (busy) return
+    if (pending.current) return
+    pending.current = true
     const data = new FormData(event.currentTarget)
     setBusy(true)
     setError('')
@@ -68,29 +78,46 @@ export function AuthPage({ register = false }: { register?: boolean }) {
               : {}),
           }),
         })
-        navigate(`/login?next=${encodeURIComponent(next)}`, {
-          replace: true,
-          state: { registered: true, email },
-        })
+        if (!mounted.current) return
+        navigate(
+          `/login?next=${encodeURIComponent(next)}${role === 'CARRIER' ? '&role=carrier' : ''}`,
+          {
+            replace: true,
+            state: { registered: true, email },
+          },
+        )
       } else {
         await session.login({ email, password })
-        navigate(next, { replace: true })
+        if (mounted.current) navigate(next, { replace: true })
       }
     } catch (failure) {
-      setError(authMessage(failure))
-      setFields(fieldErrors(failure))
+      if (mounted.current) {
+        setError(authMessage(failure))
+        setFields(fieldErrors(failure))
+      }
     } finally {
-      setBusy(false)
+      pending.current = false
+      if (mounted.current) setBusy(false)
     }
   }
 
   if (status === 'authenticated' && user) return <Navigate to={next} replace />
   return (
-    <div className="container auth-layout">
+    <div className="container auth-layout calm-auth">
       <aside className="auth-aside">
-        <span className="eyebrow">ВАШ ПУТЬ В ARMENIABUS</span>
-        <h2>{register ? 'Впереди — новые встречи.' : 'Рады видеть вас снова.'}</h2>
-        <p>Ваш аккаунт объединяет информацию о поездках и бронированиях.</p>
+        <span className="eyebrow">ARMATRANS · РОССИЯ ↔ АРМЕНИЯ</span>
+        <h2>
+          {register
+            ? role === 'CARRIER'
+              ? 'Рабочий кабинет перевозчика.'
+              : 'Бронирования в одном месте.'
+            : 'Вернуться к поездке.'}
+        </h2>
+        <p>
+          {register && role === 'CARRIER'
+            ? 'Автопарк, публикация рейсов и бронирования пассажиров — в кабинете компании.'
+            : 'Сохранённые бронирования, состояние оплаты и история поездок в одном аккаунте.'}
+        </p>
         <div className="auth-aside-note">
           <span aria-hidden="true">↔</span>
           <p>
@@ -123,7 +150,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
             <form onSubmit={submit} className="auth-form">
               <fieldset disabled={busy}>
                 {register && (
-                  <fieldset className="role-choice">
+                  <fieldset className="role-choice" aria-describedby="auth-role-hint">
                     <legend>Я регистрируюсь как</legend>
                     <label>
                       <input
@@ -146,6 +173,13 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                       Перевозчик
                     </label>
                   </fieldset>
+                )}
+                {register && (
+                  <p id="auth-role-hint" className="auth-role-hint">
+                    {role === 'PASSENGER'
+                      ? 'Для поиска, бронирования и оплаты поездок выберите роль пассажира.'
+                      : 'Для управления транспортом, публикации рейсов и просмотра бронирований пассажиров.'}
+                  </p>
                 )}
                 {register && role === 'CARRIER' && (
                   <>
@@ -179,6 +213,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                   type="email"
                   required
                   autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                   maxLength={320}
                   defaultValue={!register ? (registration?.email ?? '') : ''}
                   error={fields.email}
@@ -215,12 +251,14 @@ export function AuthPage({ register = false }: { register?: boolean }) {
             </form>
             <p className="auth-switch">
               {register ? 'Уже есть аккаунт?' : 'Впервые здесь?'}{' '}
-              <Link to={`${register ? '/login' : '/register'}?next=${encodeURIComponent(next)}`}>
+              <Link
+                to={`${register ? '/login' : '/register'}?next=${encodeURIComponent(next)}${role === 'CARRIER' ? '&role=carrier' : ''}`}
+              >
                 {register ? 'Войти' : 'Зарегистрироваться'}
               </Link>
             </p>
             {register && (
-              <p className="auth-switch">
+              <p className="auth-switch auth-legal">
                 Для ознакомления: <Link to="/terms">условия использования</Link> и{' '}
                 <Link to="/privacy">конфиденциальность</Link>. Пока это черновики для тестирования.
               </p>

@@ -23,7 +23,9 @@ test('public shell, responsive navigation, FAQ, and missing page', async ({ page
     .locator('summary')
     .filter({ hasText: 'Когда место считается забронированным?' })
     .click()
-  await expect(page.getByText('После выбора места сервис создаёт', { exact: false })).toBeVisible()
+  await expect(
+    page.getByText('Выбор кресла на схеме ещё не закрепляет его за вами.', { exact: false }),
+  ).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Давайте разберёмся')
   await page.goto('/missing-page')

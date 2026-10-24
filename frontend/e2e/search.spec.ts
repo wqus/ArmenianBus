@@ -19,6 +19,34 @@ const item = (index = 0) => ({
   free_seats: index === 0 ? 0 : 12,
 })
 
+test('nearby dates preserve direction, reset pagination and never imply availability', async ({
+  page,
+}) => {
+  const datesRequested: string[] = []
+  await page.route('**/api/v1/routes/search?*', (route) => {
+    const url = new URL(route.request().url())
+    datesRequested.push(url.searchParams.get('date')!)
+    return route.fulfill({
+      json: { items: [], limit: 21, offset: Number(url.searchParams.get('offset')) },
+    })
+  })
+  await page.goto(`/search?${params}&offset=20`)
+  await expect(page.getByText('На этой странице рейсов больше нет', { exact: true })).toBeVisible()
+  const dates = page.getByRole('navigation', { name: 'Соседние даты отправления' })
+  await expect(dates.locator('[aria-current="date"]')).toContainText('1 июн')
+  expect(new Set(datesRequested)).toEqual(new Set([date]))
+  await dates.getByRole('link').filter({ hasText: '31 мая' }).click()
+  const expected = new URLSearchParams(params)
+  expected.set('date', '2030-05-31')
+  await expect(page).toHaveURL(`/search?${expected}`)
+  await expect(page.getByLabel('Дата отправления (UTC)')).toHaveValue('2030-05-31')
+  await expect(page.getByText('Рейсов не найдено', { exact: true })).toBeVisible()
+  expect(new Set(datesRequested)).toEqual(new Set([date, '2030-05-31']))
+  await page.goBack()
+  await expect(page).toHaveURL(`/search?${params}&offset=20`)
+  await expect(dates.locator('[aria-current="date"]')).toContainText('1 июн')
+})
+
 test('search form, URL history, pagination, UTC, sold out and accessible details', async ({
   page,
 }, testInfo) => {

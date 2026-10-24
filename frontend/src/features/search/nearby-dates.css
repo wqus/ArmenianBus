@@ -1,0 +1,62 @@
+.nearby-dates {
+  padding: 24px 0;
+  margin: 8px 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+.nearby-dates > p {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.nearby-dates > p > span {
+  color: var(--muted);
+  margin-left: 16px;
+  font-size: 12px;
+}
+.nearby-dates > div {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  max-width: 680px;
+  gap: 8px;
+}
+.nearby-dates > div > a,
+.nearby-dates > div > span {
+  display: grid;
+  gap: 7px;
+  padding: 14px 8px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  text-align: center;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+}
+.nearby-dates > div > a:hover {
+  background: var(--lavender);
+  border-color: #9fa89f;
+}
+.nearby-dates [aria-current='date'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.nearby-dates strong {
+  font-weight: 600;
+}
+.nearby-dates > div > a > span,
+.nearby-dates > div > span > span {
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  .nearby-dates > p > span {
+    display: block;
+    margin: 6px 0 0;
+  }
+  .nearby-dates > div {
+    gap: 5px;
+  }
+  .nearby-dates > div > a,
+  .nearby-dates > div > span {
+    padding: 12px 3px;
+    font-size: 12px;
+  }
+}

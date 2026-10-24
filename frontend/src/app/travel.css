@@ -535,4 +535,35 @@ h3 {
   .trip-caption {
     font-size: 12px;
   }
+  .search-page .trip-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .search-page .trip-direction {
+    grid-row: 1;
+  }
+  .search-page .trip-departure {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 16px;
+  }
+  .search-page .trip-departure > .trip-caption {
+    flex-basis: 100%;
+  }
+  .search-page .trip-departure time {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .search-page .trip-departure > span:last-child {
+    font-size: 13px;
+  }
+  .search-page .trip-price {
+    gap: 8px;
+  }
+  .search-page .trip-price .button {
+    align-self: stretch;
+  }
 }
