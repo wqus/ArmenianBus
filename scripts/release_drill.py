@@ -10,10 +10,11 @@ import tempfile
 import time
 from pathlib import Path
 
+from deployment_smoke import prepare_smoke_networks
 from release_manifest import schema_head
 
 
-def drill(run, compose, project, root):
+def drill(run, compose, project, root, overrides=()):
     def output(command):
         return run(command, capture_output=True, text=True).stdout.strip()
 
@@ -67,6 +68,8 @@ def drill(run, compose, project, root):
                 str(ca),
                 "--execute",
             ]
+            for override in overrides:
+                common.extend(["--compose-override", str(override)])
             script = [sys.executable, str(root / "scripts/release_deploy.py")]
             run([*script, "apply", *common, "--manifest", str(manifest)])
             for service, expected in zip(("api", "proxy"), derived, strict=True):
@@ -113,6 +116,7 @@ def output_build(run, base, commit, tag):
 def bootstrap_drill(images, commit, root):
     """Prove the real first-installation path under the bounded pilot profile."""
     project = f"armeniabus-init-drill-{secrets.token_hex(4)}"
+    network_env, network_override = prepare_smoke_networks()
     environment = {
         **os.environ,
         "APP_IMAGE": images[0],
@@ -133,9 +137,7 @@ def bootstrap_drill(images, commit, root):
         "HTTP_PORT": "18080",
         "HTTPS_PORT": "18443",
         "ORIGIN_PORT_SUFFIX": ":18443",
-        "EDGE_SUBNET": "172.30.91.0/24",
-        "EDGE_DYNAMIC_RANGE": "172.30.91.128/25",
-        "PROXY_IP": "172.30.91.2",
+        **network_env,
     }
     compose = [
         "docker",
@@ -146,6 +148,8 @@ def bootstrap_drill(images, commit, root):
         "compose.production.yaml",
         "-f",
         "compose.pilot.yaml",
+        "-f",
+        str(network_override),
         "--env-file",
         ".env.production.example",
     ]
@@ -247,6 +251,8 @@ def bootstrap_drill(images, commit, root):
                     str(root / ".env.production.example"),
                     "--compose-override",
                     str(root / "compose.pilot.yaml"),
+                    "--compose-override",
+                    str(network_override),
                     "--state",
                     str(temporary / "state/init.json"),
                     "--manifest",
@@ -291,4 +297,7 @@ def bootstrap_drill(images, commit, root):
             if seed_created:
                 run(["docker", "rm", "-f", seed], capture_output=True)
         finally:
-            run([*compose, "down", "--volumes", "--remove-orphans"])
+            try:
+                run([*compose, "down", "--volumes", "--remove-orphans"])
+            finally:
+                network_override.unlink(missing_ok=True)
