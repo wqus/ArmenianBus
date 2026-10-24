@@ -100,7 +100,7 @@ async def prepare(
             "type": "redirect",
             "return_url": booking_return_url(str(settings.payment_return_url), booking.id),
         },
-        "description": f"ArmeniaBus booking {booking.id}",
+        "description": f"armatrans booking {booking.id}",
         "metadata": {"booking_id": str(booking.id), "payment_id": str(payment_id)},
     }
     payment = Payment(

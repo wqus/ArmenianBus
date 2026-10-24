@@ -18,7 +18,7 @@ test('public shell, responsive navigation, FAQ, and missing page', async ({ page
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Меню' }).click()
   await page.getByRole('navigation').getByRole('link', { name: 'Помощь' }).click()
-  await expect(page).toHaveTitle('Давайте разберёмся — ArmeniaBus')
+  await expect(page).toHaveTitle('Давайте разберёмся — armatrans')
   await page
     .locator('summary')
     .filter({ hasText: 'Когда место считается забронированным?' })

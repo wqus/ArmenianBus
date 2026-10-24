@@ -1,4 +1,4 @@
-"""One-time root setup for the bounded ArmeniaBus pilot; never prints application secrets."""
+"""One-time root setup for the bounded armatrans pilot; never prints application secrets."""
 
 import argparse
 import ipaddress

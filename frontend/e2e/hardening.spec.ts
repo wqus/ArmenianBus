@@ -221,6 +221,6 @@ test('JavaScript-disabled visitors see an explanation', async ({ browser }) => {
   // Playwright's text matcher deliberately excludes noscript contents.
   await expect
     .poll(() => page.locator('noscript').textContent())
-    .toBe('Для работы ArmeniaBus включите JavaScript в настройках браузера.')
+    .toBe('Для работы armatrans включите JavaScript в настройках браузера.')
   await context.close()
 })

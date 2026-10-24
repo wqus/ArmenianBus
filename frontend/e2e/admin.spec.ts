@@ -222,7 +222,7 @@ test('payment verification never invents success when disabled; refund records a
   await page.getByLabel('Номер выполненного возврата').fill('REFUND-42')
   await page.getByRole('button', { name: 'Записать ручной возврат' }).click()
   await expect(
-    page.getByText('полный возврат уже выполнен вне ArmeniaBus', { exact: false }),
+    page.getByText('полный возврат уже выполнен вне armatrans', { exact: false }),
   ).toBeVisible()
   state.mode = 'conflict'
   await confirm(page)

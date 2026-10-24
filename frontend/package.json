@@ -1,5 +1,5 @@
 {
-  "name": "armeniabus-web",
+  "name": "armatrans-web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -19,7 +19,8 @@
     "test:deployment": "playwright test -c playwright.deployment.config.ts"
   },
   "dependencies": {
-    "@fontsource-variable/manrope": "5.3.0",
+    "@fontsource-variable/golos-text": "5.3.0",
+    "@fontsource-variable/literata": "5.3.0",
     "@tanstack/react-query": "5.103.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",

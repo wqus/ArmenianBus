@@ -47,7 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     public_docs = settings.app_env != "production"
     app = FastAPI(
-        title="ArmeniaBus API",
+        title="armatrans API",
         version="0.1.0",
         lifespan=lifespan,
         docs_url="/docs" if public_docs else None,

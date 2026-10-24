@@ -157,7 +157,7 @@ export default function DesignConceptsPage() {
   const concept = concepts[theme]
   const route = routes[selectedRoute]
   useEffect(() => {
-    document.title = 'ArmeniaBus · варианты дизайна'
+    document.title = 'armatrans · варианты дизайна'
   }, [])
   function navigate(next: Screen) {
     setScreen(next)
@@ -240,7 +240,7 @@ export default function DesignConceptsPage() {
       <header className="dc-labbar">
         <div className="dc-lab-title">
           <strong>
-            ArmeniaBus <span>/ дизайн-студия</span>
+            armatrans <span>/ дизайн-студия</span>
           </strong>
           <a href="/">Открыть приложение ↗</a>
         </div>
@@ -276,7 +276,7 @@ export default function DesignConceptsPage() {
           <button
             className="dc-brand"
             onClick={() => navigate('home')}
-            aria-label="ArmeniaBus — главная"
+            aria-label="armatrans — главная"
           >
             <span className="dc-brand-mark" aria-hidden="true">
               {theme === 'calm' ? (
@@ -298,7 +298,7 @@ export default function DesignConceptsPage() {
                 '↗'
               )}
             </span>
-            ArmeniaBus<span className="dc-brand-dot">.</span>
+            armatrans<span className="dc-brand-dot">.</span>
           </button>
           <span className="dc-brand-caption">Россия ↔ Армения</span>
           <button className="dc-text-button" onClick={() => navigate('search')}>
@@ -578,8 +578,8 @@ export default function DesignConceptsPage() {
         <footer className="dc-footer">
           <span>
             {theme === 'calm'
-              ? 'ArmeniaBus. Автобусные поездки.'
-              : `ArmeniaBus · ${concept.subtitle}`}
+              ? 'armatrans. Автобусные поездки.'
+              : `armatrans · ${concept.subtitle}`}
           </span>
           <span>Концепция {concept.number} / 04 · Локальный просмотр</span>
         </footer>

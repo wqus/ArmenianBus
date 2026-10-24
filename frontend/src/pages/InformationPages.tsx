@@ -58,7 +58,7 @@ export function CarriersPage() {
   return (
     <div className="container information-page">
       <PageHeading eyebrow="ПАРТНЁРАМ" title="Ваша дорога к пассажирам">
-        ArmeniaBus объединяет рейсы перевозчиков между Россией и Арменией в одном сервисе.
+        armatrans объединяет рейсы перевозчиков между Россией и Арменией в одном сервисе.
       </PageHeading>
       <div className="step-grid">
         <article className="step-card">

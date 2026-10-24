@@ -140,7 +140,7 @@ export function Arrow() {
 
 export function Brand() {
   return (
-    <Link className="brand" to="/" aria-label="ArmeniaBus — главная">
+    <Link className="brand" to="/" aria-label="armatrans — главная">
       <svg aria-hidden="true" width="38" height="38" viewBox="0 0 48 48">
         <rect width="48" height="48" rx="14" fill="currentColor" />
         <path
@@ -152,9 +152,7 @@ export function Brand() {
           strokeLinejoin="round"
         />
       </svg>
-      <span>
-        Armenia<span className="brand-accent">Bus</span>
-      </span>
+      <span>armatrans</span>
     </Link>
   )
 }
@@ -169,7 +167,7 @@ export function PageHeading({
   children: ReactNode
 }) {
   useEffect(() => {
-    document.title = `${title} — ArmeniaBus`
+    document.title = `${title} — armatrans`
   }, [title])
   return (
     <div className="page-heading">

@@ -7,7 +7,7 @@
   --dc-accent-ink: #fff;
   --dc-line: #d7dad2;
   --dc-surface: #fff;
-  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-family: 'Golos Text Variable', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -26,9 +26,9 @@
   border-bottom: 1px solid var(--dc-line);
 }
 .dc-calm .dc-brand {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Literata Variable', Georgia, serif;
   font-size: 29px !important;
-  font-weight: 400 !important;
+  font-weight: 550 !important;
   letter-spacing: -0.035em;
 }
 .dc-calm .dc-brand-mark,
@@ -54,9 +54,11 @@
   align-items: start;
 }
 .dc-calm-start h1 {
+  font-family: 'Literata Variable', Georgia, serif;
+  font-optical-sizing: auto;
   font-size: clamp(30px, 2.7vw, 38px);
   line-height: 1.2;
-  font-weight: 600;
+  font-weight: 450;
   letter-spacing: -0.025em;
 }
 .dc-calm .dc-description {

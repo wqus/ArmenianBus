@@ -23,7 +23,7 @@ const steps = [
 
 export function HomePage() {
   useEffect(() => {
-    document.title = 'ArmeniaBus — ближе друг к другу'
+    document.title = 'armatrans — автобусные рейсы Россия — Армения'
   }, [])
   return (
     <>
@@ -119,7 +119,7 @@ export function HomePage() {
           <div>
             <span className="eyebrow">ДЛЯ ПЕРЕВОЗЧИКОВ</span>
             <h2>Ваши рейсы. Новые пассажиры.</h2>
-            <p>Управляйте автобусами, местами и поездками в ArmeniaBus.</p>
+            <p>Управляйте автобусами, местами и поездками в armatrans.</p>
           </div>
           <ButtonLink to="/carriers" secondary>
             О работе с сервисом <Arrow />

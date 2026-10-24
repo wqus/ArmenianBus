@@ -1,6 +1,6 @@
-# ArmeniaBus на VPS с существующим Nginx
+# armatrans на VPS с существующим Nginx
 
-Этот вариант предназначен для хоста, где другой Compose-проект уже публикует 80/443. Публичный путь: Cloudflare → Nginx (`bus.mathbot.site`, HTTPS) → `armeniabus-web:80` в общей Docker-сети → API во внутренней сети проекта. PostgreSQL, Redis и API не публикуют host-порты. Не останавливать и не пересоздавать чужой Nginx-проект ради установки ArmeniaBus.
+Этот вариант предназначен для хоста, где другой Compose-проект уже публикует 80/443. Публичный путь: Cloudflare → Nginx (`bus.mathbot.site`, HTTPS) → `armeniabus-web:80` в общей Docker-сети → API во внутренней сети проекта. PostgreSQL, Redis и API не публикуют host-порты. Не останавливать и не пересоздавать чужой Nginx-проект ради установки armatrans.
 
 ## Проверки перед установкой
 
@@ -90,7 +90,7 @@ docker compose -p armeniabus -f compose.production.yaml -f compose.existing-ngin
 
 Переменная в `proxy_pass` заставляет Nginx повторно разрешать Docker DNS после пересоздания веб-контейнера. Внешний HTTP перенаправляется на HTTPS; Caddy намеренно передаёт API `X-Forwarded-Proto: https`. Защита браузерной сессии, CSRF и return URL требуют единого HTTPS origin `https://bus.mathbot.site`. После установки проверить реальный клиентский IP за Cloudflare до открытия регистрации: приложение ограничивает попытки входа по адресу клиента. Настройка bus не меняет заголовки других сайтов.
 
-До DNS-переключения проверить Nginx-ответ с заданным Host через `curl --resolve` или аналог и настоящий сертификат. После переключения проверить `/api/v1/health/ready`, frontend, вход/выход, webhook-путь, заголовки безопасности и отсутствие публичных портов БД/API/web. HTTP 404 на `/telegram/` другого проекта не служит проверкой ArmeniaBus.
+До DNS-переключения проверить Nginx-ответ с заданным Host через `curl --resolve` или аналог и настоящий сертификат. После переключения проверить `/api/v1/health/ready`, frontend, вход/выход, webhook-путь, заголовки безопасности и отсутствие публичных портов БД/API/web. HTTP 404 на `/telegram/` другого проекта не служит проверкой armatrans.
 
 ## Обновления
 

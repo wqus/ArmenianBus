@@ -1,1 +1,1 @@
-"""ArmeniaBus backend."""
+"""armatrans backend."""

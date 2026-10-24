@@ -27,7 +27,7 @@ export function AccountPage() {
   return (
     <div className="container information-page">
       <PageHeading eyebrow="ЛИЧНЫЙ КАБИНЕТ" title="Мой профиль">
-        Данные вашего аккаунта в ArmeniaBus.
+        Данные вашего аккаунта в armatrans.
       </PageHeading>
       <section className="profile-card">
         <dl>

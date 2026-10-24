@@ -9,9 +9,9 @@ from armeniabus.modules.routes.models import Route
 from armeniabus.modules.users.models import User
 
 SUBJECTS = {
-    "paid": "ArmeniaBus: оплата поездки подтверждена",
-    "cancelled": "ArmeniaBus: бронирование отменено",
-    "refund_required": "ArmeniaBus: платёж требует проверки и возврата",
+    "paid": "armatrans: оплата поездки подтверждена",
+    "cancelled": "armatrans: бронирование отменено",
+    "refund_required": "armatrans: платёж требует проверки и возврата",
 }
 
 

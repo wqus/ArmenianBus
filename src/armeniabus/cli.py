@@ -25,7 +25,7 @@ async def provision_admin(data: AdminCreate) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="ArmeniaBus administrative tools")
+    parser = argparse.ArgumentParser(description="armatrans administrative tools")
     commands = parser.add_subparsers(dest="command", required=True)
     create = commands.add_parser("create-admin", help="Create a new administrator")
     create.add_argument("--email", required=True)

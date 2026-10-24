@@ -1,4 +1,4 @@
-# ArmeniaBus
+# armatrans
 
 **Веб-сервис поиска автобусных рейсов, бронирования мест и управления перевозками.**
 
@@ -38,6 +38,9 @@
 | Проверки | pytest, Ruff, Vitest, ESLint, Prettier, Playwright, axe |
 | Инфраструктура | Docker Compose, Caddy, Nginx, GitHub Actions, GHCR |
 
+Типографика: Golos Text для интерфейса и Literata для основных заголовков и названия сервиса.
+Оба семейства поставляются локально через npm.
+
 Python-зависимости закреплены в `requirements.lock` и `requirements-dev.lock`, frontend — в `frontend/package-lock.json`.
 
 ## Архитектура
@@ -73,6 +76,10 @@ docs/                Контракты, решения и эксплуатац�
 .github/workflows/   CI, сборка образов и автоматический деплой
 ```
 
+Название продукта — **armatrans**. Внутренний Python-пакет `armeniabus`, существующие
+идентификаторы Docker/VPS и URL репозитория сохранены для совместимости с текущим
+развёртыванием. [Границы переименования и шрифты](docs/branding.md).
+
 ## Быстрый старт
 
 Нужны Git, Docker с Compose v2 и **Node.js 24+**. Python на компьютере не требуется, если backend запускается в Docker. Команды ниже выполняются из корня репозитория; одновременно будут работать backend в Docker и frontend в отдельном терминале.
@@ -80,8 +87,8 @@ docs/                Контракты, решения и эксплуатац�
 ### 1. Получить проект и подготовить окружение
 
 ```bash
-git clone https://github.com/wqus/ArmenianBus.git
-cd ArmenianBus
+git clone https://github.com/wqus/ArmenianBus.git armatrans
+cd armatrans
 ```
 
 Скопируйте `.env.example` в `.env`:

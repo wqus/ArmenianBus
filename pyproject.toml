@@ -3,9 +3,9 @@ requires = ["setuptools>=75,<81", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "armeniabus"
+name = "armatrans"
 version = "0.1.0"
-description = "ArmeniaBus MVP backend"
+description = "armatrans — bus booking and carrier management"
 requires-python = ">=3.12,<3.15"
 dependencies = [
   "alembic>=1.14,<2",
