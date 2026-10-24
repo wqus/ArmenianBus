@@ -88,8 +88,8 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   await page.getByRole('link', { name: 'Создать рейс на этом автобусе' }).click()
   const departure = new Date(Date.now() + 14 * 86_400_000).toISOString().slice(0, 10) + 'T12:30'
   const origin = `F8 ${suffix}`
-  await page.getByLabel('Город отправления').fill(origin)
-  await page.getByLabel('Город прибытия').fill('Գյումրի')
+  await page.getByLabel('Город отправления', { exact: true }).fill(origin)
+  await page.getByLabel('Город прибытия', { exact: true }).fill('Գյումրի')
   await page.getByLabel('Отправление (UTC)').fill(departure)
   await page.getByLabel('Цена билета, ₽').fill('4500,55')
   await page.getByRole('button', { name: 'Создать черновик' }).click()

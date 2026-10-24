@@ -173,8 +173,12 @@ test('private navigation and forms fit narrow screens and enlarged text', async 
   state.signedIn = true
   await page.goto('/carrier/routes/new')
   await expect(page.getByRole('heading', { name: 'Новый рейс' })).toBeVisible()
-  await page.getByLabel('Город отправления').fill('Շատ երկար քաղաքի անուն '.repeat(6))
-  await page.getByLabel('Город прибытия').fill('Длинное название города '.repeat(6))
+  await page
+    .getByLabel('Город отправления', { exact: true })
+    .fill('Շատ երկար քաղաքի անուն '.repeat(6))
+  await page
+    .getByLabel('Город прибытия', { exact: true })
+    .fill('Длинное название города '.repeat(6))
   for (const width of [320, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 1000 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)

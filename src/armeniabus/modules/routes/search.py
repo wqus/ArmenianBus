@@ -10,6 +10,7 @@ from armeniabus.api.errors import ApiError
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
+from armeniabus.modules.cities.catalog import search_aliases
 from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.routes.schemas import (
     AvailableSeat,
@@ -90,12 +91,18 @@ def public_result(row) -> SearchRoute:
 
 async def search_routes(db: AsyncSession, filters: RouteSearch) -> SearchPage:
     start = datetime.combine(filters.date, time.min, tzinfo=UTC)
+    origins, origin_country = search_aliases(filters.origin)
+    destinations, destination_country = search_aliases(filters.destination)
     query = public_query(func.statement_timestamp()).where(
-        func.lower(Route.origin) == func.lower(filters.origin),
-        func.lower(Route.destination) == func.lower(filters.destination),
+        func.lower(func.trim(Route.origin)).in_(origins),
+        func.lower(func.trim(Route.destination)).in_(destinations),
         Route.departure_at >= start,
         Route.departure_at < start + timedelta(days=1),
     )
+    if origin_country:
+        query = query.where(Route.origin_country == origin_country)
+    if destination_country:
+        query = query.where(Route.destination_country == destination_country)
     rows = await db.execute(
         query.order_by(Route.departure_at, Route.id).limit(filters.limit).offset(filters.offset)
     )

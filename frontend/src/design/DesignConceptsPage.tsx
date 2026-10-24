@@ -1,10 +1,12 @@
+import { CityInput } from '../features/cities/CityInput'
+import { cityName } from '../features/cities/catalog'
 import { useEffect, useRef, useState } from 'react'
 import './concepts.css'
 import './calm.css'
-import gergeti from './assets/gergeti-1920.webp'
-import gergetiSmall from './assets/gergeti-960.webp'
-import village from './assets/village-1920.webp'
-import villageSmall from './assets/village-960.webp'
+import khorVirap from './assets/armenia-khor-virap-1920.webp'
+import khorVirapSmall from './assets/armenia-khor-virap-960.webp'
+import garni from './assets/armenia-garni-1920.webp'
+import garniSmall from './assets/armenia-garni-960.webp'
 
 const concepts = {
   calm: {
@@ -183,16 +185,7 @@ export default function DesignConceptsPage() {
           navigate('search')
         }}
       >
-        <label>
-          Откуда
-          <input
-            name="origin"
-            value={origin}
-            onChange={(event) => setOrigin(event.target.value)}
-            required
-            maxLength={200}
-          />
-        </label>
+        <CityInput label="Откуда" name="origin" value={origin} onChange={setOrigin} />
         <button
           type="button"
           className="dc-swap"
@@ -204,17 +197,8 @@ export default function DesignConceptsPage() {
         >
           ⇄
         </button>
-        <label>
-          Куда
-          <input
-            name="destination"
-            value={destination}
-            onChange={(event) => setDestination(event.target.value)}
-            required
-            maxLength={200}
-          />
-        </label>
-        <label>
+        <CityInput label="Куда" name="destination" value={destination} onChange={setDestination} />
+        <label className="dc-date">
           Дата · UTC
           <input
             name="date"
@@ -321,15 +305,22 @@ export default function DesignConceptsPage() {
                 </div>
                 <figure className="dc-calm-main-photo">
                   <img
-                    src={gergeti}
-                    srcSet={`${gergetiSmall} 960w, ${gergeti} 1920w`}
+                    src={khorVirap}
+                    srcSet={`${khorVirapSmall} 960w, ${khorVirap} 1920w`}
                     sizes="(max-width: 800px) 100vw, 48vw"
-                    alt="Троицкая церковь в Гергети на фоне гор Кавказа, Грузия"
+                    alt="Монастырь Хор Вирап в Армении на фоне Арарата"
                     width="1920"
-                    height="1326"
+                    height="1276"
                     fetchPriority="high"
                   />
-                  <figcaption>Гергети, Грузия. Дорога через Кавказ.</figcaption>
+                  <figcaption>
+                    Хор Вирап, Армения{' '}
+                    <a href="https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_Khor_Virap_Monastery,_Ararat_Plain,_Armenia.jpg">
+                      Фото: Vyacheslav Argenberg
+                    </a>{' '}
+                    · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> ·
+                    кадрировано
+                  </figcaption>
                 </figure>
               </section>
             ) : (
@@ -384,15 +375,22 @@ export default function DesignConceptsPage() {
                 </div>
                 <figure>
                   <img
-                    src={village}
-                    srcSet={`${villageSmall} 960w, ${village} 1920w`}
+                    src={garni}
+                    srcSet={`${garniSmall} 960w, ${garni} 1920w`}
                     sizes="(max-width: 800px) 100vw, 45vw"
-                    alt="Дома на зелёном склоне в окружении гор"
+                    alt="Храм Гарни в Армении"
                     width="1920"
-                    height="1280"
+                    height="1276"
                     loading="lazy"
                   />
-                  <figcaption>Горный пейзаж. Фотография предоставлена для макета.</figcaption>
+                  <figcaption>
+                    Гарни, Армения{' '}
+                    <a href="https://commons.wikimedia.org/wiki/File:Garni_Temple,_Armenia.jpg">
+                      Фото: Vyacheslav Argenberg
+                    </a>{' '}
+                    · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> ·
+                    кадрировано
+                  </figcaption>
                 </figure>
               </section>
             )}
@@ -433,7 +431,7 @@ export default function DesignConceptsPage() {
               </button>
             </div>
             <h1 ref={heading} tabIndex={-1}>
-              {origin} <span className="dc-arrow">→</span> {destination}
+              {cityName(origin)} <span className="dc-arrow">→</span> {cityName(destination)}
             </h1>
             <p className="dc-description">{formattedDate} · Отправление по UTC</p>
             {renderSearchForm()}
@@ -455,7 +453,7 @@ export default function DesignConceptsPage() {
                   </div>
                   <div className="dc-route-direction">
                     <h3>
-                      {origin} <span aria-hidden="true">→</span> {destination}
+                      {cityName(origin)} <span aria-hidden="true">→</span> {cityName(destination)}
                     </h3>
                     <p>
                       {item.company} · {item.bus}
@@ -496,7 +494,7 @@ export default function DesignConceptsPage() {
               Выберите место
             </h1>
             <p className="dc-description">
-              {origin} → {destination} · {formattedDate}, {route.time} UTC
+              {cityName(origin)} → {cityName(destination)} · {formattedDate}, {route.time} UTC
             </p>
             <div className="dc-booking-grid">
               <section className="dc-seat-panel">
@@ -529,9 +527,9 @@ export default function DesignConceptsPage() {
               <aside className="dc-summary">
                 <h2 className="dc-summary-title">Ваша поездка</h2>
                 <div className="dc-ticket-route">
-                  <strong>{origin}</strong>
+                  <strong>{cityName(origin)}</strong>
                   <span aria-hidden="true">↓</span>
-                  <strong>{destination}</strong>
+                  <strong>{cityName(destination)}</strong>
                 </div>
                 <dl>
                   <div>

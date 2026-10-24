@@ -10,7 +10,7 @@
   color: var(--dc-ink);
   background: var(--dc-bg);
   min-height: 100vh;
-  font-family: 'Golos Text Variable', sans-serif;
+  font-family: 'Golos Text Variable', 'Noto Sans Armenian Variable', sans-serif;
   line-height: 1.5;
 }
 .designlab * {
@@ -250,7 +250,7 @@
   display: block;
 }
 .dc-art text {
-  font-family: 'Golos Text Variable', sans-serif;
+  font-family: 'Golos Text Variable', 'Noto Sans Armenian Variable', sans-serif;
   fill: var(--dc-ink);
   font-size: 20px;
   font-weight: 800;
@@ -941,7 +941,7 @@
     grid-template-columns: 1fr 44px 1fr;
     gap: 16px 5px;
   }
-  .dc-search-form label:nth-of-type(3) {
+  .dc-search-form > .dc-date {
     grid-column: 1 / 3;
   }
   .dc-search-form > .dc-primary {
@@ -1113,7 +1113,7 @@
     width: 36px;
     height: 44px;
   }
-  .dc-search-form label:nth-of-type(3) {
+  .dc-search-form > .dc-date {
     grid-column: 1 / -1;
   }
   .dc-search-form > .dc-primary {

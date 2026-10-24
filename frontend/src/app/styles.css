@@ -49,7 +49,7 @@
 
 @layer tokens {
   :root {
-    font-family: 'Golos Text Variable', system-ui, sans-serif;
+    font-family: 'Golos Text Variable', 'Noto Sans Armenian Variable', system-ui, sans-serif;
     color: #292637;
     background: #fcfbfe;
     font-synthesis: none;

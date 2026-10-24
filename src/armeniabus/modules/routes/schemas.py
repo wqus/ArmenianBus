@@ -14,6 +14,7 @@ from pydantic import (
     model_validator,
 )
 
+from armeniabus.modules.cities.catalog import canonical_name, resolve
 from armeniabus.modules.routes.models import RouteStatus
 
 Country = Literal["RU", "AM"]
@@ -63,6 +64,8 @@ class RouteCreate(RouteFields):
     def cross_border_only(self):
         if self.origin_country == self.destination_country:
             raise ValueError("Only cross-border RU ↔ AM routes are supported")
+        self.origin = canonical_name(self.origin, self.origin_country)
+        self.destination = canonical_name(self.destination, self.destination_country)
         return self
 
 
@@ -118,6 +121,12 @@ class RouteSearch(BaseModel):
     )
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0, le=10000)
+
+    @field_validator("origin", "destination")
+    @classmethod
+    def unambiguous_city(cls, value):
+        resolve(value)
+        return value
 
 
 class SearchRoute(RoutePublic):

@@ -83,6 +83,32 @@ def test_public_search_details_seats_and_owner_separation(journeys):
     assert search(journeys, route, origin="' OR 1=1 --")["items"] == []
 
 
+def test_multilingual_search_finds_legacy_names_and_keeps_country_identity(journeys):
+    route = publish(journeys, origin="Moscow", destination="Yerevan")
+    assert route["origin"] == "Москва"
+    assert route["destination"] == "Ереван"
+    # Existing deployments can still contain the old free-text spellings.
+    asyncio.run(change_record(Route, route["id"], origin="Moscow", destination="Yerevan"))
+    for origin, destination in [
+        ("Москва", "Ереван"),
+        ("Մոսկվա", "Երևան"),
+        ("ru-moscow", "am-yerevan"),
+        ("MOSCOW", "Երեւան"),
+    ]:
+        assert [
+            r["id"]
+            for r in search(journeys, route, origin=origin, destination=destination)["items"]
+        ] == [route["id"]]
+    armavir = publish(journeys, origin="ru-armavir", destination="Ереван")
+    assert [r["id"] for r in search(journeys, armavir, origin="ru-armavir")["items"]] == [
+        armavir["id"]
+    ]
+    response = journeys["world"].client.get(
+        "/api/v1/routes/search", params=query(armavir, origin="Armavir")
+    )
+    assert response.status_code == 422
+
+
 def test_utc_day_boundaries_and_stable_pagination(journeys):
     day = (datetime.now(UTC) + timedelta(days=5)).replace(hour=0, minute=0, second=0, microsecond=0)
     before = publish(journeys, departure_at=(day - timedelta(microseconds=1)).isoformat())

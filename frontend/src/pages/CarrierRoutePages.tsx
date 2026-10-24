@@ -16,6 +16,7 @@ import type { OwnRoute, RouteStatus } from '../features/carrier/contracts'
 import { carrierListParams } from '../features/carrier/paths'
 import { Pager, WriteResult } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
+import { CityInput } from '../features/cities/CityInput'
 import { departureDate, departureTime, formatPrice } from '../features/search/search'
 import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 
@@ -245,24 +246,30 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
         <select
           id="route-direction"
           value={direction}
-          onChange={(event) => setDirection(event.target.value as 'RU' | 'AM')}
+          onChange={(event) => {
+            setDirection(event.target.value as 'RU' | 'AM')
+            setOrigin('')
+            setDestination('')
+          }}
         >
           <option value="RU">Россия → Армения</option>
           <option value="AM">Армения → Россия</option>
         </select>
       </div>
-      <Field
+      <CityInput
         label="Город отправления"
+        name="origin"
         value={origin}
-        onChange={(event) => setOrigin(event.target.value)}
-        maxLength={200}
+        onChange={setOrigin}
+        country={direction}
         required
       />
-      <Field
+      <CityInput
         label="Город прибытия"
+        name="destination"
         value={destination}
-        onChange={(event) => setDestination(event.target.value)}
-        maxLength={200}
+        onChange={setDestination}
+        country={direction === 'RU' ? 'AM' : 'RU'}
         required
       />
       <Field

@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button, Field } from '../../shared/ui'
 import { readSearch, searchUrl } from './search'
+import { CityInput } from '../cities/CityInput'
 
 export function SearchForm({
   initial,
@@ -35,15 +36,7 @@ export function SearchForm({
       }}
     >
       <div className="search-fields">
-        <Field
-          label="Откуда"
-          name="origin"
-          placeholder="Город отправления"
-          required
-          maxLength={200}
-          value={origin}
-          onChange={(event) => setOrigin(event.target.value)}
-        />
+        <CityInput label="Откуда" name="origin" required value={origin} onChange={setOrigin} />
         <button
           className="swap-cities"
           type="button"
@@ -55,14 +48,12 @@ export function SearchForm({
         >
           <span aria-hidden="true">⇄</span>
         </button>
-        <Field
+        <CityInput
           label="Куда"
           name="destination"
-          placeholder="Город прибытия"
           required
-          maxLength={200}
           value={destination}
-          onChange={(event) => setDestination(event.target.value)}
+          onChange={setDestination}
         />
         <Field
           label="Дата отправления (UTC)"
@@ -76,7 +67,7 @@ export function SearchForm({
         <Button type="submit">Найти рейсы</Button>
       </div>
       <p id={hintId} className="search-hint">
-        Введите полные названия городов. Дата и время отправления указаны по UTC.
+        Город можно найти на русском, английском или армянском. Время отправления — UTC.
       </p>
       {error && (
         <p className="field-error" role="alert">

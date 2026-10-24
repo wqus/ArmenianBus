@@ -1,0 +1,592 @@
+[
+  {
+    "id": "ru-moscow",
+    "country": "RU",
+    "names": {
+      "ru": "Москва",
+      "en": "Moscow",
+      "hy": "Մոսկվա"
+    },
+    "aliases": ["Moskva"]
+  },
+  {
+    "id": "am-yerevan",
+    "country": "AM",
+    "names": {
+      "ru": "Ереван",
+      "en": "Yerevan",
+      "hy": "Երևան"
+    },
+    "aliases": ["Erevan", "Երեւան"]
+  },
+  {
+    "id": "ru-saint-petersburg",
+    "country": "RU",
+    "names": {
+      "ru": "Санкт-Петербург",
+      "en": "Saint Petersburg",
+      "hy": "Սանկտ Պետերբուրգ"
+    },
+    "aliases": ["St Petersburg", "Saint-Petersburg", "Санкт Петербург", "Петербург", "СПб"]
+  },
+  {
+    "id": "am-gyumri",
+    "country": "AM",
+    "names": {
+      "ru": "Гюмри",
+      "en": "Gyumri",
+      "hy": "Գյումրի"
+    },
+    "aliases": ["Giumri"]
+  },
+  {
+    "id": "ru-krasnodar",
+    "country": "RU",
+    "names": {
+      "ru": "Краснодар",
+      "en": "Krasnodar",
+      "hy": "Կրասնոդար"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-rostov-on-don",
+    "country": "RU",
+    "names": {
+      "ru": "Ростов-на-Дону",
+      "en": "Rostov-on-Don",
+      "hy": "Դոնի Ռոստով"
+    },
+    "aliases": ["Rostov on Don", "Ростов на Дону", "Ռոստով"]
+  },
+  {
+    "id": "ru-sochi",
+    "country": "RU",
+    "names": {
+      "ru": "Сочи",
+      "en": "Sochi",
+      "hy": "Սոչի"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-vanadzor",
+    "country": "AM",
+    "names": {
+      "ru": "Ванадзор",
+      "en": "Vanadzor",
+      "hy": "Վանաձոր"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-vagharshapat",
+    "country": "AM",
+    "names": {
+      "ru": "Вагаршапат",
+      "en": "Vagharshapat",
+      "hy": "Վաղարշապատ"
+    },
+    "aliases": ["Эчмиадзин", "Echmiadzin", "Էջմիածին"]
+  },
+  {
+    "id": "am-abovyan",
+    "country": "AM",
+    "names": {
+      "ru": "Абовян",
+      "en": "Abovyan",
+      "hy": "Աբովյան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-kapan",
+    "country": "AM",
+    "names": {
+      "ru": "Капан",
+      "en": "Kapan",
+      "hy": "Կապան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-hrazdan",
+    "country": "AM",
+    "names": {
+      "ru": "Раздан",
+      "en": "Hrazdan",
+      "hy": "Հրազդան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-armavir",
+    "country": "AM",
+    "names": {
+      "ru": "Армавир",
+      "en": "Armavir",
+      "hy": "Արմավիր"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-artashat",
+    "country": "AM",
+    "names": {
+      "ru": "Арташат",
+      "en": "Artashat",
+      "hy": "Արտաշատ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-ijevan",
+    "country": "AM",
+    "names": {
+      "ru": "Иджеван",
+      "en": "Ijevan",
+      "hy": "Իջևան"
+    },
+    "aliases": ["Իջեւան"]
+  },
+  {
+    "id": "am-goris",
+    "country": "AM",
+    "names": {
+      "ru": "Горис",
+      "en": "Goris",
+      "hy": "Գորիս"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-charentsavan",
+    "country": "AM",
+    "names": {
+      "ru": "Чаренцаван",
+      "en": "Charentsavan",
+      "hy": "Չարենցավան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-sevan",
+    "country": "AM",
+    "names": {
+      "ru": "Севан",
+      "en": "Sevan",
+      "hy": "Սևան"
+    },
+    "aliases": ["Սեւան"]
+  },
+  {
+    "id": "am-ashtarak",
+    "country": "AM",
+    "names": {
+      "ru": "Аштарак",
+      "en": "Ashtarak",
+      "hy": "Աշտարակ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-masis",
+    "country": "AM",
+    "names": {
+      "ru": "Масис",
+      "en": "Masis",
+      "hy": "Մասիս"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-dilijan",
+    "country": "AM",
+    "names": {
+      "ru": "Дилижан",
+      "en": "Dilijan",
+      "hy": "Դիլիջան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-spitak",
+    "country": "AM",
+    "names": {
+      "ru": "Спитак",
+      "en": "Spitak",
+      "hy": "Սպիտակ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-sisian",
+    "country": "AM",
+    "names": {
+      "ru": "Сисиан",
+      "en": "Sisian",
+      "hy": "Սիսիան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-alaverdi",
+    "country": "AM",
+    "names": {
+      "ru": "Алаверди",
+      "en": "Alaverdi",
+      "hy": "Ալավերդի"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-vedi",
+    "country": "AM",
+    "names": {
+      "ru": "Веди",
+      "en": "Vedi",
+      "hy": "Վեդի"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-martuni",
+    "country": "AM",
+    "names": {
+      "ru": "Мартуни",
+      "en": "Martuni",
+      "hy": "Մարտունի"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-stepanavan",
+    "country": "AM",
+    "names": {
+      "ru": "Степанаван",
+      "en": "Stepanavan",
+      "hy": "Ստեփանավան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-yeghegnadzor",
+    "country": "AM",
+    "names": {
+      "ru": "Ехегнадзор",
+      "en": "Yeghegnadzor",
+      "hy": "Եղեգնաձոր"
+    },
+    "aliases": []
+  },
+  {
+    "id": "am-jermuk",
+    "country": "AM",
+    "names": {
+      "ru": "Джермук",
+      "en": "Jermuk",
+      "hy": "Ջերմուկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-armavir",
+    "country": "RU",
+    "names": {
+      "ru": "Армавир",
+      "en": "Armavir",
+      "hy": "Արմավիր"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-stavropol",
+    "country": "RU",
+    "names": {
+      "ru": "Ставрополь",
+      "en": "Stavropol",
+      "hy": "Ստավրոպոլ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-mineralnye-vody",
+    "country": "RU",
+    "names": {
+      "ru": "Минеральные Воды",
+      "en": "Mineralnye Vody",
+      "hy": "Միներալնիե Վոդի"
+    },
+    "aliases": ["Минводы"]
+  },
+  {
+    "id": "ru-pyatigorsk",
+    "country": "RU",
+    "names": {
+      "ru": "Пятигорск",
+      "en": "Pyatigorsk",
+      "hy": "Պյատիգորսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-kislovodsk",
+    "country": "RU",
+    "names": {
+      "ru": "Кисловодск",
+      "en": "Kislovodsk",
+      "hy": "Կիսլովոդսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-essentuki",
+    "country": "RU",
+    "names": {
+      "ru": "Ессентуки",
+      "en": "Essentuki",
+      "hy": "Եսենտուկի"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-vladikavkaz",
+    "country": "RU",
+    "names": {
+      "ru": "Владикавказ",
+      "en": "Vladikavkaz",
+      "hy": "Վլադիկավկազ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-volgograd",
+    "country": "RU",
+    "names": {
+      "ru": "Волгоград",
+      "en": "Volgograd",
+      "hy": "Վոլգոգրադ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-voronezh",
+    "country": "RU",
+    "names": {
+      "ru": "Воронеж",
+      "en": "Voronezh",
+      "hy": "Վորոնեժ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-saratov",
+    "country": "RU",
+    "names": {
+      "ru": "Саратов",
+      "en": "Saratov",
+      "hy": "Սարատով"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-samara",
+    "country": "RU",
+    "names": {
+      "ru": "Самара",
+      "en": "Samara",
+      "hy": "Սամարա"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-kazan",
+    "country": "RU",
+    "names": {
+      "ru": "Казань",
+      "en": "Kazan",
+      "hy": "Կազան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-nizhny-novgorod",
+    "country": "RU",
+    "names": {
+      "ru": "Нижний Новгород",
+      "en": "Nizhny Novgorod",
+      "hy": "Նիժնի Նովգորոդ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-yekaterinburg",
+    "country": "RU",
+    "names": {
+      "ru": "Екатеринбург",
+      "en": "Yekaterinburg",
+      "hy": "Եկատերինբուրգ"
+    },
+    "aliases": ["Ekaterinburg"]
+  },
+  {
+    "id": "ru-chelyabinsk",
+    "country": "RU",
+    "names": {
+      "ru": "Челябинск",
+      "en": "Chelyabinsk",
+      "hy": "Չելյաբինսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-ufa",
+    "country": "RU",
+    "names": {
+      "ru": "Уфа",
+      "en": "Ufa",
+      "hy": "Ուֆա"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-perm",
+    "country": "RU",
+    "names": {
+      "ru": "Пермь",
+      "en": "Perm",
+      "hy": "Պերմ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-tyumen",
+    "country": "RU",
+    "names": {
+      "ru": "Тюмень",
+      "en": "Tyumen",
+      "hy": "Տյումեն"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-omsk",
+    "country": "RU",
+    "names": {
+      "ru": "Омск",
+      "en": "Omsk",
+      "hy": "Օմսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-novosibirsk",
+    "country": "RU",
+    "names": {
+      "ru": "Новосибирск",
+      "en": "Novosibirsk",
+      "hy": "Նովոսիբիրսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-krasnoyarsk",
+    "country": "RU",
+    "names": {
+      "ru": "Красноярск",
+      "en": "Krasnoyarsk",
+      "hy": "Կրասնոյարսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-irkutsk",
+    "country": "RU",
+    "names": {
+      "ru": "Иркутск",
+      "en": "Irkutsk",
+      "hy": "Իրկուտսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-tula",
+    "country": "RU",
+    "names": {
+      "ru": "Тула",
+      "en": "Tula",
+      "hy": "Տուլա"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-ryazan",
+    "country": "RU",
+    "names": {
+      "ru": "Рязань",
+      "en": "Ryazan",
+      "hy": "Ռյազան"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-kaluga",
+    "country": "RU",
+    "names": {
+      "ru": "Калуга",
+      "en": "Kaluga",
+      "hy": "Կալուգա"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-belgorod",
+    "country": "RU",
+    "names": {
+      "ru": "Белгород",
+      "en": "Belgorod",
+      "hy": "Բելգորոդ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-kursk",
+    "country": "RU",
+    "names": {
+      "ru": "Курск",
+      "en": "Kursk",
+      "hy": "Կուրսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-pskov",
+    "country": "RU",
+    "names": {
+      "ru": "Псков",
+      "en": "Pskov",
+      "hy": "Պսկով"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-novorossiysk",
+    "country": "RU",
+    "names": {
+      "ru": "Новороссийск",
+      "en": "Novorossiysk",
+      "hy": "Նովոռոսիյսկ"
+    },
+    "aliases": []
+  },
+  {
+    "id": "ru-anapa",
+    "country": "RU",
+    "names": {
+      "ru": "Анапа",
+      "en": "Anapa",
+      "hy": "Անապա"
+    },
+    "aliases": []
+  }
+]

@@ -289,8 +289,12 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
   expect(state.writes).toHaveLength(0)
   await page.getByLabel('Автобус', { exact: true }).selectOption({ index: 1 })
   await page.getByLabel('Направление', { exact: true }).selectOption('AM')
-  await page.getByLabel('Город отправления').fill('Գյումրի')
-  await page.getByLabel('Город прибытия').fill('Ростов')
+  await page.getByRole('combobox', { name: 'Город отправления', exact: true }).fill('Գյումրի')
+  await page.getByRole('option', { name: /Гюмри/ }).click()
+  await page.getByRole('combobox', { name: 'Город прибытия', exact: true }).fill('Armavir')
+  await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(1)
+  await expect(page.getByRole('listbox').getByRole('option', { name: /Россия/ })).toBeVisible()
+  await page.getByRole('listbox').getByRole('option', { name: /Россия/ }).click()
   await page.getByLabel('Отправление (UTC)').fill('2030-03-01T12:30')
   await page.getByLabel('Цена билета, ₽').fill('4500,55')
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
@@ -308,6 +312,8 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
     departure_at: '2030-03-01T12:30:00.000Z',
     origin_country: 'AM',
     destination_country: 'RU',
+    origin: 'am-gyumri',
+    destination: 'ru-armavir',
     bus_id: '00000021-1111-4111-8111-111111111111',
   })
   await page.getByRole('button', { name: 'Опубликовать рейс' }).click()

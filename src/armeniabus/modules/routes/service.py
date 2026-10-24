@@ -10,6 +10,7 @@ from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus
 from armeniabus.modules.carriers.service import own_profile
+from armeniabus.modules.cities.catalog import canonical_name
 from armeniabus.modules.notifications.outbox import enqueue
 from armeniabus.modules.payments.models import Payment, PaymentStatus
 from armeniabus.modules.payments.refunds import request_refund
@@ -173,6 +174,16 @@ async def update_route(
         )
     if "departure_at" in changes and changes["departure_at"] <= datetime.now(UTC):
         raise ApiError(422, "DEPARTURE_IN_PAST", "Departure must be in the future")
+    for field in ("origin", "destination"):
+        country_field = f"{field}_country"
+        if field in changes or country_field in changes:
+            try:
+                changes[field] = canonical_name(
+                    changes.get(field, getattr(route, field)),
+                    changes.get(country_field, getattr(route, country_field)),
+                )
+            except ValueError as exc:
+                raise ApiError(422, "CITY_COUNTRY_MISMATCH", "Check city and country") from exc
     if "bus_id" in changes:
         await available_bus(db, route.carrier_id, changes["bus_id"])
     if await db.scalar(select(Booking.id).where(Booking.route_id == route.id).limit(1)):
