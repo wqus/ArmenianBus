@@ -9,19 +9,18 @@ import villageSmall from './assets/village-960.webp'
 const concepts = {
   calm: {
     number: '04',
-    name: 'Спокойная дорога',
+    name: 'Просто о поездке',
     subtitle: 'К новым местам и близким людям.',
     description:
-      'Спокойный вариант по вашим референсам: фотографии, тёплый белый фон, приглушённый зелёный и привычные формы. Поиск — сразу под фотографией, данные рейса — без лишнего декора.',
+      'Переработанный спокойный вариант: поиск на первом экране, обычная типографика, самостоятельные фотографии и конкретные тексты. Без текста поверх фото и рекламных слоганов.',
     heading: (
       <>
-        Хорошая поездка
+        Автобусные рейсы
         <br />
-        начинается спокойно.
+        Россия — Армения
       </>
     ),
-    detail:
-      'Выберите рейс между Россией и Арменией. Мы поможем пройти путь от поиска до бронирования места.',
+    detail: 'Выберите направление и дату отправления. Затем можно сравнить рейсы и выбрать место.',
     motif: 'Дорога к близким',
   },
   transit: {
@@ -145,6 +144,7 @@ function RouteArt({ theme }: { theme: Concept }) {
 }
 
 export default function DesignConceptsPage() {
+  const previewOnly = new URLSearchParams(window.location.search).get('preview') === '1'
   const [theme, setTheme] = useState<Concept>('calm')
   const [screen, setScreen] = useState<Screen>('home')
   const [origin, setOrigin] = useState('Москва')
@@ -233,7 +233,7 @@ export default function DesignConceptsPage() {
     )
   }
   return (
-    <div className={`designlab dc-${theme}`}>
+    <div className={`designlab dc-${theme}${previewOnly ? ' dc-preview-only' : ''}`}>
       <a className="dc-skip" href="#dc-preview">
         К макету
       </a>
@@ -302,57 +302,67 @@ export default function DesignConceptsPage() {
           </button>
           <span className="dc-brand-caption">Россия ↔ Армения</span>
           <button className="dc-text-button" onClick={() => navigate('search')}>
-            Найти поездку <span aria-hidden="true">↗</span>
+            Расписание
           </button>
         </header>
         {screen === 'home' ? (
           <>
-            <section className="dc-hero">
-              {theme === 'calm' && (
-                <picture className="dc-photo-hero">
-                  <source srcSet={`${gergetiSmall} 960w, ${gergeti} 1920w`} sizes="100vw" />
+            {theme === 'calm' ? (
+              <section className="dc-calm-start" aria-label="Поиск автобусного рейса">
+                <div className="dc-calm-start-copy">
+                  <h1 ref={heading} tabIndex={-1}>
+                    {concept.heading}
+                  </h1>
+                  <p className="dc-description">{concept.detail}</p>
+                  <section id="dc-search" aria-label="Поиск поездки">
+                    {renderSearchForm()}
+                    <p className="dc-fine">Дата и время отправления указаны по UTC.</p>
+                  </section>
+                </div>
+                <figure className="dc-calm-main-photo">
                   <img
                     src={gergeti}
+                    srcSet={`${gergetiSmall} 960w, ${gergeti} 1920w`}
+                    sizes="(max-width: 800px) 100vw, 48vw"
                     alt="Троицкая церковь в Гергети на фоне гор Кавказа, Грузия"
                     width="1920"
                     height="1326"
                     fetchPriority="high"
                   />
-                </picture>
-              )}
-              <div className="dc-hero-copy">
-                <p className="dc-kicker">ПОЕЗДКИ МЕЖДУ РОССИЕЙ И АРМЕНИЕЙ</p>
-                <h1 ref={heading} tabIndex={-1}>
-                  {concept.heading}
-                </h1>
-                <p className="dc-description">{concept.detail}</p>
-                <a className="dc-hero-link" href="#dc-search">
-                  Выбрать направление <span aria-hidden="true">↓</span>
-                </a>
-              </div>
-              {theme === 'calm' ? (
-                <p className="dc-photo-caption">Гергети, Грузия · фото-настроение поездки</p>
-              ) : (
-                <RouteArt theme={theme} />
-              )}
-            </section>
-            <section className="dc-search-section" id="dc-search" aria-label="Поиск поездки">
-              <div className="dc-section-label">
-                <span>{theme === 'calm' ? 'Куда вы хотите поехать?' : '01 / ВАША ПОЕЗДКА'}</span>
-                <span>
-                  {theme === 'calm' ? 'Выберите направление и дату' : 'Начнём с направления'}
-                </span>
-              </div>
-              {renderSearchForm()}
-              <p className="dc-fine">
-                Время отправления указано по UTC. Данные в этом макете — примеры.
-              </p>
-            </section>
+                  <figcaption>Гергети, Грузия. Дорога через Кавказ.</figcaption>
+                </figure>
+              </section>
+            ) : (
+              <>
+                <section className="dc-hero">
+                  <div className="dc-hero-copy">
+                    <p className="dc-kicker">ПОЕЗДКИ МЕЖДУ РОССИЕЙ И АРМЕНИЕЙ</p>
+                    <h1 ref={heading} tabIndex={-1}>
+                      {concept.heading}
+                    </h1>
+                    <p className="dc-description">{concept.detail}</p>
+                    <a className="dc-hero-link" href="#dc-search">
+                      Выбрать направление <span aria-hidden="true">↓</span>
+                    </a>
+                  </div>
+                  <RouteArt theme={theme} />
+                </section>
+                <section className="dc-search-section" id="dc-search" aria-label="Поиск поездки">
+                  <div className="dc-section-label">
+                    <span>01 / ВАША ПОЕЗДКА</span>
+                    <span>Начнём с направления</span>
+                  </div>
+                  {renderSearchForm()}
+                  <p className="dc-fine">
+                    Время отправления указано по UTC. Данные в этом макете — примеры.
+                  </p>
+                </section>
+              </>
+            )}
             {theme === 'calm' && (
               <section className="dc-calm-help" aria-labelledby="dc-calm-help-title">
                 <div>
-                  <p className="dc-kicker">ВАША ПОЕЗДКА</p>
-                  <h2 id="dc-calm-help-title">Всё важное — до отправления</h2>
+                  <h2 id="dc-calm-help-title">Перед бронированием</h2>
                   <p>
                     Сравните время и стоимость, выберите свободное место. Детали бронирования
                     останутся в личном кабинете.
@@ -382,7 +392,7 @@ export default function DesignConceptsPage() {
                     height="1280"
                     loading="lazy"
                   />
-                  <figcaption>Немного вдохновения для следующей поездки</figcaption>
+                  <figcaption>Горный пейзаж. Фотография предоставлена для макета.</figcaption>
                 </figure>
               </section>
             )}
@@ -417,7 +427,7 @@ export default function DesignConceptsPage() {
         ) : screen === 'search' ? (
           <section className="dc-results dc-content">
             <div className="dc-section-label">
-              <span>01 / ПОИСК РЕЙСОВ</span>
+              <span>{theme === 'calm' ? 'Расписание' : '01 / ПОИСК РЕЙСОВ'}</span>
               <button className="dc-text-button" onClick={() => navigate('home')}>
                 ← На главную
               </button>
@@ -439,7 +449,7 @@ export default function DesignConceptsPage() {
                   aria-label={`Демонстрационный рейс ${item.time}`}
                 >
                   <div className="dc-route-time">
-                    <span>ОТПРАВЛЕНИЕ · UTC</span>
+                    <span>{theme === 'calm' ? 'Отправление · UTC' : 'ОТПРАВЛЕНИЕ · UTC'}</span>
                     <strong>{item.time}</strong>
                     <span>{formattedDate}</span>
                   </div>
@@ -464,7 +474,7 @@ export default function DesignConceptsPage() {
                         navigate('booking')
                       }}
                     >
-                      Выбрать место ↗
+                      Выбрать место
                     </button>
                   </div>
                 </article>
@@ -477,13 +487,13 @@ export default function DesignConceptsPage() {
         ) : (
           <section className="dc-booking dc-content">
             <div className="dc-section-label">
-              <span>02 / ВЫБОР МЕСТА</span>
+              <span>{theme === 'calm' ? 'Выбор места' : '02 / ВЫБОР МЕСТА'}</span>
               <button className="dc-text-button" onClick={() => navigate('search')}>
                 ← К рейсам
               </button>
             </div>
             <h1 ref={heading} tabIndex={-1}>
-              Место для вашей поездки.
+              Выберите место
             </h1>
             <p className="dc-description">
               {origin} → {destination} · {formattedDate}, {route.time} UTC
@@ -517,7 +527,7 @@ export default function DesignConceptsPage() {
                 </div>
               </section>
               <aside className="dc-summary">
-                <p className="dc-kicker">ВАША ПОЕЗДКА</p>
+                <h2 className="dc-summary-title">Ваша поездка</h2>
                 <div className="dc-ticket-route">
                   <strong>{origin}</strong>
                   <span aria-hidden="true">↓</span>
@@ -566,7 +576,11 @@ export default function DesignConceptsPage() {
           </section>
         )}
         <footer className="dc-footer">
-          <span>ArmeniaBus · {concept.subtitle}</span>
+          <span>
+            {theme === 'calm'
+              ? 'ArmeniaBus. Автобусные поездки.'
+              : `ArmeniaBus · ${concept.subtitle}`}
+          </span>
           <span>Концепция {concept.number} / 04 · Локальный просмотр</span>
         </footer>
       </main>
