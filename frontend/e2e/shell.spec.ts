@@ -5,10 +5,10 @@ test('public shell, responsive navigation, FAQ, and missing page', async ({ page
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Дорога, которая')
-  await expect(page.getByRole('link', { name: 'Как устроена поездка' })).toHaveAttribute(
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Автобусные рейсы')
+  await expect(page.getByRole('link', { name: 'Найти свою поездку' })).toHaveAttribute(
     'href',
-    '#journey',
+    '#search',
   )
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,

@@ -43,8 +43,10 @@
 | Проверки | pytest, Ruff, Vitest, ESLint, Prettier, Playwright, axe |
 | Инфраструктура | Docker Compose, Caddy, Nginx, GitHub Actions, GHCR |
 
-Типографика: Golos Text для интерфейса и Literata для основных заголовков и названия сервиса.
-Оба семейства поставляются локально через npm.
+Типографика: Golos Text для интерфейса, Cormorant Garamond для основных заголовков
+и названия, Noto Serif/Sans Armenian для армянского письма. Шрифты поставляются локально через npm.
+Главная и выдача перенесены в согласованный спокойный дизайн с фотографией Армении;
+[границы переноса и снимки экранов](docs/design/production-integration.md).
 
 Python-зависимости закреплены в `requirements.lock` и `requirements-dev.lock`, frontend — в `frontend/package-lock.json`.
 

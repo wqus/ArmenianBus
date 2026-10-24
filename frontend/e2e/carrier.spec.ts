@@ -294,7 +294,10 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
   await page.getByRole('combobox', { name: 'Город прибытия', exact: true }).fill('Armavir')
   await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(1)
   await expect(page.getByRole('listbox').getByRole('option', { name: /Россия/ })).toBeVisible()
-  await page.getByRole('listbox').getByRole('option', { name: /Россия/ }).click()
+  await page
+    .getByRole('listbox')
+    .getByRole('option', { name: /Россия/ })
+    .click()
   await page.getByLabel('Отправление (UTC)').fill('2030-03-01T12:30')
   await page.getByLabel('Цена билета, ₽').fill('4500,55')
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])

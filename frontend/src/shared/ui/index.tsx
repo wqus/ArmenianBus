@@ -141,17 +141,6 @@ export function Arrow() {
 export function Brand() {
   return (
     <Link className="brand" to="/" aria-label="armatrans — главная">
-      <svg aria-hidden="true" width="38" height="38" viewBox="0 0 48 48">
-        <rect width="48" height="48" rx="14" fill="currentColor" />
-        <path
-          d="m10 34 14-22 14 22M17 26h14"
-          fill="none"
-          stroke="white"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
       <span>armatrans</span>
     </Link>
   )

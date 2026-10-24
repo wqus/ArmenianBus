@@ -2,11 +2,12 @@ import { CityInput } from '../features/cities/CityInput'
 import { cityName } from '../features/cities/catalog'
 import { useEffect, useRef, useState } from 'react'
 import '@fontsource-variable/cormorant-garamond'
+import '@fontsource-variable/literata'
 import '@fontsource-variable/noto-serif-armenian'
 import './concepts.css'
 import './calm.css'
-import khorVirap from './assets/armenia-khor-virap-1920.webp'
-import khorVirapSmall from './assets/armenia-khor-virap-960.webp'
+import khorVirap from '../shared/assets/armenia-khor-virap-1920.webp'
+import khorVirapSmall from '../shared/assets/armenia-khor-virap-960.webp'
 
 const concepts = {
   calm: {

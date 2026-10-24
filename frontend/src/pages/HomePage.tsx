@@ -1,25 +1,8 @@
 import { useEffect } from 'react'
-import { Arrow, ButtonLink } from '../shared/ui'
-import { MountainRoad } from '../shared/ui/MountainRoad'
+import { Link } from 'react-router'
 import { SearchForm } from '../features/search/SearchForm'
-
-const steps = [
-  {
-    number: '01',
-    title: 'Выберите свой рейс',
-    text: 'Город отправления, направление и дата. Сравните время, стоимость и доступные места.',
-  },
-  {
-    number: '02',
-    title: 'Забронируйте место',
-    text: 'Выберите конкретное место в автобусе. Оно временно закрепляется за вами на время оплаты.',
-  },
-  {
-    number: '03',
-    title: 'Сохраните поездку',
-    text: 'После подтверждения оплаты информация о бронировании останется в личном кабинете.',
-  },
-]
+import khorVirap from '../shared/assets/armenia-khor-virap-1920.webp'
+import khorVirapSmall from '../shared/assets/armenia-khor-virap-960.webp'
 
 export function HomePage() {
   useEffect(() => {
@@ -27,104 +10,85 @@ export function HomePage() {
   }, [])
   return (
     <>
-      <section className="container hero">
-        <div className="hero-copy">
-          <span className="eyebrow">
-            <span className="small-dot" /> АВТОБУСНЫЕ ПОЕЗДКИ · РОССИЯ ↔ АРМЕНИЯ
-          </span>
-          <h1>
-            Дорога, которая
-            <br />
-            <span>сближает.</span>
-          </h1>
-          <p className="hero-description">
-            К родным, новым местам и важным встречам.
-            <br className="desktop-break" /> Поездки между Россией и Арменией —
-            <br className="desktop-break" /> с вниманием к каждому шагу.
+      <section className="travel-hero" aria-labelledby="travel-title">
+        <img
+          className="travel-hero-photo"
+          src={khorVirap}
+          srcSet={`${khorVirapSmall} 960w, ${khorVirap} 1920w`}
+          sizes="100vw"
+          alt="Монастырь Хор Вирап в Армении на фоне Арарата"
+          width="1920"
+          height="1276"
+          fetchPriority="high"
+        />
+        <div className="container travel-hero-copy">
+          <p className="travel-place" lang="hy">
+            Հայաստան
           </p>
-          <div className="hero-actions">
-            <a className="button button--primary" href="#search">
-              Найти поездку <Arrow />
-            </a>
-            <a className="button button--secondary" href="#journey">
-              Как устроена поездка <Arrow />
-            </a>
-          </div>
-          <div className="hero-note">
-            <span className="note-icon" aria-hidden="true">
-              ↔
-            </span>
-            <span>
-              Два направления.
-              <br />
-              <strong>Много поводов встретиться.</strong>
-            </span>
-          </div>
-        </div>
-        <div className="hero-art">
-          <MountainRoad />
-          <div className="scene-label">
-            <span className="small-dot" /> ВПЕРЕДИ — ВАША ИСТОРИЯ
-          </div>
-          <div className="scene-caption">
-            <span>Россия</span>
-            <span className="route-line" aria-hidden="true">
-              ○ ─────── ○
-            </span>
-            <span>Армения</span>
-          </div>
+          <h1 id="travel-title">
+            Автобусные рейсы
+            <br />
+            Россия — Армения
+          </h1>
+          <p className="travel-intro">
+            К близким, по делам или навстречу новым местам. Выберите свой рейс между Россией и
+            Арменией.
+          </p>
+          <a className="travel-search-link" href="#search">
+            Найти свою поездку <span aria-hidden="true">↓</span>
+          </a>
         </div>
       </section>
+      <p className="container travel-photo-credit">
+        Хор Вирап, Армения ·{' '}
+        <a href="https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_Khor_Virap_Monastery,_Ararat_Plain,_Armenia.jpg">
+          Фото: Vyacheslav Argenberg
+        </a>
+        {' · '}
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>
+        {' · '}кадрировано, затемнено
+      </p>
       <section className="container home-search" id="search" aria-labelledby="search-title">
         <h2 id="search-title">Куда отправимся?</h2>
+        <p className="home-search-intro">Выберите города и дату — покажем подходящие рейсы.</p>
         <SearchForm />
       </section>
-      <div className="container">
-        <div className="principles">
-          <span>
-            <span aria-hidden="true">◎</span> Конкретное место в автобусе
-          </span>
-          <span>
-            <span aria-hidden="true">◇</span> Стоимость до оплаты
-          </span>
-          <span>
-            <span aria-hidden="true">↗</span> Поездки в одном кабинете
-          </span>
-        </div>
-      </div>
-      <section className="container section" id="journey">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">ОТ ПЛАНОВ — К ПОЕЗДКЕ</span>
-            <h2>Всё начинается с трёх шагов</h2>
-          </div>
+      <section className="container travel-help" id="journey" aria-labelledby="journey-title">
+        <div>
+          <h2 id="journey-title">Перед бронированием</h2>
           <p>
-            Понятный путь от выбора рейса
-            <br />
-            до подтверждённого бронирования.
+            Сравните время и стоимость, выберите свободное место. Детали бронирования останутся в
+            личном кабинете.
           </p>
         </div>
-        <div className="step-grid">
-          {steps.map((step) => (
-            <article className="step-card" key={step.number}>
-              <span className="step-number">{step.number}</span>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
-            </article>
-          ))}
+        <div className="travel-questions">
+          <details>
+            <summary>Какое время указано в расписании?</summary>
+            <p>
+              Дата и время отправления указаны по UTC. Перед поездкой проверьте их с учётом своего
+              часового пояса.
+            </p>
+          </details>
+          <details>
+            <summary>Когда место закрепляется за мной?</summary>
+            <p>
+              После подтверждения бронирования место удерживается на 10 минут. Чтобы подтвердить
+              поездку, завершите оплату до окончания этого срока.
+            </p>
+          </details>
+          <Link className="travel-info-link" to="/help">
+            Все вопросы о поездке
+          </Link>
         </div>
       </section>
-      <section className="container bottom-section">
-        <div className="carrier-banner">
-          <div>
-            <span className="eyebrow">ДЛЯ ПЕРЕВОЗЧИКОВ</span>
-            <h2>Ваши рейсы. Новые пассажиры.</h2>
-            <p>Управляйте автобусами, местами и поездками в armatrans.</p>
-          </div>
-          <ButtonLink to="/carriers" secondary>
-            О работе с сервисом <Arrow />
-          </ButtonLink>
+      <section className="container travel-carriers" aria-labelledby="travel-carriers-title">
+        <div>
+          <h2 id="travel-carriers-title">Для перевозчиков</h2>
+          <p>Автобусы, расписание и бронирования ваших пассажиров в одном кабинете.</p>
         </div>
+        <Link className="travel-info-link" to="/carriers">
+          О работе с armatrans
+        </Link>
       </section>
     </>
   )
