@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'react-router'
 import { useSession } from '../features/auth/context'
 import { remainingSeconds } from '../features/bookings/booking'
+import { JourneySummary, BookingSupport } from '../features/bookings/JourneySummary'
 import {
   confirmationUrl,
   loadCheckout,
@@ -12,7 +13,7 @@ import {
   savedPaymentKey,
 } from '../features/payments/payment'
 import { isUuid } from '../features/trips/trip'
-import { formatPrice } from '../features/search/search'
+import '../features/bookings/passenger.css'
 import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 
 function PaymentContent({ id }: { id: string }) {
@@ -108,8 +109,8 @@ function PaymentContent({ id }: { id: string }) {
   const message = value && paymentMessage(value.payment, value.booking)
   return (
     <>
-      <PageHeading eyebrow="ОПЛАТА" title="Оплата и результат">
-        Проверяем платёж и бронирование по данным сервиса.
+      <PageHeading eyebrow="ОПЛАТА" title="Оплата поездки">
+        Сумма, состояние платежа и подтверждение бронирования.
       </PageHeading>
       <div className="booking-actions">
         <Button
@@ -131,53 +132,69 @@ function PaymentContent({ id }: { id: string }) {
       ) : !value || !message ? (
         <Loading title="Проверяем оплату…" />
       ) : (
-        <section className="booking-panel">
-          <div role="status">
-            <h2>{message.title}</h2>
-            <p>{message.text}</p>
-          </div>
-          <p>
-            {value.booking.origin} → {value.booking.destination} · Место {value.booking.seat_number}
-          </p>
-          <p className="booking-amount">{formatPrice(value.booking.amount)}</p>
-          {active && (
-            <p>
-              До окончания удержания:{' '}
-              <span role="timer" aria-live="off">
-                {String(Math.floor(remainingSeconds(value, now) / 60)).padStart(2, '0')}:
-                {String(remainingSeconds(value, now) % 60).padStart(2, '0')}
-              </span>
-            </p>
-          )}
-          {eligible && !query.isFetching && !busy && url && (
-            <a className="button button--primary" href={url} rel="noreferrer">
-              Перейти на страницу ЮKassa
-            </a>
-          )}
-          {eligible && !url && !payment?.confirmation_url && canRetry && (
-            <Button busy={busy} disabled={query.isFetching} onClick={() => void start()}>
-              {payment ? 'Повторить подготовку оплаты' : 'Подготовить оплату'}
-            </Button>
-          )}
-          {eligible && payment?.confirmation_url && !url && (
-            <Notice title="Ссылка оплаты недоступна" error>
-              Не удалось проверить адрес платёжной страницы. Обновите результат или обратитесь в
-              поддержку.
-            </Notice>
-          )}
-          {eligible && payment && !payment.confirmation_url && !canRetry && (
-            <Notice title="Платёж уже создан">
-              Ожидаем результат. Для продолжения подготовки используйте браузер, в котором начинали
-              оплату.
-            </Notice>
-          )}
-          {error && (
-            <Notice title="Результат запроса" error>
-              {error}
-            </Notice>
-          )}
-          <p className="booking-reference">Номер брони: {id}</p>
-        </section>
+        <div className="passenger-checkout payment-checkout">
+          <JourneySummary journey={value.booking} />
+          <section className="booking-panel checkout-action payment-panel">
+            <div
+              role="status"
+              className="payment-result"
+              data-confirmed={
+                payment?.status === 'SUCCEEDED' &&
+                !payment.review_reason &&
+                !value.booking.refund_status &&
+                ['PAID', 'COMPLETED'].includes(value.booking.status)
+              }
+            >
+              <p className="journey-caption">Состояние оплаты</p>
+              <h2>{message.title}</h2>
+              <p>{message.text}</p>
+            </div>
+            {active && (
+              <p className="payment-countdown">
+                До окончания удержания:{' '}
+                <span role="timer" aria-live="off">
+                  {String(Math.floor(remainingSeconds(value, now) / 60)).padStart(2, '0')}:
+                  {String(remainingSeconds(value, now) % 60).padStart(2, '0')}
+                </span>
+              </p>
+            )}
+            {eligible && (
+              <p className="checkout-reassurance">
+                {payment
+                  ? 'Если уже оплатили, дождитесь подтверждения. Здесь сохраняется та же попытка оплаты; её состояние можно обновить кнопкой выше.'
+                  : 'После подготовки появится ссылка на платёжную страницу. Возвращение на сайт не подтверждает списание — дождитесь результата сервиса.'}
+              </p>
+            )}
+            {eligible && !query.isFetching && !busy && url && (
+              <a className="button button--primary" href={url} rel="noreferrer">
+                Перейти на страницу ЮKassa
+              </a>
+            )}
+            {eligible && !url && !payment?.confirmation_url && canRetry && (
+              <Button busy={busy} disabled={query.isFetching} onClick={() => void start()}>
+                {payment ? 'Повторить подготовку оплаты' : 'Подготовить оплату'}
+              </Button>
+            )}
+            {eligible && payment?.confirmation_url && !url && (
+              <Notice title="Ссылка оплаты недоступна" error>
+                Не удалось проверить адрес платёжной страницы. Обновите результат или обратитесь в
+                поддержку.
+              </Notice>
+            )}
+            {eligible && payment && !payment.confirmation_url && !canRetry && (
+              <Notice title="Попытка оплаты сохранена">
+                Ожидаем результат. Для продолжения подготовки используйте браузер, в котором
+                начинали оплату.
+              </Notice>
+            )}
+            {error && (
+              <Notice title="Результат запроса" error>
+                {error}
+              </Notice>
+            )}
+            <BookingSupport id={id} />
+          </section>
+        </div>
       )}
       <div className="booking-actions">
         <ButtonLink secondary to="/bookings">
@@ -197,7 +214,7 @@ export function PaymentPage({ result = false }: { result?: boolean }) {
       : null
     : routeId
   return (
-    <div className="container information-page">
+    <div className="container information-page passenger-page">
       {isUuid(id) ? (
         <PaymentContent key={id.toLowerCase()} id={id.toLowerCase()} />
       ) : (

@@ -29,6 +29,7 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     signedIn,
     mode: 'ok',
     status: 'HELD',
+    paymentStatusOverride: undefined as string | null | undefined,
     posts: 0,
     deletes: 0,
     exists: false,
@@ -53,7 +54,12 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     company_name: 'Перевозчик',
     cancellation_allowed: state.status === 'HELD',
     route_status: 'ACTIVE',
-    payment_status: state.status === 'PAID' ? 'SUCCEEDED' : null,
+    payment_status:
+      state.paymentStatusOverride !== undefined
+        ? state.paymentStatusOverride
+        : state.status === 'PAID'
+          ? 'SUCCEEDED'
+          : null,
     refund_status: null,
     refund_required: false,
   })
@@ -150,6 +156,50 @@ test('login returns to the chosen seat, creates once, restores hold on reload an
     await page.setViewportSize({ width, height: 900 })
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
   }
+})
+
+test('expired countdown removes checkout action without inventing a server status or sending a mutation', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(context)
+  state.seconds = 10
+  await page.clock.install()
+  await page.goto(`/bookings/${id}`)
+  await expect(page.getByRole('link', { name: 'Перейти к оплате', exact: true })).toBeVisible()
+  await page.clock.runFor(11_000)
+  await expect(page.getByRole('link', { name: 'Перейти к оплате', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Проверить оплату', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Место удерживается', exact: true })).toBeVisible()
+  await expect(page.getByRole('timer')).toHaveText('00:00')
+  expect(state.posts).toBe(0)
+  expect(state.deletes).toBe(0)
+})
+
+test('confirmed or terminated payment attempts never offer a new checkout action on a held booking', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(context)
+  for (const paymentStatus of ['SUCCEEDED', 'CANCELED', 'FAILED']) {
+    state.paymentStatusOverride = paymentStatus
+    await page.goto(`/bookings/${id}`)
+    await expect(
+      page.getByRole('heading', { name: 'Место удерживается', exact: true }),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Перейти к оплате', exact: true })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Проверить оплату', exact: true })).toBeVisible()
+    await expect(
+      page.getByText(
+        paymentStatus === 'SUCCEEDED'
+          ? 'Не оплачивайте повторно:'
+          : 'Платёж завершён без подтверждённой оплаты.',
+        { exact: false },
+      ),
+    ).toBeVisible()
+  }
+  expect(state.posts).toBe(0)
+  expect(state.deletes).toBe(0)
 })
 
 test('a lost create response is recovered from own bookings without replaying POST', async ({

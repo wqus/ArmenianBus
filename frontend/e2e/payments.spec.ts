@@ -241,7 +241,7 @@ test('late success, review, provider rejection and unsafe URL are distinct outco
   await expect(page.getByRole('link', { name: 'Перейти на страницу ЮKassa' })).toHaveCount(0)
   state.url = null
   await page.getByRole('button', { name: 'Обновить результат' }).click()
-  await expect(page.getByText('Платёж уже создан', { exact: true })).toBeVisible()
+  await expect(page.getByText('Попытка оплаты сохранена', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Повторить подготовку оплаты' })).toHaveCount(0)
   expect(state.keys).toHaveLength(0)
 })

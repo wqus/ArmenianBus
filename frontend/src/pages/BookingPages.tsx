@@ -13,6 +13,9 @@ import {
 } from '../features/bookings/booking'
 import type { BookingDetails, TimedBooking } from '../features/bookings/booking'
 import { BookingFinancials } from '../features/bookings/BookingFinancials'
+import { JourneySummary, BookingSupport } from '../features/bookings/JourneySummary'
+import { bookingGuidance } from '../features/bookings/guidance'
+import '../features/bookings/passenger.css'
 import {
   bookingFilterParams,
   defaultBookingFilters,
@@ -132,35 +135,34 @@ function CreateBooking({ routeId, seatId }: { routeId: string; seatId: string })
       ) : !trip ? (
         <Notice title="Проверяем рейс…" />
       ) : (
-        <section className="booking-panel">
-          <h2>
-            {trip.route.origin} → {trip.route.destination}
-          </h2>
-          <p>
-            {departureDate.format(new Date(trip.route.departure_at))} ·{' '}
-            {departureTime.format(new Date(trip.route.departure_at))} UTC
-          </p>
-          <p>{trip.route.company_name}</p>
-          {seat?.status === 'FREE' ? (
-            <>
-              <p className="booking-amount">
-                Место {seat.seat_number} · {formatPrice(trip.route.price)}
-              </p>
-              <Button
-                busy={state === 'sending'}
-                disabled={query.isFetching}
-                onClick={() => void create()}
-              >
-                Удержать место
-              </Button>
-              <p className="seat-help">Это временное удержание. Оплата ещё не выполнена.</p>
-            </>
-          ) : (
-            <Notice title="Место больше недоступно">
-              Вернитесь к рейсу и выберите свободное место.
-            </Notice>
-          )}
-        </section>
+        <div className="passenger-checkout">
+          <JourneySummary
+            journey={{ ...trip.route, amount: trip.route.price, seat_number: seat?.seat_number }}
+          />
+          <section className="booking-panel checkout-action">
+            <h2>Проверьте выбор</h2>
+            <p>
+              После подтверждения начнётся временное удержание. Деньги на этом шаге не списываются.
+            </p>
+            {seat?.status === 'FREE' ? (
+              <>
+                <p className="booking-amount">Место {seat.seat_number}</p>
+                <Button
+                  busy={state === 'sending'}
+                  disabled={query.isFetching}
+                  onClick={() => void create()}
+                >
+                  Удержать место
+                </Button>
+                <p className="seat-help">Это временное удержание. Оплата ещё не выполнена.</p>
+              </>
+            ) : (
+              <Notice title="Место больше недоступно">
+                Вернитесь к рейсу и выберите свободное место.
+              </Notice>
+            )}
+          </section>
+        </div>
       )}
       <div className="booking-actions">
         <ButtonLink secondary to={`/trips/${routeId}`}>
@@ -179,7 +181,7 @@ export function CreateBookingPage() {
   const [params] = useSearchParams()
   const seat = params.get('seat')
   return (
-    <div className="container information-page">
+    <div className="container information-page passenger-page">
       {isUuid(id) && isUuid(seat) && params.getAll('seat').length === 1 ? (
         <CreateBooking
           key={`${id}:${seat}`}
@@ -198,12 +200,7 @@ export function CreateBookingPage() {
   )
 }
 
-function HoldTimer({ value }: { value: TimedBooking }) {
-  const [now, setNow] = useState(() => performance.now())
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(performance.now()), 1000)
-    return () => clearInterval(timer)
-  }, [])
+function HoldTimer({ value, now }: { value: TimedBooking; now: number }) {
   const seconds = remainingSeconds(value, now)
   return (
     <div className="hold-timer">
@@ -294,6 +291,18 @@ function BookingContent({ id }: { id: string }) {
         : false,
   })
   const value = query.data
+  const [now, setNow] = useState(() => performance.now())
+  useEffect(() => {
+    if (value?.booking.status !== 'HELD') return
+    const timer = window.setInterval(() => setNow(performance.now()), 1000)
+    return () => clearInterval(timer)
+  }, [value?.booking.status])
+  const canPay =
+    value?.booking.status === 'HELD' &&
+    remainingSeconds(value, now) > 0 &&
+    !value.booking.refund_status &&
+    value.booking.route_status === 'ACTIVE' &&
+    (value.booking.payment_status === null || value.booking.payment_status === 'PENDING')
   async function cancel() {
     if (
       pending.current ||
@@ -346,68 +355,99 @@ function BookingContent({ id }: { id: string }) {
       ) : !value ? (
         <Loading title="Загружаем бронирование…" />
       ) : (
-        <section className="booking-panel">
-          <div role="status">
+        <div className="booking-detail-layout">
+          <div role="status" className="passenger-status" data-status={value.booking.status}>
+            <p className="journey-caption">Статус брони</p>
             <h2>{statusLabels[value.booking.status]}</h2>
+            <p>{bookingGuidance(value.booking)}</p>
+            <p className="booking-route-caption">
+              {value.booking.origin} → {value.booking.destination} · Место{' '}
+              {value.booking.seat_number}
+            </p>
           </div>
-          <BookingInfo booking={value.booking} />
-          <BookingFinancials booking={value.booking} />
-          {value.booking.status === 'HELD' && <HoldTimer value={value} />}
-          <div className="booking-actions">
-            <ButtonLink to={`/bookings/${id}/payment`}>
-              {value.booking.status === 'HELD' ? 'Перейти к оплате' : 'Проверить оплату'}
-            </ButtonLink>
-          </div>
-          {value.booking.status === 'EXPIRED' && (
-            <Notice title="Место больше не удерживается">
-              Для новой поездки выберите свободное место заново.
-            </Notice>
-          )}
-          {(value.booking.status === 'HELD' || value.booking.status === 'PAID') &&
-            value.booking.cancellation_allowed &&
-            (confirm === value.booking.status ? (
-              <div className="cancel-confirm">
-                <p>
-                  {confirm === 'PAID'
-                    ? 'Отменить оплаченную бронь? Место освободится, а сервис создаст заявку на ручной возврат. Отмена не означает, что деньги уже возвращены.'
-                    : 'Отменить удержание? Место станет доступно другим пассажирам.'}
-                </p>
-                <div className="booking-actions">
-                  <Button busy={busy} disabled={query.isFetching} onClick={() => void cancel()}>
-                    {confirm === 'PAID' ? 'Да, отменить оплаченную бронь' : 'Да, освободить место'}
-                  </Button>
-                  <Button variant="secondary" disabled={busy} onClick={() => setConfirm(null)}>
-                    Сохранить бронь
-                  </Button>
+          <section className="booking-panel booking-detail">
+            <BookingInfo booking={value.booking} />
+            <BookingFinancials booking={value.booking} />
+          </section>
+          <aside className="booking-panel checkout-action" aria-labelledby="booking-actions-title">
+            <h2 id="booking-actions-title">Что дальше</h2>
+            <p className="checkout-amount">
+              {formatPrice(value.booking.amount)}
+              <span>за одного пассажира</span>
+            </p>
+            {value.booking.status === 'HELD' && <HoldTimer value={value} now={now} />}
+            <div className="booking-actions">
+              {canPay && !query.isFetching && !busy ? (
+                <ButtonLink to={`/bookings/${id}/payment`}>
+                  {value.booking.payment_status === 'PENDING'
+                    ? 'Открыть платёж'
+                    : 'Перейти к оплате'}
+                </ButtonLink>
+              ) : (
+                <ButtonLink secondary to={`/bookings/${id}/payment`}>
+                  Проверить оплату
+                </ButtonLink>
+              )}
+            </div>
+            {value.booking.status === 'HELD' && !canPay && (
+              <p className="seat-help">
+                Перед оплатой проверьте результат и срок удержания. Новый платёж на этой странице не
+                создаётся.
+              </p>
+            )}
+            {value.booking.status === 'EXPIRED' && (
+              <Notice title="Место больше не удерживается">
+                Для новой поездки выберите свободное место заново.
+              </Notice>
+            )}
+            {(value.booking.status === 'HELD' || value.booking.status === 'PAID') &&
+              value.booking.cancellation_allowed &&
+              (confirm === value.booking.status ? (
+                <div className="cancel-confirm">
+                  <p>
+                    {confirm === 'PAID'
+                      ? 'Отменить оплаченную бронь? Место освободится, а сервис создаст заявку на ручной возврат. Отмена не означает, что деньги уже возвращены.'
+                      : 'Отменить удержание? Место станет доступно другим пассажирам.'}
+                  </p>
+                  <div className="booking-actions">
+                    <Button busy={busy} disabled={query.isFetching} onClick={() => void cancel()}>
+                      {confirm === 'PAID'
+                        ? 'Да, отменить оплаченную бронь'
+                        : 'Да, освободить место'}
+                    </Button>
+                    <Button variant="secondary" disabled={busy} onClick={() => setConfirm(null)}>
+                      Сохранить бронь
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <Button
-                variant="secondary"
-                disabled={query.isFetching || busy}
-                onClick={() => setConfirm(value.booking.status as 'HELD' | 'PAID')}
-              >
-                {value.booking.status === 'PAID'
-                  ? 'Отменить оплаченную бронь'
-                  : 'Отменить удержание'}
-              </Button>
-            ))}
-          {value.booking.status === 'PAID' && !value.booking.cancellation_allowed && (
-            <Notice title="Отмена оплаченной брони недоступна">
-              Сервер учитывает срок до отправления и состояние рейса. Если нужна помощь, обратитесь
-              в поддержку с номером брони.
-            </Notice>
-          )}
-          {error && (
-            <Notice title="Результат отмены" error>
-              {error}
-            </Notice>
-          )}
-          <p className="booking-reference">Номер брони: {value.booking.id}</p>
-          <ButtonLink secondary to={`/trips/${value.booking.route_id}`}>
-            Открыть рейс
-          </ButtonLink>
-        </section>
+              ) : (
+                <Button
+                  variant="secondary"
+                  disabled={query.isFetching || busy}
+                  onClick={() => setConfirm(value.booking.status as 'HELD' | 'PAID')}
+                >
+                  {value.booking.status === 'PAID'
+                    ? 'Отменить оплаченную бронь'
+                    : 'Отменить удержание'}
+                </Button>
+              ))}
+            {value.booking.status === 'PAID' && !value.booking.cancellation_allowed && (
+              <Notice title="Отмена оплаченной брони недоступна">
+                Сервер учитывает срок до отправления и состояние рейса. Если нужна помощь,
+                обратитесь в поддержку с номером брони.
+              </Notice>
+            )}
+            {error && (
+              <Notice title="Результат отмены" error>
+                {error}
+              </Notice>
+            )}
+            <BookingSupport id={value.booking.id} />
+            <ButtonLink secondary to={`/trips/${value.booking.route_id}`}>
+              Открыть рейс
+            </ButtonLink>
+          </aside>
+        </div>
       )}
     </>
   )
@@ -416,7 +456,7 @@ function BookingContent({ id }: { id: string }) {
 export function BookingPage() {
   const { id = '' } = useParams()
   return (
-    <div className="container information-page">
+    <div className="container information-page passenger-page">
       {isUuid(id) ? (
         <BookingContent key={id} id={id.toLowerCase()} />
       ) : (
@@ -480,7 +520,7 @@ export function BookingsPage() {
       </div>
     )
   return (
-    <div className="container information-page">
+    <div className="container information-page passenger-page booking-cabinet">
       <PageHeading eyebrow="ЛИЧНЫЙ КАБИНЕТ" title="Мои бронирования">
         Предстоящие поездки, история и состояние оплаты. Последние бронирования — в начале списка.
       </PageHeading>
@@ -552,23 +592,29 @@ export function BookingsPage() {
             )}
             <div className="booking-list">
               {query.data.items.map((booking) => (
-                <article className="booking-panel" key={booking.id}>
-                  <h2>
-                    {booking.origin} → {booking.destination}
-                  </h2>
-                  <p>
-                    {departureDate.format(new Date(booking.departure_at))} · Место{' '}
-                    {booking.seat_number}
-                  </p>
-                  <p>
-                    {departureTime.format(new Date(booking.departure_at))} UTC ·{' '}
-                    {booking.company_name}
-                  </p>
-                  <p>
-                    {statusLabels[booking.status]} · {formatPrice(booking.amount)}
-                  </p>
-                  <BookingFinancials booking={booking} />
-                  <ButtonLink to={`/bookings/${booking.id}`}>Открыть бронь</ButtonLink>
+                <article className="booking-panel booking-row" key={booking.id}>
+                  <div className="booking-row-main">
+                    <span className="booking-status-label" data-status={booking.status}>
+                      {statusLabels[booking.status]}
+                    </span>
+                    <h2>
+                      {booking.origin} → {booking.destination}
+                    </h2>
+                    <p>
+                      {departureDate.format(new Date(booking.departure_at))} · Место{' '}
+                      {booking.seat_number}
+                    </p>
+                    <p>
+                      {departureTime.format(new Date(booking.departure_at))} UTC ·{' '}
+                      {booking.company_name}
+                    </p>
+                    <BookingFinancials booking={booking} />
+                  </div>
+                  <div className="booking-row-action">
+                    <strong className="booking-row-price">{formatPrice(booking.amount)}</strong>
+                    <span>за одного пассажира</span>
+                    <ButtonLink to={`/bookings/${booking.id}`}>Открыть бронь</ButtonLink>
+                  </div>
                 </article>
               ))}
             </div>

@@ -1,0 +1,364 @@
+.passenger-page {
+  padding-block: 42px 64px;
+}
+.passenger-page .page-heading {
+  margin-bottom: 28px;
+}
+.passenger-checkout,
+.booking-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 40px;
+  align-items: start;
+  margin-block: 28px;
+}
+.journey-summary {
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+.journey-caption {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.journey-summary h2 {
+  font-family: var(--display-font);
+  font-size: clamp(30px, 3vw, 38px);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.journey-summary h2 span {
+  font-family: 'Golos Text Variable', sans-serif;
+  font-size: 0.7em;
+}
+.journey-summary dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 26px 0 0;
+}
+.journey-summary dt {
+  font-size: 14px;
+  color: var(--muted);
+}
+.journey-summary dd {
+  margin: 6px 0 0;
+  line-height: 1.6;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.journey-summary time strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 26px;
+}
+.journey-summary .journey-summary-total {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+.journey-summary-total dd {
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.passenger-page .booking-panel.checkout-action {
+  margin: 0;
+  background: #f0f1e9;
+  padding: 28px;
+  border-radius: 4px;
+}
+.checkout-action > h2 {
+  font-size: 23px;
+  margin-bottom: 16px;
+}
+.checkout-action > .button {
+  width: 100%;
+  margin-top: 16px;
+}
+.checkout-action > .booking-actions {
+  align-items: stretch;
+}
+.checkout-action .booking-actions > .button {
+  flex: 1 1 auto;
+}
+.checkout-action .seat-help,
+.checkout-reassurance {
+  margin-top: 16px;
+  font-size: 14px;
+  line-height: 1.75;
+}
+.passenger-page .booking-panel.booking-detail {
+  margin: 0;
+  padding: 0 28px 28px 0;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  border-radius: 0;
+}
+.passenger-status {
+  padding: 0 0 24px;
+  border-bottom: 1px solid var(--line);
+}
+.booking-detail-layout > .passenger-status {
+  grid-column: 1 / -1;
+}
+.passenger-status .booking-route-caption {
+  margin-top: 14px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.checkout-action .checkout-amount {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+  margin-top: 8px;
+}
+.checkout-amount > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.passenger-status h2 {
+  font-size: 26px;
+  margin-bottom: 12px;
+}
+.passenger-status > p:last-child {
+  font-size: 16px;
+  line-height: 1.75;
+  max-width: 560px;
+}
+.passenger-status[data-status='PAID'] h2,
+.passenger-status[data-status='COMPLETED'] h2 {
+  color: var(--primary);
+}
+.passenger-page .booking-info {
+  gap: 24px;
+}
+.passenger-page .booking-info dt {
+  font-size: 14px;
+}
+.passenger-page .booking-info dd {
+  font-size: 16px;
+}
+.passenger-page .hold-timer {
+  margin: 20px 0;
+  padding: 18px 0;
+  border-top: 1px solid #cbd1c5;
+  border-bottom: 1px solid #cbd1c5;
+  border-radius: 0;
+  background: transparent;
+}
+.passenger-page .hold-timer > strong {
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 10px 0;
+}
+.booking-support {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.booking-support a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: var(--primary);
+}
+.booking-support .booking-reference {
+  margin: 8px 0 16px;
+  font-size: 13px;
+}
+.booking-reference span {
+  display: block;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+.passenger-page .cancel-confirm {
+  margin: 24px 0;
+  padding: 4px 0 4px 14px;
+  border-left: 2px solid #a58241;
+  font-size: 15px;
+}
+.passenger-page .cancel-confirm .booking-actions {
+  gap: 8px;
+}
+.payment-result {
+  border-bottom: 1px solid #cbd1c5;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+.payment-result h2 {
+  font-size: 26px;
+  line-height: 1.3;
+  margin-bottom: 14px;
+}
+.payment-result p:last-child {
+  font-size: 16px;
+  line-height: 1.75;
+}
+.payment-result[data-confirmed='true'] h2 {
+  color: var(--primary);
+}
+.payment-countdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  align-items: baseline;
+  font-size: 14px;
+}
+.payment-countdown [role='timer'] {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.checkout-action .checkout-reassurance {
+  font-size: 14px;
+}
+.passenger-page .booking-refund {
+  border-left: 2px solid #a58241;
+  padding: 8px 16px;
+  background: #f4efe3;
+  border-radius: 0;
+  margin-top: 16px;
+}
+.passenger-page .booking-refund h3 {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.booking-cabinet .booking-filters {
+  border-block: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  padding: 24px 0;
+}
+.booking-cabinet .booking-segments {
+  gap: 8px;
+}
+.booking-cabinet .booking-list {
+  display: block;
+  border-top: 1px solid var(--line);
+}
+.booking-cabinet .booking-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 32px;
+  padding: 28px 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+.booking-row h2 {
+  font-size: 23px;
+  margin: 12px 0 10px;
+  line-height: 1.35;
+}
+.booking-row-main > p {
+  margin-top: 6px;
+  font-size: 15px;
+}
+.booking-row .booking-financials {
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+.booking-row-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.booking-row-price {
+  color: var(--ink);
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.booking-row-action > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.booking-row-action > .button {
+  margin-top: 8px;
+}
+.booking-status-label {
+  display: inline-block;
+  border: 1px solid #b9c2b4;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 13px;
+  color: #44513e;
+}
+.booking-status-label[data-status='HELD'] {
+  background: #f4eddd;
+  color: #715319;
+  border-color: #c2ab7e;
+}
+.booking-status-label[data-status='PAID'] {
+  background: #e9eee4;
+  color: #34513b;
+}
+.booking-status-label[data-status='CANCELLED'],
+.booking-status-label[data-status='EXPIRED'] {
+  color: #596151;
+  background: #f0f1eb;
+}
+@media (max-width: 900px) {
+  .booking-detail-layout > .passenger-status {
+    order: 0;
+  }
+  .booking-detail-layout > .checkout-action {
+    order: 1;
+  }
+  .booking-detail-layout > .booking-detail {
+    order: 2;
+  }
+  .passenger-checkout,
+  .booking-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .passenger-page .booking-panel.booking-detail {
+    padding: 0;
+    border: 0;
+  }
+}
+@media (max-width: 560px) {
+  .passenger-page {
+    padding-block: 28px 44px;
+  }
+  .passenger-page .booking-panel.checkout-action {
+    padding: 22px 18px;
+  }
+  .journey-summary {
+    padding-block: 22px;
+  }
+  .journey-summary dl {
+    gap: 20px;
+  }
+  .booking-cabinet .booking-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+  .booking-row-action {
+    align-items: flex-start;
+  }
+  .booking-row-action > .button {
+    width: 100%;
+  }
+}
