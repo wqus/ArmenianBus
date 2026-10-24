@@ -56,6 +56,9 @@ const CarrierBookingPage = lazy(() =>
 const DesignSystemPage = import.meta.env.DEV
   ? lazy(() => import('../pages/DesignSystemPage'))
   : null
+const DesignConceptsPage = import.meta.env.DEV
+  ? lazy(() => import('../design/DesignConceptsPage'))
+  : null
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false }
@@ -195,6 +198,16 @@ export function App() {
         <SessionProvider>
           <BrowserRouter>
             <Routes>
+              {DesignConceptsPage && (
+                <Route
+                  path="design-concepts"
+                  element={
+                    <Suspense fallback={<Loading title="Загружаем концепции…" />}>
+                      <DesignConceptsPage />
+                    </Suspense>
+                  }
+                />
+              )}
               <Route element={<Shell />}>
                 <Route index element={<HomePage />} />
                 <Route path="search" element={<SearchPage />} />

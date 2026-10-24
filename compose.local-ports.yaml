@@ -1,0 +1,7 @@
+# Optional local override when another project already occupies port 8000.
+# docker compose -f compose.yaml -f compose.local-ports.yaml up -d api
+# Point Vite's API_PROXY_TARGET at the same loopback port before starting Vite.
+services:
+  api:
+    ports: !override
+      - "127.0.0.1:${LOCAL_API_PORT:-8002}:8000"
