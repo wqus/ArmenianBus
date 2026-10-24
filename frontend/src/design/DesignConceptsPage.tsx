@@ -1,6 +1,8 @@
 import { CityInput } from '../features/cities/CityInput'
 import { cityName } from '../features/cities/catalog'
 import { useEffect, useRef, useState } from 'react'
+import '@fontsource-variable/cormorant-garamond'
+import '@fontsource-variable/noto-serif-armenian'
 import './concepts.css'
 import './calm.css'
 import khorVirap from './assets/armenia-khor-virap-1920.webp'
@@ -303,6 +305,9 @@ export default function DesignConceptsPage() {
                     fetchPriority="high"
                   />
                   <div className="dc-calm-start-copy">
+                    <p className="dc-calm-place" lang="hy">
+                      Հայաստան
+                    </p>
                     <h1 ref={heading} tabIndex={-1}>
                       {concept.heading}
                     </h1>

@@ -26,10 +26,10 @@
   border-bottom: 1px solid var(--dc-line);
 }
 .dc-calm .dc-brand {
-  font-family: 'Literata Variable', Georgia, serif;
-  font-size: 29px !important;
-  font-weight: 550 !important;
-  letter-spacing: -0.035em;
+  font-family: 'Cormorant Garamond Variable', 'Noto Serif Armenian Variable', Georgia, serif;
+  font-size: 34px !important;
+  font-weight: 650 !important;
+  letter-spacing: -0.025em;
 }
 .dc-calm .dc-brand-mark,
 .dc-calm .dc-brand-dot {
@@ -79,12 +79,19 @@
   max-width: 640px;
 }
 .dc-calm-start h1 {
-  font-family: 'Literata Variable', Georgia, serif;
+  font-family: 'Cormorant Garamond Variable', 'Noto Serif Armenian Variable', Georgia, serif;
   font-optical-sizing: auto;
-  font-size: clamp(36px, 4.2vw, 58px);
-  line-height: 1.2;
-  font-weight: 450;
-  letter-spacing: -0.025em;
+  font-size: clamp(40px, 4.5vw, 64px);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.dc-calm-place {
+  color: #fff;
+  font-family: 'Noto Serif Armenian Variable', serif;
+  font-size: 21px;
+  font-weight: 500;
+  margin-bottom: 22px !important;
 }
 .dc-calm .dc-description {
   font-size: 17px;
@@ -125,9 +132,9 @@
   scroll-margin-top: 24px;
 }
 .dc-calm-search h2 {
-  font-family: 'Literata Variable', Georgia, serif;
-  font-size: 30px;
-  font-weight: 450;
+  font-family: 'Cormorant Garamond Variable', 'Noto Serif Armenian Variable', Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
 }
 .dc-calm-search-intro {
   color: var(--dc-muted);
@@ -410,7 +417,7 @@
     padding: 48px 24px;
   }
   .dc-calm-start h1 {
-    font-size: clamp(36px, 6vw, 48px);
+    font-size: clamp(40px, 6vw, 52px);
   }
   .dc-calm-start .dc-description {
     max-width: 580px;
@@ -456,7 +463,7 @@
     padding: 18px 20px;
   }
   .dc-calm .dc-brand {
-    font-size: 27px !important;
+    font-size: 32px !important;
   }
   .dc-calm .dc-site-header > .dc-text-button {
     max-width: none;
@@ -466,7 +473,7 @@
     padding: 40px 20px;
   }
   .dc-calm-start h1 {
-    font-size: 36px;
+    font-size: 40px;
   }
   .dc-calm-search {
     padding: 28px 20px 36px;
