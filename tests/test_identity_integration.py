@@ -62,9 +62,10 @@ def test_registration_login_rotation_revocation_and_blocking():
         with TestClient(app) as client:
             payload = {"email": email, "password": "CorrectHorseBattery42!", "role": "PASSENGER"}
             assert client.get("/api/v1/me").status_code == 401
-            assert client.post(
-                "/api/v1/auth/register", json={**payload, "role": "ADMIN"}
-            ).status_code == 422
+            assert (
+                client.post("/api/v1/auth/register", json={**payload, "role": "ADMIN"}).status_code
+                == 422
+            )
             registration = client.post("/api/v1/auth/register", json=payload)
             assert registration.status_code == 201, registration.text
             user_id = uuid.UUID(registration.json()["id"])
@@ -89,9 +90,12 @@ def test_registration_login_rotation_revocation_and_blocking():
             current = client.get("/api/v1/me", headers=headers)
             assert current.status_code == 200
             assert current.json()["id"] == str(user_id)
-            assert client.get(
-                "/api/v1/me", headers={"Authorization": "Bearer not-a-valid-token"}
-            ).status_code == 401
+            assert (
+                client.get(
+                    "/api/v1/me", headers={"Authorization": "Bearer not-a-valid-token"}
+                ).status_code
+                == 401
+            )
 
             rotated = client.post(
                 "/api/v1/auth/refresh", json={"refresh_token": first["refresh_token"]}
@@ -132,9 +136,12 @@ def test_registration_login_rotation_revocation_and_blocking():
             stored_hash = asyncio.run(inspect_and_block_user(settings.database_url, user_id))
             assert stored_hash.startswith("$argon2id$")
             assert client.get("/api/v1/me", headers=headers).status_code == 403
-            assert client.post(
-                "/api/v1/auth/login", json={"email": email, "password": payload["password"]}
-            ).status_code == 403
+            assert (
+                client.post(
+                    "/api/v1/auth/login", json={"email": email, "password": payload["password"]}
+                ).status_code
+                == 403
+            )
     finally:
         if user_id:
             asyncio.run(delete_user(settings.database_url, user_id))

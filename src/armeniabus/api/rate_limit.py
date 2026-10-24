@@ -19,7 +19,9 @@ async def enforce_auth_rate_limit(request: Request, operation: str, identity: st
     client_host = request.client.host if request.client else "unknown"
     keys = [f"auth:rate:{operation}:ip:{hashlib.sha256(client_host.encode()).hexdigest()}"]
     if identity:
-        keys.append(f"auth:rate:{operation}:account:{hashlib.sha256(identity.encode()).hexdigest()}")
+        keys.append(
+            f"auth:rate:{operation}:account:{hashlib.sha256(identity.encode()).hexdigest()}"
+        )
     try:
         for key in keys:
             count = await asyncio.wait_for(

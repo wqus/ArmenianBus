@@ -22,6 +22,7 @@ async def live() -> dict[str, str]:
 )
 async def ready(request: Request) -> dict[str, str]:
     try:
+
         async def check_database() -> None:
             async with request.app.state.db_engine.connect() as connection:
                 await connection.execute(text("SELECT 1"))

@@ -23,5 +23,6 @@ COPY requirements-dev.lock ./
 RUN pip install --no-cache-dir -r requirements-dev.lock
 COPY tests ./tests
 COPY scripts ./scripts
+COPY deploy ./deploy
 USER appuser
 CMD ["python", "tests/run.py"]

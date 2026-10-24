@@ -44,9 +44,7 @@ async def register(request: Request, data: RegisterInput, db: DbSession) -> User
     response_model=TokenPair,
     responses={401: {"model": ErrorBody}, 403: {"model": ErrorBody}, 429: {"model": ErrorBody}},
 )
-async def login(
-    request: Request, data: LoginInput, db: DbSession
-) -> TokenPair:
+async def login(request: Request, data: LoginInput, db: DbSession) -> TokenPair:
     await enforce_auth_rate_limit(request, "login", str(data.email).lower())
     return await login_user(db, data, request.app.state.settings)
 
@@ -56,9 +54,7 @@ async def login(
     response_model=TokenPair,
     responses={401: {"model": ErrorBody}, 403: {"model": ErrorBody}, 429: {"model": ErrorBody}},
 )
-async def refresh(
-    request: Request, data: RefreshInput, db: DbSession
-) -> TokenPair:
+async def refresh(request: Request, data: RefreshInput, db: DbSession) -> TokenPair:
     await enforce_auth_rate_limit(request, "refresh")
     return await rotate_refresh_token(db, data.refresh_token, request.app.state.settings)
 
