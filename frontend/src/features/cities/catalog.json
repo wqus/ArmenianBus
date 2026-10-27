@@ -7,7 +7,8 @@
       "en": "Moscow",
       "hy": "Մոսկվա"
     },
-    "aliases": ["Moskva"]
+    "aliases": ["Moskva"],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "am-yerevan",
@@ -17,7 +18,8 @@
       "en": "Yerevan",
       "hy": "Երևան"
     },
-    "aliases": ["Erevan", "Երեւան"]
+    "aliases": ["Erevan", "Երեւան"],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "ru-saint-petersburg",
@@ -27,7 +29,8 @@
       "en": "Saint Petersburg",
       "hy": "Սանկտ Պետերբուրգ"
     },
-    "aliases": ["St Petersburg", "Saint-Petersburg", "Санкт Петербург", "Петербург", "СПб"]
+    "aliases": ["St Petersburg", "Saint-Petersburg", "Санкт Петербург", "Петербург", "СПб"],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "am-gyumri",
@@ -37,7 +40,8 @@
       "en": "Gyumri",
       "hy": "Գյումրի"
     },
-    "aliases": ["Giumri"]
+    "aliases": ["Giumri"],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "ru-krasnodar",
@@ -47,7 +51,8 @@
       "en": "Krasnodar",
       "hy": "Կրասնոդար"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-rostov-on-don",
@@ -57,7 +62,8 @@
       "en": "Rostov-on-Don",
       "hy": "Դոնի Ռոստով"
     },
-    "aliases": ["Rostov on Don", "Ростов на Дону", "Ռոստով"]
+    "aliases": ["Rostov on Don", "Ростов на Дону", "Ռոստով"],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-sochi",
@@ -67,7 +73,8 @@
       "en": "Sochi",
       "hy": "Սոչի"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "am-vanadzor",
@@ -77,7 +84,8 @@
       "en": "Vanadzor",
       "hy": "Վանաձոր"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-vagharshapat",
@@ -87,7 +95,8 @@
       "en": "Vagharshapat",
       "hy": "Վաղարշապատ"
     },
-    "aliases": ["Эчмиадзин", "Echmiadzin", "Էջմիածին"]
+    "aliases": ["Эчмиадзин", "Echmiadzin", "Էջմիածին"],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-abovyan",
@@ -97,7 +106,8 @@
       "en": "Abovyan",
       "hy": "Աբովյան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-kapan",
@@ -107,7 +117,8 @@
       "en": "Kapan",
       "hy": "Կապան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-hrazdan",
@@ -117,7 +128,8 @@
       "en": "Hrazdan",
       "hy": "Հրազդան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-armavir",
@@ -127,7 +139,8 @@
       "en": "Armavir",
       "hy": "Արմավիր"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-artashat",
@@ -137,7 +150,8 @@
       "en": "Artashat",
       "hy": "Արտաշատ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-ijevan",
@@ -147,7 +161,8 @@
       "en": "Ijevan",
       "hy": "Իջևան"
     },
-    "aliases": ["Իջեւան"]
+    "aliases": ["Իջեւան"],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-goris",
@@ -157,7 +172,8 @@
       "en": "Goris",
       "hy": "Գորիս"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-charentsavan",
@@ -167,7 +183,8 @@
       "en": "Charentsavan",
       "hy": "Չարենցավան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-sevan",
@@ -177,7 +194,8 @@
       "en": "Sevan",
       "hy": "Սևան"
     },
-    "aliases": ["Սեւան"]
+    "aliases": ["Սեւան"],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-ashtarak",
@@ -187,7 +205,8 @@
       "en": "Ashtarak",
       "hy": "Աշտարակ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-masis",
@@ -197,7 +216,8 @@
       "en": "Masis",
       "hy": "Մասիս"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-dilijan",
@@ -207,7 +227,8 @@
       "en": "Dilijan",
       "hy": "Դիլիջան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-spitak",
@@ -217,7 +238,8 @@
       "en": "Spitak",
       "hy": "Սպիտակ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-sisian",
@@ -227,7 +249,8 @@
       "en": "Sisian",
       "hy": "Սիսիան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-alaverdi",
@@ -237,7 +260,8 @@
       "en": "Alaverdi",
       "hy": "Ալավերդի"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-vedi",
@@ -247,7 +271,8 @@
       "en": "Vedi",
       "hy": "Վեդի"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-martuni",
@@ -257,7 +282,8 @@
       "en": "Martuni",
       "hy": "Մարտունի"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-stepanavan",
@@ -267,7 +293,8 @@
       "en": "Stepanavan",
       "hy": "Ստեփանավան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-yeghegnadzor",
@@ -277,7 +304,8 @@
       "en": "Yeghegnadzor",
       "hy": "Եղեգնաձոր"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "am-jermuk",
@@ -287,7 +315,8 @@
       "en": "Jermuk",
       "hy": "Ջերմուկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yerevan"
   },
   {
     "id": "ru-armavir",
@@ -297,7 +326,8 @@
       "en": "Armavir",
       "hy": "Արմավիր"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-stavropol",
@@ -307,7 +337,8 @@
       "en": "Stavropol",
       "hy": "Ստավրոպոլ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-mineralnye-vody",
@@ -317,7 +348,8 @@
       "en": "Mineralnye Vody",
       "hy": "Միներալնիե Վոդի"
     },
-    "aliases": ["Минводы"]
+    "aliases": ["Минводы"],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-pyatigorsk",
@@ -327,7 +359,8 @@
       "en": "Pyatigorsk",
       "hy": "Պյատիգորսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-kislovodsk",
@@ -337,7 +370,8 @@
       "en": "Kislovodsk",
       "hy": "Կիսլովոդսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-essentuki",
@@ -347,7 +381,8 @@
       "en": "Essentuki",
       "hy": "Եսենտուկի"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-vladikavkaz",
@@ -357,7 +392,8 @@
       "en": "Vladikavkaz",
       "hy": "Վլադիկավկազ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-volgograd",
@@ -367,7 +403,8 @@
       "en": "Volgograd",
       "hy": "Վոլգոգրադ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Volgograd"
   },
   {
     "id": "ru-voronezh",
@@ -377,7 +414,8 @@
       "en": "Voronezh",
       "hy": "Վորոնեժ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-saratov",
@@ -387,7 +425,8 @@
       "en": "Saratov",
       "hy": "Սարատով"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Saratov"
   },
   {
     "id": "ru-samara",
@@ -397,7 +436,8 @@
       "en": "Samara",
       "hy": "Սամարա"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Samara"
   },
   {
     "id": "ru-kazan",
@@ -407,7 +447,8 @@
       "en": "Kazan",
       "hy": "Կազան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-nizhny-novgorod",
@@ -417,7 +458,8 @@
       "en": "Nizhny Novgorod",
       "hy": "Նիժնի Նովգորոդ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-yekaterinburg",
@@ -427,7 +469,8 @@
       "en": "Yekaterinburg",
       "hy": "Եկատերինբուրգ"
     },
-    "aliases": ["Ekaterinburg"]
+    "aliases": ["Ekaterinburg"],
+    "timezone": "Asia/Yekaterinburg"
   },
   {
     "id": "ru-chelyabinsk",
@@ -437,7 +480,8 @@
       "en": "Chelyabinsk",
       "hy": "Չելյաբինսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yekaterinburg"
   },
   {
     "id": "ru-ufa",
@@ -447,7 +491,8 @@
       "en": "Ufa",
       "hy": "Ուֆա"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yekaterinburg"
   },
   {
     "id": "ru-perm",
@@ -457,7 +502,8 @@
       "en": "Perm",
       "hy": "Պերմ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yekaterinburg"
   },
   {
     "id": "ru-tyumen",
@@ -467,7 +513,8 @@
       "en": "Tyumen",
       "hy": "Տյումեն"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Yekaterinburg"
   },
   {
     "id": "ru-omsk",
@@ -477,7 +524,8 @@
       "en": "Omsk",
       "hy": "Օմսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Omsk"
   },
   {
     "id": "ru-novosibirsk",
@@ -487,7 +535,8 @@
       "en": "Novosibirsk",
       "hy": "Նովոսիբիրսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Novosibirsk"
   },
   {
     "id": "ru-krasnoyarsk",
@@ -497,7 +546,8 @@
       "en": "Krasnoyarsk",
       "hy": "Կրասնոյարսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Krasnoyarsk"
   },
   {
     "id": "ru-irkutsk",
@@ -507,7 +557,8 @@
       "en": "Irkutsk",
       "hy": "Իրկուտսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Asia/Irkutsk"
   },
   {
     "id": "ru-tula",
@@ -517,7 +568,8 @@
       "en": "Tula",
       "hy": "Տուլա"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-ryazan",
@@ -527,7 +579,8 @@
       "en": "Ryazan",
       "hy": "Ռյազան"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-kaluga",
@@ -537,7 +590,8 @@
       "en": "Kaluga",
       "hy": "Կալուգա"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-belgorod",
@@ -547,7 +601,8 @@
       "en": "Belgorod",
       "hy": "Բելգորոդ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-kursk",
@@ -557,7 +612,8 @@
       "en": "Kursk",
       "hy": "Կուրսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-pskov",
@@ -567,7 +623,8 @@
       "en": "Pskov",
       "hy": "Պսկով"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-novorossiysk",
@@ -577,7 +634,8 @@
       "en": "Novorossiysk",
       "hy": "Նովոռոսիյսկ"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   },
   {
     "id": "ru-anapa",
@@ -587,6 +645,7 @@
       "en": "Anapa",
       "hy": "Անապա"
     },
-    "aliases": []
+    "aliases": [],
+    "timezone": "Europe/Moscow"
   }
 ]

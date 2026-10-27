@@ -79,6 +79,8 @@ test('real admin activates a carrier, blocks its account, cancels its route and 
       origin_country: 'RU',
       destination_country: 'AM',
       origin: `Admin ${suffix}`,
+      boarding_address: 'Тестовая автостанция, платформа 1',
+      dropoff_address: 'Тестовая площадь, дом 2',
       destination: 'Գյումրի',
       departure_at: new Date(Date.now() + 14 * 86_400_000).toISOString(),
       price: '4500.50',

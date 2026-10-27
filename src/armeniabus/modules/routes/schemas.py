@@ -1,8 +1,10 @@
+import unicodedata
 import uuid
 from datetime import UTC, datetime
 from datetime import date as CalendarDate
 from decimal import Decimal
 from typing import Annotated, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import (
     AwareDatetime,
@@ -14,7 +16,7 @@ from pydantic import (
     model_validator,
 )
 
-from armeniabus.modules.cities.catalog import canonical_name, resolve
+from armeniabus.modules.cities.catalog import canonical_name, departure_zone, resolve
 from armeniabus.modules.routes.models import RouteStatus
 
 Country = Literal["RU", "AM"]
@@ -24,6 +26,27 @@ Price = Annotated[Decimal, Field(gt=0, max_digits=12, decimal_places=2)]
 
 class RouteFields(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+    @field_validator("boarding_address", "dropoff_address", check_fields=False)
+    @classmethod
+    def valid_address(cls, value):
+        if value is not None:
+            value = value.strip()
+            if len(value) < 5 or any(unicodedata.category(c).startswith("C") for c in value):
+                raise ValueError("Use a boarding or drop-off address without control characters")
+        return value
+
+    @field_validator("departure_timezone", check_fields=False)
+    @classmethod
+    def valid_zone(cls, value):
+        if value is not None:
+            if value != "UTC" and not value.startswith(("Europe/", "Asia/")):
+                raise ValueError("Use a timezone for the departure city")
+            try:
+                ZoneInfo(value)
+            except (ZoneInfoNotFoundError, ValueError):
+                raise ValueError("Use an IANA timezone") from None
+        return value
 
     @field_validator("price", mode="before", check_fields=False)
     @classmethod
@@ -57,6 +80,13 @@ class RouteCreate(RouteFields):
     origin: PlaceName
     destination: PlaceName
     departure_at: AwareDatetime
+    departure_timezone: str | None = Field(default=None, max_length=64)
+    boarding_address: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=5, max_length=500)
+    ]
+    dropoff_address: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=5, max_length=500)
+    ]
     price: Price
     currency: Literal["RUB"] = "RUB"
 
@@ -66,6 +96,9 @@ class RouteCreate(RouteFields):
             raise ValueError("Only cross-border RU ↔ AM routes are supported")
         self.origin = canonical_name(self.origin, self.origin_country)
         self.destination = canonical_name(self.destination, self.destination_country)
+        self.departure_timezone = departure_zone(
+            self.origin, self.origin_country, self.departure_timezone
+        )
         return self
 
 
@@ -76,6 +109,9 @@ class RouteUpdate(RouteFields):
     origin: PlaceName | None = None
     destination: PlaceName | None = None
     departure_at: AwareDatetime | None = None
+    departure_timezone: str | None = Field(default=None, max_length=64)
+    boarding_address: str | None = Field(default=None, max_length=500)
+    dropoff_address: str | None = Field(default=None, max_length=500)
     price: Price | None = None
     status: RouteStatus | None = None
 
@@ -99,10 +135,20 @@ class RoutePublic(BaseModel):
     origin: str
     destination: str
     departure_at: datetime
+    departure_timezone: str | None = None
+    boarding_address: str | None = None
+    dropoff_address: str | None = None
     price: Decimal
     currency: Literal["RUB"]
     status: RouteStatus
     created_at: datetime
+
+    @model_validator(mode="after")
+    def legacy_timezone(self):
+        self.departure_timezone = self.departure_timezone or departure_zone(
+            self.origin, self.origin_country
+        )
+        return self
 
 
 class RoutePage(BaseModel):
@@ -121,6 +167,7 @@ class RouteSearch(BaseModel):
     )
     limit: int = Field(default=20, ge=1, le=100)
     offset: int = Field(default=0, ge=0, le=10000)
+    date_basis: Literal["utc", "local"] = "utc"
 
     @field_validator("origin", "destination")
     @classmethod

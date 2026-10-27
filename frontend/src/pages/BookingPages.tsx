@@ -15,6 +15,8 @@ import type { BookingDetails, TimedBooking } from '../features/bookings/booking'
 import { BookingFinancials } from '../features/bookings/BookingFinancials'
 import { PassengerInfo } from '../features/bookings/PassengerInfo'
 import { PaidConfirmation } from '../features/bookings/PaidConfirmation'
+import { formatDeparture } from '../features/trips/departure'
+import { BoardingDetails } from '../features/trips/BoardingDetails'
 import { emptyPassenger, normalizePassenger, passengerErrors } from '../features/bookings/passenger'
 import { JourneySummary, BookingSupport } from '../features/bookings/JourneySummary'
 import { bookingGuidance, hasPaidConfirmation } from '../features/bookings/guidance'
@@ -286,10 +288,10 @@ function BookingInfo({ booking }: { booking: BookingDetails }) {
         </dd>
       </div>
       <div>
-        <dt>Отправление · UTC</dt>
+        <dt>Отправление · время города отправления</dt>
         <dd>
-          {departureDate.format(new Date(booking.departure_at))} ·{' '}
-          {departureTime.format(new Date(booking.departure_at))}
+          {formatDeparture(booking).date} · {formatDeparture(booking).time}{' '}
+          {formatDeparture(booking).offset}
         </dd>
       </div>
       <div>
@@ -457,6 +459,7 @@ function BookingContent({ id }: { id: string }) {
           </div>
           <section className="booking-panel booking-detail">
             <BookingInfo booking={value.booking} />
+            <BoardingDetails journey={value.booking} />
             <PassengerInfo passenger={value.booking} />
             <BookingFinancials booking={value.booking} />
             {hasPaidConfirmation(value.booking) && !query.isFetching && (
@@ -705,11 +708,10 @@ export function BookingsPage() {
                       {booking.origin} → {booking.destination}
                     </h2>
                     <p>
-                      {departureDate.format(new Date(booking.departure_at))} · Место{' '}
-                      {booking.seat_number}
+                      {formatDeparture(booking).date} · Место {booking.seat_number}
                     </p>
                     <p>
-                      {departureTime.format(new Date(booking.departure_at))} UTC ·{' '}
+                      {formatDeparture(booking).time} {formatDeparture(booking).offset} ·{' '}
                       {booking.company_name}
                     </p>
                     <BookingFinancials booking={booking} />

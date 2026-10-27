@@ -17,7 +17,7 @@ test('city suggestions share one identity across languages and support the keybo
   }
   await page.getByRole('option', { name: /Ереван/ }).click()
   await expect(destination).toHaveValue('Ереван')
-  await page.getByLabel('Дата отправления (UTC)').fill('2026-11-12')
+  await page.getByLabel('Дата отправления').fill('2026-11-12')
   await page.getByRole('button', { name: 'Найти рейсы', exact: true }).click()
   await expect(page).toHaveURL(/origin=ru-moscow&destination=am-yerevan/)
 })

@@ -1,9 +1,12 @@
+from zoneinfo import ZoneInfo
+
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from armeniabus.modules.bookings.models import Booking
 from armeniabus.modules.buses.models import Seat
+from armeniabus.modules.cities.catalog import departure_zone
 from armeniabus.modules.notifications.models import Notification
 from armeniabus.modules.routes.models import Route
 from armeniabus.modules.users.models import User
@@ -19,10 +22,14 @@ async def enqueue(db: AsyncSession, booking: Booking, event: str) -> None:
     route = await db.get(Route, booking.route_id)
     seat_number = await db.scalar(select(Seat.seat_number).where(Seat.id == booking.seat_id))
     recipient = await db.scalar(select(User.email).where(User.id == booking.passenger_id))
+    zone = route.departure_timezone or departure_zone(route.origin, route.origin_country)
+    local_departure = route.departure_at.astimezone(ZoneInfo(zone))
     body = (
         f"{SUBJECTS[event]}\nБронирование: {booking.id}\n"
         f"{route.origin} → {route.destination}\n"
-        f"Отправление (UTC): {route.departure_at.isoformat()}\n"
+        f"Отправление (местное время, {zone}): {local_departure.isoformat()}\n"
+        f"Посадка: {route.boarding_address or 'Адрес ещё не указан; уточните у перевозчика'}\n"
+        f"Высадка: {route.dropoff_address or 'Адрес ещё не указан; уточните у перевозчика'}\n"
         f"Место: {seat_number}\nСумма: {booking.amount} {booking.currency}\n"
     )
     if event in {"cancelled", "refund_required"}:

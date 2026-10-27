@@ -89,8 +89,11 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
       destination_country: 'AM',
       origin,
       destination: 'Գյումրի',
-      departure_at: `${nextDay}T01:00:00+03:00`,
+      departure_at: `${date}T01:00:00+03:00`,
       price: '4500.50',
+      departure_timezone: 'Europe/Moscow',
+      boarding_address: 'Тестовая автостанция, платформа 1',
+      dropoff_address: 'Тестовая площадь, дом 2',
       currency: 'RUB',
     },
   })
@@ -109,7 +112,7 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   ).toBe(200)
   await page.getByRole('button', { name: 'Обновить рейсы' }).click()
   await expect(page.getByRole('article')).toContainText('Свободных мест: 1')
-  await expect(page.getByRole('article')).toContainText('22:00 UTC')
+  await expect(page.getByRole('article')).toContainText('01:00 UTC+3')
   await expect(page.getByRole('article')).toContainText('4 500,50 ₽')
   // Anonymous search does not require or create a passenger session.
   expect((await page.context().cookies()).some((cookie) => cookie.name.includes('refresh'))).toBe(
@@ -149,7 +152,7 @@ test('real search and trip selection reflect publishing, UTC day, held seats and
   await expect(firstSeat).toBeEnabled()
   await expect(firstSeat).toHaveAttribute('aria-pressed', 'false')
   await page.getByRole('link', { name: 'К результатам поиска' }).click()
-  await page.getByLabel('Дата отправления (UTC)').fill(nextDay)
+  await page.getByLabel('Дата отправления').fill(nextDay)
   await page.getByRole('button', { name: 'Найти рейсы', exact: true }).click()
   await expect(page.getByText('Рейсов не найдено', { exact: true })).toBeVisible()
   // The passenger now creates and cancels their hold entirely through the browser.

@@ -1,6 +1,7 @@
 import { ApiError } from '../../shared/api/client'
 import { isUuid } from '../trips/trip'
 import type { Session } from '../auth/session'
+import { validTravelDetails, type TravelDetails } from '../trips/departure'
 
 export type Booking = {
   id: string
@@ -16,19 +17,20 @@ export type Booking = {
   passenger_last_name?: string | null
   passenger_phone?: string | null
 }
-export type BookingDetails = Booking & {
-  server_time: string
-  origin: string
-  destination: string
-  departure_at: string
-  route_status: 'DRAFT' | 'ACTIVE' | 'DEPARTED' | 'COMPLETED' | 'CANCELLED'
-  seat_number: number
-  company_name: string
-  cancellation_allowed: boolean
-  payment_status: 'PENDING' | 'SUCCEEDED' | 'CANCELED' | 'FAILED' | null
-  refund_status: 'OPEN' | 'REFUND_RECORDED' | null
-  refund_required: boolean
-}
+export type BookingDetails = Booking &
+  TravelDetails & {
+    server_time: string
+    origin: string
+    destination: string
+    departure_at: string
+    route_status: 'DRAFT' | 'ACTIVE' | 'DEPARTED' | 'COMPLETED' | 'CANCELLED'
+    seat_number: number
+    company_name: string
+    cancellation_allowed: boolean
+    payment_status: 'PENDING' | 'SUCCEEDED' | 'CANCELED' | 'FAILED' | null
+    refund_status: 'OPEN' | 'REFUND_RECORDED' | null
+    refund_required: boolean
+  }
 export type TimedBooking = { booking: BookingDetails; receivedAt: number; remainingMs: number }
 const timestamp = (value: unknown): value is string =>
   typeof value === 'string' &&
@@ -68,6 +70,7 @@ export function readDetails(data: unknown): BookingDetails {
   readBooking(data)
   const b = data as Partial<BookingDetails>
   if (
+    !validTravelDetails(b) ||
     !timestamp(b.server_time) ||
     !timestamp(b.departure_at) ||
     !['DRAFT', 'ACTIVE', 'DEPARTED', 'COMPLETED', 'CANCELLED'].includes(b.route_status ?? '') ||

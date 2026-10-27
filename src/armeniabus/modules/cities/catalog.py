@@ -33,6 +33,15 @@ def canonical_name(value: str, country: str) -> str:
     return city["names"]["ru"] if city else value.strip()
 
 
+def departure_zone(origin: str, country: str, supplied: str | None = None) -> str:
+    city = resolve(origin, country)
+    if city:
+        if supplied and supplied != city["timezone"]:
+            raise ValueError("Timezone does not match the departure city")
+        return city["timezone"]
+    return supplied or "UTC"
+
+
 def search_aliases(value: str) -> tuple[list[str], str | None]:
     city = resolve(value)
     values = aliases(city) if city else [value]

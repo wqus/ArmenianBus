@@ -1,6 +1,8 @@
 import { expect, test, type BrowserContext } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
+test.use({ timezoneId: 'Pacific/Honolulu' })
+
 const id = '11111111-1111-4111-8111-111111111111'
 const seat = '22222222-2222-4222-8222-222222222222'
 async function mock(context: BrowserContext) {
@@ -28,6 +30,9 @@ async function mock(context: BrowserContext) {
       destination_country: 'AM',
       origin: 'Ростов',
       destination: 'Գյումրի',
+      boarding_address: 'Тестовая автостанция, платформа 1',
+      dropoff_address: 'Тестовая площадь, дом 2',
+      departure_timezone: 'Europe/Moscow',
       departure_at: '2030-03-01T12:00:00Z',
       price: '4500.50',
       currency: 'RUB',
@@ -313,7 +318,7 @@ test('lost creation is not replayed and late completion cannot navigate away fro
   await expect(page).toHaveURL('/carrier/routes')
 })
 
-test('route form pages buses without submitting, saves exact UTC and price, and publishes only on confirmation', async ({
+test('route form saves local Armenia time as exact UTC regardless of device zone and publishes only on confirmation', async ({
   page,
   context,
 }, info) => {
@@ -332,7 +337,9 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
     .getByRole('listbox')
     .getByRole('option', { name: /Россия/ })
     .click()
-  await page.getByLabel('Отправление (UTC)').fill('2030-03-01T12:30')
+  await page.getByLabel('Адрес посадки').fill('Тестовая автостанция, платформа 1')
+  await page.getByLabel('Адрес высадки').fill('Тестовая площадь, дом 2')
+  await page.getByLabel('Отправление (местное время)').fill('2030-03-01T12:30')
   await page.getByLabel('Цена билета, ₽').fill('4500,55')
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
   await page.getByRole('main').focus()
@@ -346,7 +353,10 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
   await expect(page).toHaveURL(`/carrier/routes/${id}`)
   expect(state.writes[0].body).toMatchObject({
     price: '4500.55',
-    departure_at: '2030-03-01T12:30:00.000Z',
+    departure_at: '2030-03-01T08:30:00.000Z',
+    departure_timezone: 'Asia/Yerevan',
+    boarding_address: 'Тестовая автостанция, платформа 1',
+    dropoff_address: 'Тестовая площадь, дом 2',
     origin_country: 'AM',
     destination_country: 'RU',
     origin: 'am-gyumri',
@@ -363,6 +373,26 @@ test('route form pages buses without submitting, saves exact UTC and price, and 
   await page.getByRole('button', { name: 'Сохранить изменения рейса' }).click()
   await expect(page).toHaveURL(`/carrier/routes/${id}`)
   expect(state.writes.at(-1)?.body).toEqual({ price: '4600.00' })
+})
+
+test('price-only edits preserve original departure seconds and changing the city clears the local time', async ({
+  page,
+  context,
+}) => {
+  const state = await mock(context)
+  state.route.departure_at = '2030-03-01T12:00:39.123Z'
+  await page.goto(`/carrier/routes/${id}/edit`)
+  await expect(page.getByLabel('Отправление (местное время)')).toHaveValue('2030-03-01T15:00')
+  await page.getByLabel('Цена билета, ₽').fill('4600.00')
+  await page.getByRole('button', { name: 'Сохранить изменения рейса' }).click()
+  await expect(page).toHaveURL(`/carrier/routes/${id}`)
+  expect(state.writes.at(-1)?.body).toEqual({ price: '4600.00' })
+  expect(state.route.departure_at).toBe('2030-03-01T12:00:39.123Z')
+  await page.getByRole('link', { name: 'Изменить данные' }).click()
+  await page.getByLabel('Город отправления', { exact: true }).fill('Екатеринбург')
+  await expect(page.getByLabel('Отправление (местное время)')).toHaveValue('')
+  await expect(page.getByLabel('Часовой пояс отправления')).toHaveValue('Asia/Yekaterinburg')
+  expect(state.writes).toHaveLength(1)
 })
 
 test('booking lock and transition failures are visible; lost cancellation reconciles and draft archives', async ({

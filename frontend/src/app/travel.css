@@ -567,3 +567,26 @@ h3 {
     align-self: stretch;
   }
 }
+.boarding-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+  margin-block: 20px;
+}
+.boarding-details dt {
+  color: var(--muted);
+  font-size: 14px;
+}
+.boarding-details dd {
+  margin: 8px 0 0;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+@media (max-width: 560px) {
+  .boarding-details,
+  .journey-summary .boarding-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

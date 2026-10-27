@@ -404,13 +404,45 @@
   body:has(.paid-confirmation) .paid-confirmation {
     width: 100%;
     margin: 0;
-    padding: 16mm;
+    padding: 12mm;
     border: 0;
     background: white;
     color: black;
     font-size: 11pt;
   }
   .paid-confirmation .journey-summary h2 {
-    font-size: 24pt;
+    font-size: 20pt;
+  }
+  .paid-confirmation .journey-summary {
+    padding-block: 12px;
+  }
+  .paid-confirmation .journey-summary dl {
+    margin-top: 12px;
+    gap: 14px;
+  }
+  .paid-confirmation .journey-summary dd {
+    font-size: 11pt;
+  }
+  .paid-confirmation .journey-summary time strong,
+  .paid-confirmation .journey-summary-total dd {
+    font-size: 16pt;
+  }
+  .paid-confirmation .journey-summary-total {
+    padding-top: 12px;
+  }
+  .paid-confirmation .boarding-details,
+  .paid-confirmation .passenger-contact {
+    margin-block: 12px;
+    padding-top: 12px;
+  }
+  .paid-confirmation p {
+    margin-block: 8px;
+  }
+  .paid-confirmation .boarding-details dd {
+    font-size: 11pt;
+  }
+  .paid-confirmation h2,
+  .paid-confirmation h3 {
+    margin-block: 10px;
   }
 }

@@ -53,7 +53,7 @@ Vite проксирует `/api` к backend, поэтому клиент раб�
 - `src/features/payments` — контракт платежа, проверка ссылки, ключ попытки и состояния результата; экран в `src/pages/PaymentPage.tsx`.
 - `src/features/bookings` — контракт брони, серверный таймер, фильтры кабинета и финансовые состояния; страницы подтверждения/деталей/списка в `src/pages/BookingPages.tsx`.
 - `src/features/trips` — проверка деталей/мест, предварительный выбор и сверка его доступности.
-- `src/features/search` — форма, параметры URL, проверка ответа поиска, UTC и точное форматирование цен.
+- `src/features/search` — форма, параметры URL, поиск по местной дате, проверка ответа и точное форматирование цен.
 - `src/features/auth` — Session, provider, role guards и проверка контрактов user/access.
 - `src/shared/ui` — кнопки/ссылки, label/input с hint/error, сообщения состояний, заголовки и SVG.
 - `src/shared/api` — fetch-клиент и тип ошибки. Сохраняет HTTP status, code, request_id и details; HTML ошибок proxy и низкоуровневые сетевые сообщения не выдаёт пользователю.

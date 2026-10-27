@@ -1,9 +1,10 @@
 import { ApiError, apiRequest } from '../../shared/api/client'
+import { validTravelDetails, type TravelDetails } from '../trips/departure'
 
 export const PAGE_SIZE = 20
 export const MAX_OFFSET = 10_000
 export type SearchInput = { origin: string; destination: string; date: string; offset: number }
-export type SearchRoute = {
+export type SearchRoute = TravelDetails & {
   id: string
   origin: string
   destination: string
@@ -88,7 +89,8 @@ export function isRoute(value: unknown): value is SearchRoute {
     typeof route.free_seats === 'number' &&
     Number.isInteger(route.free_seats) &&
     route.free_seats >= 0 &&
-    route.free_seats <= route.capacity
+    route.free_seats <= route.capacity &&
+    validTravelDetails(route as TravelDetails)
   )
 }
 
@@ -98,6 +100,7 @@ export async function searchRoutes(input: SearchInput, signal?: AbortSignal) {
     ...input,
     offset: String(input.offset),
     limit: String(PAGE_SIZE + 1),
+    date_basis: 'local',
   })
   const data = await apiRequest<unknown>(`/routes/search?${params}`, { signal })
   if (

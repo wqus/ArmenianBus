@@ -6,6 +6,7 @@ export type City = {
   country: Country
   names: { ru: string; en: string; hy: string }
   aliases: string[]
+  timezone: string
 }
 export const cities = data as City[]
 export const countryNames = { RU: 'Россия', AM: 'Армения' }
@@ -14,6 +15,15 @@ export const normalizeCity = (value: string) =>
 export const cityAliases = (city: City) => [city.id, ...Object.values(city.names), ...city.aliases]
 export const cityById = (id: string) => cities.find((city) => city.id === id)
 export const cityName = (value: string) => cityById(value)?.names.ru ?? value
+export function cityTimezone(value: string, country?: Country): string | null {
+  const key = normalizeCity(value)
+  const matches = cities.filter(
+    (city) =>
+      (!country || city.country === country) &&
+      cityAliases(city).some((alias) => normalizeCity(alias) === key),
+  )
+  return matches.length === 1 ? matches[0].timezone : null
+}
 export function citySuggestions(value: string, country?: Country): City[] {
   const key = normalizeCity(value)
   return cities

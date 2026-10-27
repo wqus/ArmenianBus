@@ -45,6 +45,8 @@ def payload(journeys, **changes):
         "destination": "Гюмри",
         "departure_at": departure.isoformat(),
         "price": "4500.50",
+        "boarding_address": "Тестовая автостанция, платформа 1",
+        "dropoff_address": "Тестовая площадь, дом 2",
         **changes,
     }
 

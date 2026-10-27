@@ -3,21 +3,28 @@ import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { useCarrierRead, useCarrierWrite } from '../features/carrier/hooks'
 import {
   carrierError,
-  departureIso,
   exactPrice,
   readBus,
   readBusDetails,
   readOwnRoute,
   readPage,
   routeLabels,
-  utcInput,
 } from '../features/carrier/contracts'
 import type { OwnRoute, RouteStatus } from '../features/carrier/contracts'
 import { carrierListParams } from '../features/carrier/paths'
 import { Pager, WriteResult } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
 import { CityInput } from '../features/cities/CityInput'
-import { departureDate, departureTime, formatPrice } from '../features/search/search'
+import { formatPrice } from '../features/search/search'
+import { cityTimezone, cities } from '../features/cities/catalog'
+import {
+  formatDeparture,
+  journeyZone,
+  localInput,
+  localDepartureIso,
+  timezoneLabel,
+} from '../features/trips/departure'
+import { BoardingDetails } from '../features/trips/BoardingDetails'
 import { Button, ButtonLink, Field, Notice, Loading, PageHeading } from '../shared/ui'
 
 function RouteInfo({ route }: { route: OwnRoute }) {
@@ -31,11 +38,11 @@ function RouteInfo({ route }: { route: OwnRoute }) {
       </h2>
       <dl className="carrier-facts">
         <div>
-          <dt>Отправление · UTC</dt>
+          <dt>Отправление · время города отправления</dt>
           <dd>
             <time dateTime={route.departure_at}>
-              {departureDate.format(new Date(route.departure_at))} ·{' '}
-              {departureTime.format(new Date(route.departure_at))} UTC
+              {formatDeparture(route).date} · {formatDeparture(route).time}{' '}
+              {formatDeparture(route).offset}
             </time>
           </dd>
         </div>
@@ -44,6 +51,7 @@ function RouteInfo({ route }: { route: OwnRoute }) {
           <dd>{formatPrice(route.price)}</dd>
         </div>
       </dl>
+      <BoardingDetails journey={route} />
     </>
   )
 }
@@ -151,7 +159,13 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
   const [direction, setDirection] = useState(initial?.origin_country ?? 'RU')
   const [origin, setOrigin] = useState(initial?.origin ?? '')
   const [destination, setDestination] = useState(initial?.destination ?? '')
-  const [departure, setDeparture] = useState(initial ? utcInput(initial.departure_at) : '')
+  const [customZone, setCustomZone] = useState(initial ? journeyZone(initial) : '')
+  const zone = cityTimezone(origin, direction) ?? (direction === 'AM' ? 'Asia/Yerevan' : customZone)
+  const [departure, setDeparture] = useState(
+    initial ? localInput(initial.departure_at, journeyZone(initial)) : '',
+  )
+  const [boarding, setBoarding] = useState(initial?.boarding_address ?? '')
+  const [dropoff, setDropoff] = useState(initial?.dropoff_address ?? '')
   const [price, setPrice] = useState(initial?.price ?? '')
   const [error, setError] = useState('')
   const write = useCarrierWrite()
@@ -161,7 +175,7 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
   async function submit(event: React.SubmitEvent) {
     event.preventDefault()
     if (disabled) return
-    const at = departureIso(departure)
+    const at = localDepartureIso(departure, zone)
     const amount = price.replace(',', '.')
     if (
       !at ||
@@ -169,9 +183,15 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
       !destination.trim() ||
       origin.trim().length > 200 ||
       destination.trim().length > 200 ||
+      [boarding, dropoff].some(
+        (address) =>
+          address.trim().length < 5 || [...address.trim()].length > 500 || /\p{C}/u.test(address),
+      ) ||
       !exactPrice(amount)
     ) {
-      setError('Проверьте города, дату UTC и положительную цену с точностью до копеек.')
+      setError(
+        'Проверьте города, адреса, часовой пояс, местное время и цену. Если время неоднозначно из-за перевода часов, выберите другое время.',
+      )
       return
     }
     const fields = {
@@ -181,7 +201,14 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
       origin: origin.trim(),
       destination: destination.trim(),
       departure_at:
-        initial && departure === utcInput(initial.departure_at) ? initial.departure_at : at,
+        initial &&
+        zone === journeyZone(initial) &&
+        departure === localInput(initial.departure_at, zone)
+          ? initial.departure_at
+          : at,
+      departure_timezone: zone,
+      boarding_address: boarding.trim(),
+      dropoff_address: dropoff.trim(),
       price: amount,
     }
     const body = initial
@@ -268,6 +295,8 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
               setDirection(event.target.value as 'RU' | 'AM')
               setOrigin('')
               setDestination('')
+              setCustomZone('')
+              setDeparture('')
             }}
           >
             <option value="RU">Россия → Армения</option>
@@ -278,7 +307,10 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
           label="Город отправления"
           name="origin"
           value={origin}
-          onChange={setOrigin}
+          onChange={(value) => {
+            if (cityTimezone(value, direction) !== cityTimezone(origin, direction)) setDeparture('')
+            setOrigin(value)
+          }}
           country={direction}
           required
         />
@@ -292,14 +324,80 @@ function RouteForm({ initial, selectedBus = '' }: { initial?: OwnRoute; selected
         />
       </fieldset>
       <fieldset className="carrier-form-section">
-        <legend>3. Отправление и цена</legend>
+        <legend>3. Посадка и высадка</legend>
         <Field
-          label="Отправление (UTC)"
+          label="Адрес посадки"
+          value={boarding}
+          onChange={(event) => setBoarding(event.target.value)}
+          required
+          minLength={5}
+          maxLength={500}
+          hint="Город, улица, номер дома или автостанция; укажите точный ориентир и платформу, если известны."
+        />
+        <Field
+          label="Адрес высадки"
+          value={dropoff}
+          onChange={(event) => setDropoff(event.target.value)}
+          required
+          minLength={5}
+          maxLength={500}
+          hint="Точное место прибытия в городе назначения. Пассажир увидит его до бронирования."
+        />
+      </fieldset>
+      <fieldset className="carrier-form-section">
+        <legend>4. Отправление и цена</legend>
+        <div className="booking-status-filter">
+          <label htmlFor="departure-zone">Часовой пояс отправления</label>
+          <select
+            id="departure-zone"
+            value={zone}
+            disabled={!!cityTimezone(origin, direction) || direction === 'AM'}
+            onChange={(event) => {
+              setCustomZone(event.target.value)
+              setDeparture('')
+            }}
+          >
+            <option value="">Выберите пояс города</option>
+            {[
+              ...new Set([
+                ...cities.map((city) => city.timezone),
+                'Europe/Kaliningrad',
+                'Europe/Kirov',
+                'Europe/Astrakhan',
+                'Europe/Ulyanovsk',
+                'Asia/Barnaul',
+                'Asia/Tomsk',
+                'Asia/Novokuznetsk',
+                'Asia/Chita',
+                'Asia/Yakutsk',
+                'Asia/Khandyga',
+                'Asia/Vladivostok',
+                'Asia/Ust-Nera',
+                'Asia/Magadan',
+                'Asia/Sakhalin',
+                'Asia/Srednekolymsk',
+                'Asia/Kamchatka',
+                'Asia/Anadyr',
+                'UTC',
+              ]),
+            ].map((value) => (
+              <option key={value} value={value}>
+                {timezoneLabel(value)}
+              </option>
+            ))}
+          </select>
+          <p className="seat-help">
+            Для города из справочника пояс определяется автоматически. При смене пояса укажите время
+            заново.
+          </p>
+        </div>
+        <Field
+          label="Отправление (местное время)"
           type="datetime-local"
           value={departure}
           onChange={(event) => setDeparture(event.target.value)}
           required
-          hint="Укажите время в UTC. Часовой пояс вашего устройства не используется."
+          hint={`Время города отправления${zone ? ` · пояс: ${timezoneLabel(zone)}` : ''}. Часовой пояс устройства не используется.`}
         />
         <Field
           label="Цена билета, ₽"

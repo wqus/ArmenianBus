@@ -5,8 +5,6 @@ import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
 import { SearchForm } from '../features/search/SearchForm'
 import { NearbyDates } from '../features/search/NearbyDates'
 import {
-  departureDate,
-  departureTime,
   formatPrice,
   MAX_OFFSET,
   PAGE_SIZE,
@@ -17,23 +15,25 @@ import {
 } from '../features/search/search'
 import type { SearchInput, SearchRoute } from '../features/search/search'
 import { tripUrl } from '../features/trips/trip'
+import { formatDeparture } from '../features/trips/departure'
+import { BoardingDetails } from '../features/trips/BoardingDetails'
 
 const countries = { RU: 'Россия', AM: 'Армения' }
 
 function RouteCard({ route, search }: { route: SearchRoute; search: string }) {
-  const departure = new Date(route.departure_at)
+  const departure = formatDeparture(route)
   return (
     <article
       className="trip-card"
-      aria-label={`${route.origin} — ${route.destination}, ${departureTime.format(departure)} UTC`}
+      aria-label={`${route.origin} — ${route.destination}, ${departure.time} ${departure.offset}`}
     >
       <div className="trip-main">
         <div className="trip-departure">
           <span className="trip-caption">Отправление</span>
           <time dateTime={route.departure_at}>
-            <strong>{departureTime.format(departure)}</strong> UTC
+            <strong>{departure.time}</strong> {departure.offset}
           </time>
-          <span>{departureDate.format(departure)}</span>
+          <span>{departure.date}</span>
         </div>
         <div className="trip-direction">
           <h3>
@@ -68,6 +68,7 @@ function RouteCard({ route, search }: { route: SearchRoute; search: string }) {
             <dd>{route.capacity}</dd>
           </div>
         </dl>
+        <BoardingDetails journey={route} />
       </details>
     </article>
   )
@@ -101,7 +102,7 @@ function Results({ input, params }: { input: SearchInput; params: URLSearchParam
             <h2 id="results-title" ref={heading} tabIndex={-1}>
               Рейсы по вашему направлению
             </h2>
-            <p>По времени отправления · UTC</p>
+            <p>Дата и время — по городу отправления</p>
           </div>
           <Button
             variant="secondary"

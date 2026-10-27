@@ -9,7 +9,7 @@ const item = (index = 0) => ({
   destination: 'Գյումրի',
   origin_country: 'RU',
   destination_country: 'AM',
-  departure_at: '2030-06-02T01:00:00+03:00',
+  departure_at: '2030-06-01T01:00:00+03:00',
   price: '4500.50',
   currency: 'RUB',
   status: 'ACTIVE',
@@ -39,7 +39,7 @@ test('nearby dates preserve direction, reset pagination and never imply availabi
   const expected = new URLSearchParams(params)
   expected.set('date', '2030-05-31')
   await expect(page).toHaveURL(`/search?${expected}`)
-  await expect(page.getByLabel('Дата отправления (UTC)')).toHaveValue('2030-05-31')
+  await expect(page.getByLabel('Дата отправления')).toHaveValue('2030-05-31')
   await expect(page.getByText('Рейсов не найдено', { exact: true })).toBeVisible()
   expect(new Set(datesRequested)).toEqual(new Set([date, '2030-05-31']))
   await page.goBack()
@@ -53,6 +53,7 @@ test('search form, URL history, pagination, UTC, sold out and accessible details
   await page.route('**/api/v1/routes/search?*', (route) => {
     const url = new URL(route.request().url())
     expect(url.searchParams.get('limit')).toBe('21')
+    expect(url.searchParams.get('date_basis')).toBe('local')
     expect(route.request().headers()).not.toHaveProperty('authorization')
     const offset = Number(url.searchParams.get('offset'))
     return route.fulfill({
@@ -69,12 +70,12 @@ test('search form, URL history, pagination, UTC, sold out and accessible details
   await page.getByRole('button', { name: 'Поменять города местами' }).click()
   await expect(page.getByLabel('Откуда', { exact: true })).toHaveValue('Գյումրի')
   await page.getByRole('button', { name: 'Поменять города местами' }).click()
-  await page.getByLabel('Дата отправления (UTC)').fill(date)
+  await page.getByLabel('Дата отправления').fill(date)
   await page.getByRole('button', { name: 'Найти рейсы', exact: true }).click()
   await expect(page).toHaveURL(`/search?${params}`)
   await expect(page.getByRole('article')).toHaveCount(20)
   const first = page.getByRole('article').first()
-  await expect(first).toContainText('22:00 UTC')
+  await expect(first).toContainText('01:00 UTC+3')
   await expect(first).toContainText('1 июня 2030')
   await expect(first).toContainText('4 500,50 ₽')
   await expect(first).toContainText('Свободных мест нет')

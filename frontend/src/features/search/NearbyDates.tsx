@@ -15,7 +15,7 @@ export function NearbyDates({ input }: { input: SearchInput }) {
   return (
     <nav className="nearby-dates" aria-label="Соседние даты отправления">
       <p>
-        Посмотреть другую дату <span>Даты отправления по UTC</span>
+        Посмотреть другую дату <span>Даты по городу отправления</span>
       </p>
       <div>
         {nearbyDates(input.date).map((value) => {

@@ -14,6 +14,9 @@ const routeData = {
   origin_country: 'RU',
   destination_country: 'AM',
   departure_at: '2030-06-01T22:00:00Z',
+  departure_timezone: 'Europe/Moscow',
+  boarding_address: 'Тестовая автостанция, платформа 1',
+  dropoff_address: 'Тестовая площадь, дом 2',
   price: '4500.50',
   currency: 'RUB',
   status: 'ACTIVE',
@@ -62,6 +65,9 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     origin: routeData.origin,
     destination: routeData.destination,
     departure_at: routeData.departure_at,
+    departure_timezone: routeData.departure_timezone,
+    boarding_address: routeData.boarding_address,
+    dropoff_address: routeData.dropoff_address,
     seat_number: 1,
     company_name: 'Перевозчик',
     cancellation_allowed: state.status === 'HELD',
@@ -221,6 +227,10 @@ test('paid confirmation refreshes before printing and disappears on cancellation
   await page.goto(`/bookings/${id}`)
   const confirmation = page.getByRole('region', { name: 'Подтверждение оплаченной брони' })
   await expect(confirmation).toContainText('Արամ Петросян')
+  await expect(confirmation).toContainText('2 июня 2030')
+  await expect(confirmation).toContainText('01:00 UTC+3')
+  await expect(confirmation).toContainText(routeData.boarding_address)
+  await expect(confirmation).toContainText(routeData.dropoff_address)
   const print = page.getByRole('button', { name: 'Распечатать / сохранить PDF' })
   await print.click()
   await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1')

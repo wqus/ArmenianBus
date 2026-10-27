@@ -56,7 +56,7 @@ export function SearchForm({
           onChange={setDestination}
         />
         <Field
-          label="Дата отправления (UTC)"
+          label="Дата отправления"
           name="date"
           type="date"
           required
@@ -67,7 +67,8 @@ export function SearchForm({
         <Button type="submit">Найти рейсы</Button>
       </div>
       <p id={hintId} className="search-hint">
-        Город можно найти на русском, английском или армянском. Время отправления — UTC.
+        Дата и время — по городу отправления. Города можно вводить на русском, английском или
+        армянском.
       </p>
       {error && (
         <p className="field-error" role="alert">

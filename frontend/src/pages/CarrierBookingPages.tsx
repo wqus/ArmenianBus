@@ -10,7 +10,9 @@ import { carrierError, readPage, routeLabels } from '../features/carrier/contrac
 import { useCarrierRead } from '../features/carrier/hooks'
 import { Pager } from '../features/carrier/CarrierUI'
 import { isUuid } from '../features/trips/trip'
-import { departureDate, departureTime, formatPrice } from '../features/search/search'
+import { formatPrice } from '../features/search/search'
+import { formatDeparture } from '../features/trips/departure'
+import { BoardingDetails } from '../features/trips/BoardingDetails'
 
 function BookingInfo({ booking: b }: { booking: BookingDetails }) {
   return (
@@ -23,11 +25,10 @@ function BookingInfo({ booking: b }: { booking: BookingDetails }) {
       </p>
       <dl className="carrier-facts">
         <div>
-          <dt>Отправление · UTC</dt>
+          <dt>Отправление · время города отправления</dt>
           <dd>
             <time dateTime={b.departure_at}>
-              {departureDate.format(new Date(b.departure_at))} ·{' '}
-              {departureTime.format(new Date(b.departure_at))} UTC
+              {formatDeparture(b).date} · {formatDeparture(b).time} {formatDeparture(b).offset}
             </time>
           </dd>
         </div>
@@ -44,6 +45,7 @@ function BookingInfo({ booking: b }: { booking: BookingDetails }) {
           <dd>{routeLabels[b.route_status]}</dd>
         </div>
       </dl>
+      <BoardingDetails journey={b} />
       <BookingFinancials booking={b} />
       <PassengerInfo passenger={b} />
     </>

@@ -1,9 +1,11 @@
-import { departureDate, departureTime, formatPrice } from '../search/search'
+import { formatPrice } from '../search/search'
+import { formatDeparture, type TravelDetails } from '../trips/departure'
+import { BoardingDetails } from '../trips/BoardingDetails'
 
 export function JourneySummary({
   journey,
 }: {
-  journey: {
+  journey: TravelDetails & {
     origin: string
     destination: string
     departure_at: string
@@ -12,7 +14,7 @@ export function JourneySummary({
     amount: string
   }
 }) {
-  const departure = new Date(journey.departure_at)
+  const departure = formatDeparture(journey)
   return (
     <section className="journey-summary" aria-label="Сведения о выбранной поездке">
       <p className="journey-caption">Ваша поездка</p>
@@ -21,11 +23,13 @@ export function JourneySummary({
       </h2>
       <dl>
         <div>
-          <dt>Отправление · UTC</dt>
+          <dt>Отправление · время города отправления</dt>
           <dd>
             <time dateTime={journey.departure_at}>
-              {departureDate.format(departure)}
-              <strong>{departureTime.format(departure)} UTC</strong>
+              {departure.date}
+              <strong>
+                {departure.time} {departure.offset}
+              </strong>
             </time>
           </dd>
         </div>
@@ -44,6 +48,7 @@ export function JourneySummary({
           <dd>{formatPrice(journey.amount)}</dd>
         </div>
       </dl>
+      <BoardingDetails journey={journey} />
     </section>
   )
 }

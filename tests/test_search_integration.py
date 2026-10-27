@@ -83,6 +83,71 @@ def test_public_search_details_seats_and_owner_separation(journeys):
     assert search(journeys, route, origin="' OR 1=1 --")["items"] == []
 
 
+@pytest.mark.parametrize(
+    "origin,country,zone,offset",
+    [
+        ("Moscow", "RU", "Europe/Moscow", 3),
+        ("Երևան", "AM", "Asia/Yerevan", 4),
+        ("Екатеринбург", "RU", "Asia/Yekaterinburg", 5),
+        ("Custom departure", "RU", "Asia/Omsk", 6),
+    ],
+)
+def test_local_search_day_starts_before_the_utc_day(journeys, origin, country, zone, offset):
+    day = (datetime.now(UTC) + timedelta(days=5)).replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = day - timedelta(hours=offset)
+    options = dict(
+        origin=origin,
+        origin_country=country,
+        destination="Гюмри" if country == "RU" else "Псков",
+        destination_country="AM" if country == "RU" else "RU",
+        departure_timezone=zone,
+    )
+    before = publish(
+        journeys, **options, departure_at=(midnight - timedelta(microseconds=1)).isoformat()
+    )
+    first = publish(journeys, **options, departure_at=midnight.isoformat())
+    last = publish(
+        journeys,
+        **options,
+        departure_at=(midnight + timedelta(days=1, microseconds=-1)).isoformat(),
+    )
+    after = publish(journeys, **options, departure_at=(midnight + timedelta(days=1)).isoformat())
+    page = search(journeys, first, date=day.date().isoformat(), date_basis="local")
+    assert [r["id"] for r in page["items"]] == [first["id"], last["id"]]
+    assert before["id"] not in str(page) and after["id"] not in str(page)
+    assert page["items"][0]["departure_timezone"] == zone
+    # The default API contract remains the UTC day for existing integrations.
+    utc_page = search(journeys, first, date=day.date().isoformat())
+    assert [r["id"] for r in utc_page["items"]] == [last["id"], after["id"]]
+
+
+def test_legacy_addresses_stay_unknown_and_publication_requires_carrier_details(journeys):
+    route = create(journeys, origin="Москва")
+    original = route["departure_at"]
+    asyncio.run(
+        change_record(
+            Route, route["id"], boarding_address=None, dropoff_address=None, departure_timezone=None
+        )
+    )
+    client = journeys["world"].client
+    legacy = client.get(f"/api/v1/routes/my/{route['id']}", headers=journeys["headers"]).json()
+    assert legacy["departure_at"] == original
+    assert legacy["departure_timezone"] == "Europe/Moscow"
+    assert legacy["boarding_address"] is None and legacy["dropoff_address"] is None
+    response = patch(journeys, route["id"], status="ACTIVE")
+    assert response.status_code == 409 and response.json()["code"] == "BOARDING_DETAILS_REQUIRED"
+    assert (
+        patch(
+            journeys,
+            route["id"],
+            boarding_address="Тестовая автостанция 1",
+            dropoff_address="Тестовая площадь 2",
+        ).status_code
+        == 200
+    )
+    assert patch(journeys, route["id"], status="ACTIVE").status_code == 200
+
+
 def test_multilingual_search_finds_legacy_names_and_keeps_country_identity(journeys):
     route = publish(journeys, origin="Moscow", destination="Yerevan")
     assert route["origin"] == "Москва"

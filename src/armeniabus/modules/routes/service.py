@@ -10,7 +10,7 @@ from armeniabus.modules.bookings.lifecycle import database_now, expire_booking
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus
 from armeniabus.modules.carriers.service import own_profile
-from armeniabus.modules.cities.catalog import canonical_name
+from armeniabus.modules.cities.catalog import canonical_name, departure_zone
 from armeniabus.modules.notifications.outbox import enqueue
 from armeniabus.modules.payments.models import Payment, PaymentStatus
 from armeniabus.modules.payments.refunds import request_refund
@@ -88,6 +88,12 @@ async def transition(db: AsyncSession, user: User, route: Route, target: RouteSt
         raise ApiError(409, "INVALID_ROUTE_TRANSITION", "Route status transition is not allowed")
     now = await database_now(db)
     if target == RouteStatus.ACTIVE:
+        if not route.boarding_address or not route.dropoff_address:
+            raise ApiError(
+                409,
+                "BOARDING_DETAILS_REQUIRED",
+                "Add boarding and drop-off addresses before publishing",
+            )
         await available_bus(db, route.carrier_id, route.bus_id)
         if route.departure_at <= now:
             raise ApiError(409, "DEPARTURE_IN_PAST", "Cannot publish a departed route")
@@ -186,6 +192,15 @@ async def update_route(
                 raise ApiError(422, "CITY_COUNTRY_MISMATCH", "Check city and country") from exc
     if "bus_id" in changes:
         await available_bus(db, route.carrier_id, changes["bus_id"])
+    if {"origin", "origin_country", "departure_timezone"} & changes.keys():
+        try:
+            changes["departure_timezone"] = departure_zone(
+                changes.get("origin", route.origin), origin, changes.get("departure_timezone")
+            )
+        except ValueError as exc:
+            raise ApiError(
+                422, "CITY_TIMEZONE_MISMATCH", "Check departure city and timezone"
+            ) from exc
     if await db.scalar(select(Booking.id).where(Booking.route_id == route.id).limit(1)):
         raise ApiError(409, "ROUTE_HAS_BOOKINGS", "Route details are fixed after the first booking")
     for field, value in changes.items():

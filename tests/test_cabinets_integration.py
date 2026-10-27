@@ -79,6 +79,13 @@ def test_cabinet_server_clock_and_hold_only_cancellation(trip):
     client, headers = trip["world"].client, trip["passengers"][0]
     path = f"/api/v1/cabinet/bookings/{booking['id']}"
     item = client.get(path, headers=headers).json()
+    assert item["departure_timezone"] == "Europe/Moscow"
+    assert item["boarding_address"] == trip["route"]["boarding_address"]
+    assert item["dropoff_address"] == trip["route"]["dropoff_address"]
+    assert (
+        patch(trip, trip["route"]["id"], boarding_address="Другая автостанция").json()["code"]
+        == "ROUTE_HAS_BOOKINGS"
+    )
     assert datetime.fromisoformat(item["created_at"]) <= datetime.fromisoformat(item["server_time"])
     assert datetime.fromisoformat(item["server_time"]) < datetime.fromisoformat(item["held_until"])
     assert datetime.fromisoformat(
@@ -114,6 +121,12 @@ def test_paid_cancellation_is_atomic_idempotent_and_does_not_claim_refund(checko
     assert [r.status_code for r in responses] == [204, 204]
     assert refund_count(payment) == 1 and notification_count(booking, "cancelled") == 1
     assert notification_count(booking, "paid") == 1
+    body = asyncio.run(
+        scalar(select(Notification.body).where(Notification.booking_id == uuid.UUID(booking["id"])))
+    )
+    assert "местное время, Europe/Moscow" in body
+    assert checkout["route"]["boarding_address"] in body
+    assert checkout["route"]["dropoff_address"] in body
     assert audit_count(booking, "booking.cancelled") == 1
     item = cabinet(checkout, segment="history").json()["items"][0]
     assert item["status"] == "CANCELLED" and item["refund_required"]

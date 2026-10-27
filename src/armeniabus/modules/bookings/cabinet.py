@@ -12,6 +12,7 @@ from armeniabus.modules.bookings.schemas import BookingPublic
 from armeniabus.modules.buses.models import Seat
 from armeniabus.modules.carriers.models import CarrierProfile
 from armeniabus.modules.carriers.service import own_profile
+from armeniabus.modules.cities.catalog import departure_zone
 from armeniabus.modules.payments.models import Payment
 from armeniabus.modules.payments.refunds import RefundCase
 from armeniabus.modules.routes.models import Route
@@ -22,6 +23,9 @@ class CabinetBooking(BookingPublic):
     origin: str
     destination: str
     departure_at: datetime
+    departure_timezone: str
+    boarding_address: str | None
+    dropoff_address: str | None
     route_status: str
     seat_number: int
     company_name: str
@@ -100,6 +104,10 @@ def result(row, cutoff_hours):
         origin=route.origin,
         destination=route.destination,
         departure_at=route.departure_at,
+        departure_timezone=route.departure_timezone
+        or departure_zone(route.origin, route.origin_country),
+        boarding_address=route.boarding_address,
+        dropoff_address=route.dropoff_address,
         route_status=route.status,
         seat_number=row.seat_number,
         company_name=row.company_name,

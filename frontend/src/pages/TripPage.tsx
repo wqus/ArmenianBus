@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'react-router'
 import { ApiError } from '../shared/api/client'
 import { Button, ButtonLink, Notice, Loading, PageHeading } from '../shared/ui'
-import { departureDate, departureTime } from '../features/search/search'
+import { formatDeparture } from '../features/trips/departure'
+import { BoardingDetails } from '../features/trips/BoardingDetails'
 import { backToSearch, getTrip, isUuid, tripError } from '../features/trips/trip'
 import { SeatPicker } from '../features/trips/SeatPicker'
 
@@ -61,11 +62,13 @@ function TripDetails({ id }: { id: string }) {
           <section className="trip-overview" aria-label="Информация о рейсе">
             <dl>
               <div>
-                <dt>Отправление · UTC</dt>
+                <dt>Отправление · время города отправления</dt>
                 <dd>
                   <time dateTime={trip.route.departure_at}>
-                    {departureDate.format(new Date(trip.route.departure_at))}
-                    <strong>{departureTime.format(new Date(trip.route.departure_at))} UTC</strong>
+                    {formatDeparture(trip.route).date}
+                    <strong>
+                      {formatDeparture(trip.route).time} {formatDeparture(trip.route).offset}
+                    </strong>
                   </time>
                 </dd>
               </div>
@@ -86,6 +89,7 @@ function TripDetails({ id }: { id: string }) {
               </div>
             </dl>
           </section>
+          <BoardingDetails journey={trip.route} />
           {trip.freeSeats === 0 && !query.isFetching && (
             <Notice title="Свободных мест нет">
               Можно обновить доступность позже или выбрать другой рейс в поиске.

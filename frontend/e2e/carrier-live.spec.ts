@@ -92,7 +92,10 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
   const origin = `F8 ${suffix}`
   await page.getByLabel('Город отправления', { exact: true }).fill(origin)
   await page.getByLabel('Город прибытия', { exact: true }).fill('Գյումրի')
-  await page.getByLabel('Отправление (UTC)').fill(departure)
+  await page.getByLabel('Адрес посадки').fill('Тестовая автостанция, платформа 1')
+  await page.getByLabel('Адрес высадки').fill('Тестовая площадь, дом 2')
+  await page.getByLabel('Часовой пояс отправления').selectOption('Europe/Moscow')
+  await page.getByLabel('Отправление (местное время)').fill(departure)
   await page.getByLabel('Цена билета, ₽').fill('4500,55')
   await page.getByRole('button', { name: 'Создать черновик' }).click()
   await expect(page.getByRole('heading', { name: 'Управление рейсом', exact: true })).toBeVisible()
@@ -110,7 +113,10 @@ test('real carrier creates and publishes a trip, views its hold, cancels it and 
     await request.get(`${api}/routes/my/${routeId}`, { headers: carrier })
   ).json()
   expect(saved.price).toBe('4600.01')
-  expect(Date.parse(saved.departure_at)).toBe(Date.parse(departure + ':00Z'))
+  expect(Date.parse(saved.departure_at)).toBe(Date.parse(departure + ':00+03:00'))
+  expect(saved.departure_timezone).toBe('Europe/Moscow')
+  expect(saved.boarding_address).toBe('Тестовая автостанция, платформа 1')
+  expect(saved.dropoff_address).toBe('Тестовая площадь, дом 2')
   const passengerEmail = `passenger-${suffix}@example.com`
   expect(
     (

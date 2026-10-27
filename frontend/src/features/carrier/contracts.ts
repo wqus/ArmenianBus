@@ -1,6 +1,7 @@
 import { ApiError } from '../../shared/api/client'
 import { isUuid } from '../trips/trip'
 import { findLayout, findVehicleModel } from '../vehicles/catalog'
+import { validTravelDetails, type TravelDetails } from '../trips/departure'
 
 export const routeLabels = {
   DRAFT: 'Черновик',
@@ -20,7 +21,7 @@ export type Bus = {
   created_at: string
 }
 export type BusDetails = Bus & { seats: { id: string; seat_number: number }[] }
-export type OwnRoute = {
+export type OwnRoute = TravelDetails & {
   id: string
   carrier_id: string
   bus_id: string
@@ -111,7 +112,8 @@ export function readOwnRoute(v: unknown): OwnRoute {
     typeof r.price !== 'string' ||
     !exactPrice(r.price) ||
     r.currency !== 'RUB' ||
-    !Object.hasOwn(routeLabels, r.status ?? '')
+    !Object.hasOwn(routeLabels, r.status ?? '') ||
+    !validTravelDetails(r)
   )
     throw invalid()
   return r as OwnRoute
@@ -150,7 +152,9 @@ export function carrierError(error: unknown, writing = false): string {
       BUS_HAS_ROUTES:
         'Автобус используется в незавершённых рейсах. Сначала завершите или отмените эти рейсы.',
       ROUTE_HAS_BOOKINGS:
-        'У рейса уже были бронирования. Автобус, направление, дату и цену менять нельзя.',
+        'У рейса уже были бронирования. Данные поездки, включая адреса, время и цену, менять нельзя.',
+      BOARDING_DETAILS_REQUIRED:
+        'Перед публикацией добавьте точные адреса посадки и высадки в данных рейса.',
       INVALID_ROUTE_TRANSITION:
         'Этот переход сейчас недоступен. Обновите рейс и проверьте его состояние.',
       ROUTE_HAS_PAID_BOOKINGS:

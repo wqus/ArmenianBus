@@ -3,14 +3,14 @@
 import uuid
 from datetime import UTC, datetime, time, timedelta
 
-from sqlalchemy import case, exists, func, select
+from sqlalchemy import Date, case, cast, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from armeniabus.api.errors import ApiError
 from armeniabus.modules.bookings.models import Booking, BookingStatus
 from armeniabus.modules.buses.models import Bus, Seat
 from armeniabus.modules.carriers.models import CarrierProfile, CarrierStatus
-from armeniabus.modules.cities.catalog import search_aliases
+from armeniabus.modules.cities.catalog import resolve, search_aliases
 from armeniabus.modules.routes.models import Route, RouteStatus
 from armeniabus.modules.routes.schemas import (
     AvailableSeat,
@@ -93,12 +93,32 @@ async def search_routes(db: AsyncSession, filters: RouteSearch) -> SearchPage:
     start = datetime.combine(filters.date, time.min, tzinfo=UTC)
     origins, origin_country = search_aliases(filters.origin)
     destinations, destination_country = search_aliases(filters.destination)
+    end = start + timedelta(days=1)
+    city = resolve(filters.origin)
+    fallback_zone = city["timezone"] if city else "UTC"
+    if filters.date_basis == "local":
+        try:
+            # Keep an indexed UTC range; the exact local date uses each route's zone.
+            start -= timedelta(days=1)
+            end += timedelta(days=1)
+        except OverflowError:
+            raise ApiError(422, "INVALID_DATE", "Departure date is out of range") from None
     query = public_query(func.statement_timestamp()).where(
         func.lower(func.trim(Route.origin)).in_(origins),
         func.lower(func.trim(Route.destination)).in_(destinations),
         Route.departure_at >= start,
-        Route.departure_at < start + timedelta(days=1),
+        Route.departure_at < end,
     )
+    if filters.date_basis == "local":
+        query = query.where(
+            cast(
+                func.timezone(
+                    func.coalesce(Route.departure_timezone, fallback_zone), Route.departure_at
+                ),
+                Date,
+            )
+            == filters.date
+        )
     if origin_country:
         query = query.where(Route.origin_country == origin_country)
     if destination_country:
