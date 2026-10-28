@@ -12,6 +12,7 @@ from armeniabus.infrastructure.db import models  # noqa: F401
 from armeniabus.infrastructure.db.session import create_session_factory
 from armeniabus.modules.admin.monitoring import heartbeat
 from armeniabus.modules.notifications.delivery import SmtpSender, deliver_batch
+from armeniabus.modules.users.mail import deliver_account_batch
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,7 @@ async def run(once: bool) -> int:
         while True:
             try:
                 count = await deliver_batch(sessions, sender, settings)
+                count += await deliver_account_batch(sessions, sender, settings)
                 await heartbeat(
                     sessions, "notifications", enabled=settings.notifications_enabled, count=count
                 )

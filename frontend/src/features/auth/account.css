@@ -114,3 +114,25 @@
     padding-inline: 8px;
   }
 }
+.account-verification {
+  border-top: 1px solid var(--line);
+  margin-top: 24px;
+  padding-top: 20px;
+}
+.account-verification h2 {
+  font-size: 20px;
+}
+.account-verification p {
+  margin-block: 12px;
+}
+.account-verification .button,
+.recovery-layout .button {
+  max-width: 100%;
+  white-space: normal;
+}
+.recovery-layout .page-heading h1 {
+  overflow-wrap: anywhere;
+}
+.recovery-layout .profile-actions {
+  margin-top: 24px;
+}

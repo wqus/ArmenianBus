@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from armeniabus.api.errors import ApiError, ErrorBody, error_response
 from armeniabus.api.rate_limit import enforce_auth_rate_limit
 from armeniabus.infrastructure.db.session import get_db_session
-from armeniabus.modules.users.schemas import LoginInput, TokenPair
+from armeniabus.modules.users.actions import consume_action
+from armeniabus.modules.users.schemas import LoginInput, ResetPasswordInput, TokenPair
 from armeniabus.modules.users.service import login_user, revoke_refresh_token, rotate_refresh_token
 
 
@@ -105,4 +106,13 @@ async def logout(request: Request, response: Response, db: DbSession):
     token = request.cookies.get(cookie_name(request))
     if token:
         await revoke_refresh_token(db, token)
+    clear_cookie(request, response)
+
+
+@router.post("/reset-password", status_code=204)
+async def reset_password(
+    request: Request, response: Response, data: ResetPasswordInput, db: DbSession
+):
+    await enforce_auth_rate_limit(request, "reset-password")
+    await consume_action(db, data.token, "RESET", request.app.state.settings, data.password)
     clear_cookie(request, response)

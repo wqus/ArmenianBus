@@ -35,15 +35,19 @@ def new_refresh_session(user_id: uuid.UUID, settings: Settings) -> tuple[Refresh
     return session, token
 
 
-def token_pair(user_id: uuid.UUID, refresh_token: str, settings: Settings) -> TokenPair:
+def token_pair(
+    user_id: uuid.UUID, refresh_token: str, settings: Settings, auth_version: int = 0
+) -> TokenPair:
     return TokenPair(
-        access_token=create_access_token(user_id, settings),
+        access_token=create_access_token(user_id, settings, auth_version),
         refresh_token=refresh_token,
         expires_in=settings.access_token_ttl_minutes * 60,
     )
 
 
-async def register_user(db: AsyncSession, data: RegisterInput) -> User:
+async def register_user(
+    db: AsyncSession, data: RegisterInput, settings: Settings | None = None
+) -> User:
     user = User(
         email=normalized_email(str(data.email)),
         password_hash=await run_in_threadpool(hash_password, data.password),
@@ -60,6 +64,10 @@ async def register_user(db: AsyncSession, data: RegisterInput) -> User:
             db.add(profile)
             await db.flush()
             record_audit(db, user.id, "carrier.created", "carrier", profile.id)
+        if settings and settings.notifications_enabled:
+            from armeniabus.modules.users.actions import enqueue_action
+
+            await enqueue_action(db, user, "VERIFY", settings)
         await db.commit()
     except IntegrityError:
         await db.rollback()
@@ -77,6 +85,7 @@ async def login_user(db: AsyncSession, data: LoginInput, settings: Settings) -> 
     )
     if not user or not valid_password:
         raise ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password")
+    verified_hash = user.password_hash
     user = await db.scalar(
         select(User)
         .where(User.id == user.id)
@@ -85,10 +94,12 @@ async def login_user(db: AsyncSession, data: LoginInput, settings: Settings) -> 
     )
     if user.status != UserStatus.ACTIVE:
         raise ApiError(403, "USER_BLOCKED", "User account is blocked")
+    if user.password_hash != verified_hash:
+        raise ApiError(401, "INVALID_CREDENTIALS", "Invalid email or password")
     session, refresh_token = new_refresh_session(user.id, settings)
     db.add(session)
     await db.commit()
-    return token_pair(user.id, refresh_token, settings)
+    return token_pair(user.id, refresh_token, settings, user.auth_version)
 
 
 async def rotate_refresh_token(db: AsyncSession, token: str, settings: Settings) -> TokenPair:
@@ -118,7 +129,7 @@ async def rotate_refresh_token(db: AsyncSession, token: str, settings: Settings)
     replacement, refresh_token = new_refresh_session(user.id, settings)
     db.add(replacement)
     await db.commit()
-    return token_pair(user.id, refresh_token, settings)
+    return token_pair(user.id, refresh_token, settings, user.auth_version)
 
 
 async def revoke_refresh_token(db: AsyncSession, token: str) -> None:

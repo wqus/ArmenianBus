@@ -39,6 +39,8 @@ async def get_current_user(
     user = await db.get(User, user_id)
     if not user:
         raise ApiError(401, "INVALID_ACCESS_TOKEN", "Access token is invalid")
+    if type(payload.get("ver", 0)) is not int or payload.get("ver", 0) != user.auth_version:
+        raise ApiError(401, "INVALID_ACCESS_TOKEN", "Access token is invalid")
     if user.status != UserStatus.ACTIVE:
         raise ApiError(403, "USER_BLOCKED", "User account is blocked")
     return user

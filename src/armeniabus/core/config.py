@@ -2,7 +2,7 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import EmailStr, Field, HttpUrl, SecretStr, model_validator
+from pydantic import EmailStr, Field, HttpUrl, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import make_url
 
@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     payment_batch_size: int = Field(default=10, ge=1, le=100)
     paid_cancellation_cutoff_hours: int = Field(default=24, ge=0, le=720)
     notifications_enabled: bool = False
+    auth_public_origin: HttpUrl | None = None
     smtp_host: str = ""
     smtp_port: int = Field(default=465, ge=1, le=65535)
     smtp_from: EmailStr | None = None
@@ -48,6 +49,11 @@ class Settings(BaseSettings):
     notification_poll_seconds: int = Field(default=5, ge=1, le=300)
     notification_retry_seconds: int = Field(default=30, ge=1, le=3600)
     notification_max_attempts: int = Field(default=8, ge=1, le=20)
+
+    @field_validator("auth_public_origin", mode="before")
+    @classmethod
+    def optional_auth_origin(cls, value):
+        return None if value == "" else value
 
     @model_validator(mode="after")
     def validate_jwt_secret(self):
@@ -60,6 +66,20 @@ class Settings(BaseSettings):
                 raise ValueError("Live payments require an HTTPS return URL")
         if self.notifications_enabled and (not self.smtp_host or not self.smtp_from):
             raise ValueError("Enabled notifications require SMTP_HOST and SMTP_FROM")
+        if self.auth_public_origin:
+            parsed = urlsplit(str(self.auth_public_origin))
+            if (
+                parsed.username
+                or parsed.password
+                or parsed.query
+                or parsed.fragment
+                or parsed.path not in {"", "/"}
+            ):
+                raise ValueError("AUTH_PUBLIC_ORIGIN must be an exact origin")
+        if self.notifications_enabled and self.app_env == "production":
+            origin = self.auth_public_origin or self.payment_return_url
+            if origin.scheme != "https" or origin.username or origin.password:
+                raise ValueError("Account emails require a trusted HTTPS public origin")
         if not self.allowed_hosts or any(not host or "/" in host for host in self.allowed_hosts):
             raise ValueError("ALLOWED_HOSTS must contain hostnames")
         if self.app_env == "production":

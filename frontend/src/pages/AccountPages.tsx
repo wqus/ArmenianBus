@@ -8,6 +8,7 @@ import { readCarrier } from '../features/carrier/contracts'
 import { CarrierNavigation } from '../features/carrier/CarrierNavigation'
 import '../features/carrier/carrier.css'
 import '../features/auth/account.css'
+import { EmailVerification } from '../features/auth/EmailVerification'
 
 export function AccountPage() {
   const { session, user } = useSession()
@@ -47,6 +48,7 @@ export function AccountPage() {
             <dd>Активен</dd>
           </div>
         </dl>
+        <EmailVerification />
         <div className="profile-actions">
           {user.role === 'PASSENGER' && <ButtonLink to="/bookings">Мои бронирования</ButtonLink>}
           {user.role === 'CARRIER' && <ButtonLink to="/carrier">Профиль перевозчика</ButtonLink>}

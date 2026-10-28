@@ -54,6 +54,34 @@ it('coalesces parallel refresh and does not clear the cache for the same user', 
   expect(clear).not.toHaveBeenCalled()
 })
 
+it('forgets private state immediately after password reset and ignores a late restore', async () => {
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  let entered!: () => void
+  const ready = new Promise<void>((resolve) => {
+    entered = resolve
+  })
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) => {
+      if (url.endsWith('/refresh')) return json(access())
+      entered()
+      await gate
+      return json(user)
+    }),
+  )
+  const session = new Session(vi.fn())
+  const restoring = session.restore()
+  await ready
+  session.forget()
+  expect(session.snapshot().status).toBe('anonymous')
+  release()
+  await restoring
+  expect(session.snapshot().user).toBeNull()
+})
+
 it('a late restore cannot sign the user back in after logout starts', async () => {
   let release!: () => void
   let entered!: () => void

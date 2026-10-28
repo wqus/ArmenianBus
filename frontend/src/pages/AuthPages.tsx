@@ -249,6 +249,11 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                 </Button>
               </fieldset>
             </form>
+            {!register && (
+              <p className="auth-switch">
+                <Link to="/forgot-password">Забыли пароль?</Link>
+              </p>
+            )}
             <p className="auth-switch">
               {register ? 'Уже есть аккаунт?' : 'Впервые здесь?'}{' '}
               <Link

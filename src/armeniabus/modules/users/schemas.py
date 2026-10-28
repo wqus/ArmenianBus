@@ -48,6 +48,7 @@ class UserPublic(BaseModel):
     role: UserRole
     status: UserStatus
     created_at: datetime
+    email_verified_at: datetime | None = None
 
 
 class TokenPair(BaseModel):
@@ -55,3 +56,17 @@ class TokenPair(BaseModel):
     refresh_token: str
     token_type: Literal["Bearer"] = "Bearer"
     expires_in: int
+
+
+class ForgotPasswordInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    email: EmailStr
+
+
+class ActionTokenInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    token: str = Field(min_length=1, max_length=200)
+
+
+class ResetPasswordInput(ActionTokenInput):
+    password: str = Field(min_length=12, max_length=128)

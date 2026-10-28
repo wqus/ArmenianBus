@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from redis.asyncio import Redis
 
+from armeniabus.api.account_actions import router as account_actions_router
 from armeniabus.api.admin import router as admin_router
 from armeniabus.api.auth import router as auth_router
 from armeniabus.api.body_limit import BodyLimitMiddleware
@@ -56,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json" if public_docs else None,
     )
     app.state.settings = settings
+    app.include_router(account_actions_router)
     app.add_middleware(
         BodyLimitMiddleware,
         max_bytes=settings.request_max_bytes,

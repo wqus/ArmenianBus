@@ -64,6 +64,10 @@ export class Session {
     }
     this.channel = channel
     channel.onmessage = (event: MessageEvent<unknown>) => {
+      if (event.data === 'profile') {
+        void this.reloadUser(false).catch(() => {})
+        return
+      }
       if (event.data !== 'login' && event.data !== 'logout') return
       this.revision++
       this.reset()
@@ -161,6 +165,24 @@ export class Session {
       this.publish({ status: 'anonymous', user: null })
       this.channel?.postMessage('logout')
     })
+  }
+
+  forget() {
+    this.revision++
+    this.reset()
+    this.refreshJob = null
+    this.publish({ status: 'anonymous', user: null })
+    this.channel?.postMessage('logout')
+  }
+
+  async reloadUser(broadcast = true) {
+    if (!this.state.user) return
+    const revision = this.revision
+    const user = readUser(await this.request('/me'))
+    if (revision === this.revision && user.id === this.state.user?.id) {
+      this.publish({ status: 'authenticated', user })
+      if (broadcast) this.channel?.postMessage('profile')
+    }
   }
 
   async request<T>(path: string, options: RequestInit = {}): Promise<T> {

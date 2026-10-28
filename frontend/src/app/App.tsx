@@ -14,6 +14,7 @@ import { SessionProvider } from '../features/auth/SessionProvider'
 import { useSession } from '../features/auth/context'
 import { Protected } from '../features/auth/Protected'
 import { AuthPage } from '../pages/AuthPages'
+import { RecoveryPage } from '../pages/RecoveryPages'
 import { AccountPage, CarrierProfilePage } from '../pages/AccountPages'
 import { CarrierLayout } from '../features/carrier/CarrierLayout'
 const AdminLayout = lazy(() =>
@@ -219,6 +220,12 @@ export function App() {
                 <Route path="refunds" element={<LegalPage kind="refunds" />} />
                 <Route path="login" element={<AuthPage key="login" />} />
                 <Route path="register" element={<AuthPage key="register" register />} />
+                <Route
+                  path="forgot-password"
+                  element={<RecoveryPage key="request" mode="request" />}
+                />
+                <Route path="reset-password" element={<RecoveryPage key="reset" mode="reset" />} />
+                <Route path="verify-email" element={<RecoveryPage key="verify" mode="verify" />} />
                 <Route element={<Protected />}>
                   <Route path="account" element={<AccountPage />} />
                 </Route>

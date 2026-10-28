@@ -36,7 +36,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 )
 async def register(request: Request, data: RegisterInput, db: DbSession) -> User:
     await enforce_auth_rate_limit(request, "register")
-    return await register_user(db, data)
+    return await register_user(db, data, request.app.state.settings)
 
 
 @router.post(

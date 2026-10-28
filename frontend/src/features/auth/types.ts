@@ -10,6 +10,7 @@ export type User = {
   role: Role
   status: 'ACTIVE' | 'BLOCKED'
   created_at: string
+  email_verified_at?: string | null
 }
 export type Access = { access_token: string; expires_in: number; token_type: 'Bearer' }
 export type SessionState = {
@@ -26,7 +27,11 @@ export function readUser(value: unknown): User {
     typeof user.email !== 'string' ||
     !['PASSENGER', 'CARRIER', 'ADMIN'].includes(user.role ?? '') ||
     !['ACTIVE', 'BLOCKED'].includes(user.status ?? '') ||
-    typeof user.created_at !== 'string'
+    typeof user.created_at !== 'string' ||
+    (user.email_verified_at != null &&
+      (typeof user.email_verified_at !== 'string' ||
+        !/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(user.email_verified_at) ||
+        !Number.isFinite(Date.parse(user.email_verified_at))))
   ) {
     throw new Error('Invalid user response')
   }
@@ -64,6 +69,10 @@ export function authMessage(error: unknown): string {
     UNAUTHORIZED: 'Войдите, чтобы продолжить.',
     INVALID_REFRESH_TOKEN: 'Сессия завершилась. Войдите снова.',
     INVALID_ACCESS_TOKEN: 'Сессия завершилась. Войдите снова.',
+    ACTION_LINK_INVALID:
+      'Ссылка недействительна, уже использована или срок её действия истёк. Запросите новое письмо.',
+    ACCOUNT_MAIL_UNAVAILABLE:
+      'Отправка писем сейчас недоступна. Попробуйте позже или напишите в поддержку.',
   }
   if (['NETWORK_ERROR', 'REQUEST_TIMEOUT'].includes(error.problem.code)) return error.message
   return messages[error.problem.code] ?? 'Не удалось выполнить действие. Попробуйте ещё раз.'
