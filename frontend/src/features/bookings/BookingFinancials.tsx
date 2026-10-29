@@ -13,7 +13,11 @@ export function BookingFinancials({ booking }: { booking: BookingDetails }) {
     <div className="booking-financials">
       <p>
         <strong>Платёж:</strong>{' '}
-        {booking.payment_status ? paymentLabels[booking.payment_status] : 'Не создан'}
+        {booking.payment_review_reason
+          ? 'Требует проверки'
+          : booking.payment_status
+            ? paymentLabels[booking.payment_status]
+            : 'Не создан'}
       </p>
       {refund && (
         <div className="booking-refund">

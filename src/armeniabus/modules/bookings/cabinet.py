@@ -30,6 +30,7 @@ class CabinetBooking(BookingPublic):
     seat_number: int
     company_name: str
     payment_status: str | None
+    payment_review_reason: str | None
     refund_required: bool
     refund_status: str | None
     cancellation_allowed: bool
@@ -77,6 +78,7 @@ def query():
             Seat.seat_number,
             CarrierProfile.company_name,
             Payment.status.label("payment_status"),
+            Payment.review_reason.label("payment_review_reason"),
             RefundCase.id.label("refund_id"),
             RefundCase.status.label("refund_status"),
             effective_status().label("effective_status"),
@@ -112,6 +114,7 @@ def result(row, cutoff_hours):
         seat_number=row.seat_number,
         company_name=row.company_name,
         payment_status=row.payment_status,
+        payment_review_reason=row.payment_review_reason,
         refund_required=row.refund_status == "OPEN",
         refund_status=row.refund_status,
         cancellation_allowed=allowed,

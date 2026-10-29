@@ -52,6 +52,7 @@ function PaymentContent({ id }: { id: string }) {
   const active = value?.booking.status === 'HELD' && remainingSeconds(value, now) > 0
   const eligible =
     active &&
+    !value?.booking.payment_review_reason &&
     !value?.booking.refund_status &&
     (!payment || (payment.status === 'PENDING' && !payment.review_reason))
   const url = eligible && payment ? confirmationUrl(payment.confirmation_url) : null
@@ -75,6 +76,7 @@ function PaymentContent({ id }: { id: string }) {
       if (
         fresh.booking.status !== 'HELD' ||
         fresh.booking.refund_status !== null ||
+        fresh.booking.payment_review_reason ||
         remainingSeconds(fresh, performance.now()) <= 0 ||
         (fresh.payment &&
           (fresh.payment.status !== 'PENDING' ||
@@ -145,6 +147,7 @@ function PaymentContent({ id }: { id: string }) {
               data-confirmed={
                 payment?.status === 'SUCCEEDED' &&
                 !payment.review_reason &&
+                !value.booking.payment_review_reason &&
                 !value.booking.refund_status &&
                 ['PAID', 'COMPLETED'].includes(value.booking.status)
               }

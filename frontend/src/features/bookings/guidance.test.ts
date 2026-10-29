@@ -10,6 +10,12 @@ it('offers a confirmation only for verified, active paid bookings without any re
   } as const
   expect(hasPaidConfirmation(paid)).toBe(true)
   expect(hasPaidConfirmation({ ...paid, route_status: 'DEPARTED' })).toBe(true)
+  expect(hasPaidConfirmation({ ...paid, payment_review_reason: 'PROVIDER_STATE_CONFLICT' })).toBe(
+    false,
+  )
+  expect(bookingGuidance({ ...paid, payment_review_reason: 'PROVIDER_STATE_CONFLICT' })).toContain(
+    'Не оплачивайте повторно',
+  )
   for (const status of ['HELD', 'EXPIRED', 'CANCELLED', 'COMPLETED'] as const)
     expect(hasPaidConfirmation({ ...paid, status })).toBe(false)
   for (const payment_status of [null, 'PENDING', 'FAILED', 'CANCELED'] as const)

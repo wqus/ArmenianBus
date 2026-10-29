@@ -100,6 +100,11 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - run: npm run test:browsers
+      - run: docker compose -p armeniabus-auth-e2e --profile test -f compose.yaml -f compose.purchase-test.yaml up -d --build --wait api-e2e
+        working-directory: .
+      - run: npx playwright test e2e/purchase-live.spec.ts --workers=1
+        env:
+          RUN_PURCHASE_E2E: "1"
       - uses: actions/upload-artifact@v7
         if: failure()
         with:

@@ -2,8 +2,9 @@ import asyncio
 import smtplib
 import ssl
 import uuid
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from email.message import EmailMessage
+from email.utils import format_datetime
 
 from sqlalchemy import or_, select, update
 
@@ -25,6 +26,9 @@ class SmtpSender:
         message["From"] = str(config.smtp_from)
         message["To"] = notification.recipient_email
         message["Subject"] = notification.subject
+        message["Date"] = format_datetime(
+            getattr(notification, "created_at", None) or datetime.now(UTC)
+        )
         message["Message-ID"] = f"<{notification.id}@{str(config.smtp_from).split('@')[1]}>"
         message.set_content(notification.body)
         with smtplib.SMTP_SSL(

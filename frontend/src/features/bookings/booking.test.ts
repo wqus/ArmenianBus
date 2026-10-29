@@ -41,6 +41,7 @@ it('validates private booking data including clock, price, seat and terminal sta
     { seat_number: 0 },
     { cancellation_allowed: 'true' },
     { payment_status: 'PAID' },
+    { payment_review_reason: 123 },
     { route_status: 'INVALID' },
     { refund_status: 'REFUNDED' },
     { refund_status: 'OPEN', refund_required: false },

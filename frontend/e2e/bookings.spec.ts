@@ -44,6 +44,7 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
     mode: 'ok',
     status: 'HELD',
     paymentStatusOverride: undefined as string | null | undefined,
+    paymentReview: null as string | null,
     posts: 0,
     deletes: 0,
     exists: false,
@@ -79,6 +80,7 @@ async function mock(context: BrowserContext, role = 'PASSENGER', signedIn = true
           ? 'SUCCEEDED'
           : null,
     refund_status: null,
+    payment_review_reason: state.paymentReview,
     refund_required: false,
   })
   await context.route('**/api/v1/**', async (route) => {
@@ -247,6 +249,14 @@ test('paid confirmation refreshes before printing and disappears on cancellation
     expect(pdf.toString('latin1').match(/\/Type \/Page\b/g)?.length).toBe(1)
   }
   await page.emulateMedia({ media: 'screen' })
+  state.paymentReview = 'PROVIDER_STATE_CONFLICT'
+  await print.click()
+  await expect(confirmation).toHaveCount(0)
+  await expect(page.getByText('Платёж: Требует проверки', { exact: true })).toBeVisible()
+  await expect(page.locator('html')).toHaveAttribute('data-print-calls', '1')
+  state.paymentReview = null
+  await page.getByRole('button', { name: 'Обновить статус' }).click()
+  await expect(confirmation).toBeVisible()
   state.status = 'CANCELLED'
   await print.click()
   await expect(confirmation).toHaveCount(0)

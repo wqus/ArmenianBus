@@ -93,6 +93,7 @@ async function mock(context: BrowserContext, signedIn = true, role = 'PASSENGER'
         cancellation_allowed: state.booking === 'HELD',
         route_status: 'ACTIVE',
         payment_status: state.exists ? state.status : null,
+        payment_review_reason: state.mode === 'booking-review' ? 'PROVIDER_DATA_MISMATCH' : null,
         refund_status: null,
         refund_required: false,
       })
@@ -235,6 +236,12 @@ test('late success, review, provider rejection and unsafe URL are distinct outco
   await page.getByRole('button', { name: 'Обновить результат' }).click()
   await expect(page.getByRole('heading', { name: 'Платёж не завершён' })).toBeVisible()
   state.status = 'PENDING'
+  state.mode = 'booking-review'
+  state.url = providerUrl
+  await page.getByRole('button', { name: 'Обновить результат' }).click()
+  await expect(page.getByRole('heading', { name: 'Платёж требует проверки' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Перейти на страницу ЮKassa' })).toHaveCount(0)
+  state.mode = 'ok'
   state.url = 'https://yoomoney.ru.evil.test/steal'
   await page.getByRole('button', { name: 'Обновить результат' }).click()
   await expect(page.getByRole('alert')).toContainText('Ссылка оплаты недоступна')

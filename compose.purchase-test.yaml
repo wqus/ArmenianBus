@@ -1,0 +1,9 @@
+# Test-only override: the runtime image does not contain tests/purchase_app.py.
+# Use only with the disposable armeniabus-auth-e2e project and --profile test.
+services:
+  api-e2e:
+    build:
+      target: test
+    command: [uvicorn, tests.purchase_app:create_purchase_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    environment:
+      RUN_PURCHASE_E2E: "1"

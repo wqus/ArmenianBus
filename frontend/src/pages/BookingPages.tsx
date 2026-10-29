@@ -394,6 +394,7 @@ function BookingContent({ id }: { id: string }) {
     remainingSeconds(value, now) > 0 &&
     !value.booking.refund_status &&
     value.booking.route_status === 'ACTIVE' &&
+    !value.booking.payment_review_reason &&
     (value.booking.payment_status === null || value.booking.payment_status === 'PENDING')
   async function cancel() {
     if (

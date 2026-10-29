@@ -28,6 +28,7 @@ export type BookingDetails = Booking &
     company_name: string
     cancellation_allowed: boolean
     payment_status: 'PENDING' | 'SUCCEEDED' | 'CANCELED' | 'FAILED' | null
+    payment_review_reason?: string | null
     refund_status: 'OPEN' | 'REFUND_RECORDED' | null
     refund_required: boolean
   }
@@ -78,6 +79,8 @@ export function readDetails(data: unknown): BookingDetails {
       b.payment_status as string | null,
     ) ||
     ![null, 'OPEN', 'REFUND_RECORDED'].includes(b.refund_status as string | null) ||
+    (b.payment_review_reason != null &&
+      (!text(b.payment_review_reason) || b.payment_review_reason.length > 100)) ||
     typeof b.refund_required !== 'boolean' ||
     b.refund_required !== (b.refund_status === 'OPEN') ||
     !text(b.origin) ||

@@ -52,6 +52,13 @@ it('keeps payment success separate from booking confirmation and refund completi
   expect(paymentMessage(paid, booking).title).not.toBe('Оплата подтверждена')
   expect(paymentMessage(paid, { ...booking, status: 'PAID' }).title).toBe('Оплата подтверждена')
   expect(
+    paymentMessage(paid, {
+      ...booking,
+      status: 'PAID',
+      payment_review_reason: 'PROVIDER_STATE_CONFLICT',
+    }).title,
+  ).toBe('Платёж требует проверки')
+  expect(
     paymentMessage({ ...paid, review_reason: 'REFUND_REQUIRED' }, { ...booking, status: 'EXPIRED' })
       .text,
   ).toContain('Статус возврата уточните')

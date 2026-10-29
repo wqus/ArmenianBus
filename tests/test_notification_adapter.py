@@ -1,6 +1,7 @@
 import smtplib
 import uuid
 from datetime import UTC, datetime, timedelta
+from email.utils import parsedate_to_datetime
 from unittest.mock import patch
 
 import pytest
@@ -50,6 +51,7 @@ def test_smtp_uses_verified_tls_and_stable_message_id_without_network():
         messages = [call.args[0] for call in smtp.send_message.call_args_list]
         assert messages[0]["Message-ID"] == messages[1]["Message-ID"] == f"<{item.id}@example.com>"
         assert messages[0]["To"] == "recipient@example.com"
+        assert parsedate_to_datetime(messages[0]["Date"]).utcoffset() == timedelta(0)
         assert "Гюмри" in messages[0].get_content()
         smtp.login.assert_called_with("sender", "test-secret")
         smtp.send_message.return_value = {"recipient@example.com": (550, b"refused")}

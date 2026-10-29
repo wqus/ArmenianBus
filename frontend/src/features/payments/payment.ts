@@ -107,11 +107,12 @@ export async function paymentKey(
 export function paymentMessage(payment: Payment | null, booking: BookingDetails) {
   const refund = refundSummary(booking)
   if (refund) return refund
-  if (payment?.review_reason)
+  const review = payment?.review_reason || booking.payment_review_reason
+  if (review)
     return {
       title: 'Платёж требует проверки',
       text:
-        payment.review_reason === 'REFUND_REQUIRED'
+        review === 'REFUND_REQUIRED'
           ? 'Оплата поступила, но бронь не подтверждена. Создана заявка на возврат. Статус возврата уточните в поддержке по номеру брони.'
           : 'Результат проверяет сервис. Не оплачивайте повторно. Сохраните номер брони для обращения в поддержку.',
     }

@@ -1,23 +1,32 @@
 import type { BookingDetails } from './booking'
 
 export function hasPaidConfirmation(
-  booking: Pick<BookingDetails, 'status' | 'route_status' | 'refund_status' | 'payment_status'>,
+  booking: Pick<
+    BookingDetails,
+    'status' | 'route_status' | 'refund_status' | 'payment_status' | 'payment_review_reason'
+  >,
 ): boolean {
   return (
     booking.status === 'PAID' &&
     booking.payment_status === 'SUCCEEDED' &&
+    !booking.payment_review_reason &&
     booking.refund_status === null &&
     ['ACTIVE', 'DEPARTED'].includes(booking.route_status)
   )
 }
 
 export function bookingGuidance(
-  booking: Pick<BookingDetails, 'status' | 'route_status' | 'refund_status' | 'payment_status'>,
+  booking: Pick<
+    BookingDetails,
+    'status' | 'route_status' | 'refund_status' | 'payment_status' | 'payment_review_reason'
+  >,
 ): string {
   if (booking.refund_status === 'OPEN')
     return 'Бронь отменена или требует возврата. Заявка обрабатывается отдельно — это ещё не подтверждение поступления денег.'
   if (booking.refund_status === 'REFUND_RECORDED')
     return 'Оператор отметил ручной возврат. Срок поступления денег уточняйте у банка; при вопросах сохраните номер брони.'
+  if (booking.payment_review_reason)
+    return 'Платёж требует проверки. Не оплачивайте повторно; проверьте результат оплаты или обратитесь в поддержку по номеру брони. Подтверждение поездки временно недоступно.'
   if (booking.route_status === 'CANCELLED')
     return 'Рейс отменён. Если оплата уже прошла, проверьте сведения о возврате или обратитесь в поддержку.'
   if (booking.payment_status === 'SUCCEEDED' && !['PAID', 'COMPLETED'].includes(booking.status))

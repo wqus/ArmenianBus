@@ -138,7 +138,11 @@ def review(db, payment, reason):
 
 
 async def apply_snapshot(
-    db: AsyncSession, payment_id: uuid.UUID, snapshot: ProviderPayment
+    db: AsyncSession,
+    payment_id: uuid.UUID,
+    snapshot: ProviderPayment,
+    *,
+    resolve_terminal_review: bool = False,
 ) -> Payment:
     booking_id = await db.scalar(select(Payment.booking_id).where(Payment.id == payment_id))
     carrier, owner_status, route, booking = await lock_booking(db, booking_id)
@@ -157,6 +161,7 @@ async def apply_snapshot(
         and snapshot.metadata.get("booking_id") == str(booking.id)
         and snapshot.metadata.get("payment_id") == str(payment.id)
         and (payment.external_id is None or payment.external_id == str(snapshot.id))
+        and (snapshot.status != "succeeded" or snapshot.paid)
     )
     if not valid:
         review(db, payment, "PROVIDER_DATA_MISMATCH")
@@ -164,13 +169,35 @@ async def apply_snapshot(
         return payment
     payment.external_id = str(snapshot.id)
     payment.last_error = None
-    if payment.status != PaymentStatus.PENDING:
+    recovered_failure = (
+        payment.status == PaymentStatus.FAILED and snapshot.status == "succeeded" and snapshot.paid
+    )
+    if payment.status != PaymentStatus.PENDING and not recovered_failure:
         # Duplicates and out-of-order pending notifications never regress terminal states.
         expected = {"succeeded": "SUCCEEDED", "canceled": "CANCELED"}.get(snapshot.status)
         if expected and payment.status != expected:
             review(db, payment, "PROVIDER_STATE_CONFLICT")
+        elif (
+            resolve_terminal_review
+            and expected == payment.status
+            and payment.review_reason in {"PROVIDER_STATE_CONFLICT", "PROVIDER_DATA_MISMATCH"}
+        ):
+            previous_review = payment.review_reason
+            payment.review_reason = None
+            record_audit(
+                db,
+                None,
+                "payment.review_rechecked",
+                "payment",
+                payment.id,
+                {"previous_reason": previous_review},
+            )
         await db.commit()
         return payment
+    if recovered_failure:
+        # FAILED is our local create error, not a verified terminal provider state.
+        # A matching paid object must still fulfil the live hold or open a refund.
+        record_audit(db, None, "payment.failure_reconciled", "payment", payment.id)
     if payment.review_reason and snapshot.status in ("pending", "succeeded", "canceled"):
         # A newly verified matching object can resolve an earlier uncertain/mismatched response.
         previous_review = payment.review_reason

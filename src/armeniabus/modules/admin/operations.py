@@ -233,4 +233,4 @@ async def verify_payment(db, actor, payment_id, external_id, provider):
         raise ApiError(503, exc.code, "Payment verification temporarily unavailable") from None
     if str(snapshot.id) != candidate:
         raise ApiError(503, "PROVIDER_INVALID_RESPONSE", "Provider returned a different payment")
-    return await apply_snapshot(db, payment.id, snapshot)
+    return await apply_snapshot(db, payment.id, snapshot, resolve_terminal_review=True)
