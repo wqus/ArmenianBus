@@ -281,33 +281,6 @@ def bootstrap_drill(images, commit, root):
             )
             print("Bootstrap drill passed: pilot limits, first migration, HTTPS and workers")
     except Exception:
-        # The synthetic database and credentials belong only to this drill.
-        # The release runner deliberately hides subprocess output to avoid leaking
-        # production configuration; repeat the migration here for diagnostics.
-        diagnostic = subprocess.run(
-            [
-                *compose,
-                "run",
-                "--rm",
-                "--no-deps",
-                "--pull",
-                "never",
-                "migrate",
-                "alembic",
-                "upgrade",
-                "head",
-            ],
-            cwd=root,
-            env=environment,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        output_text = (diagnostic.stdout + "\n" + diagnostic.stderr)[-12000:]
-        for key, value in environment.items():
-            if value and any(part in key.upper() for part in ("PASSWORD", "SECRET", "TOKEN")):
-                output_text = output_text.replace(value, "[redacted]")
-        print(f"Disposable migration diagnostic exit={diagnostic.returncode}:\n{output_text}")
         # Inspect only state, never Config.Env (which contains generated credentials).
         containers = output([*compose, "ps", "-aq"]).splitlines()
         if containers:

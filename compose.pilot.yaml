@@ -1,5 +1,5 @@
 # Bounded single-CPU pilot on a shared VPS. Not a production capacity guarantee.
-# Sum of resident-memory ceilings for the seven running services: 832 MiB.
+# Sum of resident-memory ceilings for the seven running services: 864 MiB.
 # Migrations replace stopped writers during updates and do not add to that sum.
 services:
   db:
@@ -45,8 +45,9 @@ services:
       timeout: 30s
       start_period: 60s
   notification-worker:
-    mem_limit: 96m
-    memswap_limit: 96m
+    # The account-mail worker and its separate health probe run together.
+    mem_limit: 128m
+    memswap_limit: 128m
     cpus: 0.05
     healthcheck:
       timeout: 30s
