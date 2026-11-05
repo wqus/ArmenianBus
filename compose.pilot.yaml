@@ -48,7 +48,7 @@ services:
     # The account-mail worker and its separate health probe run together.
     mem_limit: 128m
     memswap_limit: 128m
-    cpus: 0.05
+    cpus: 0.10
     healthcheck:
       timeout: 30s
       start_period: 60s
